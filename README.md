@@ -198,4 +198,4 @@ Bangladesh University of Business and Technology (BUBT) is a leading private uni
 
 **Made with ❤️ for BUBT Community**
 
-For support: transport@bubt.edu.bd | +880-2-9138234
+For support: transport@bubt.edu.bd | +880-2-9138234# realtime-bubt-bus-update

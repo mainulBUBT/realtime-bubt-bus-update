@@ -1,216 +1,148 @@
-<x-app-layout>
-    <div class="welcome-container">
-        <!-- Navigation -->
-        <nav class="main-nav">
-            <div class="nav-brand">
-                <h1>🚌 BUBT Bus Tracker</h1>
-                <p>Know Where Is My University Bus</p>
+<x-layouts.app>
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mobile-header-title">Good Morning</h1>
+                <p class="mobile-header-subtitle">Dhaka, Bangladesh</p>
             </div>
-            <div class="nav-links">
-                <a href="/" class="nav-link active">Live Tracking</a>
-                <a href="/admin" class="nav-link">Admin</a>
-            </div>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <livewire:today-trips />
-        </main>
-
-        <!-- Footer -->
-        <footer class="main-footer">
-            <div class="footer-content">
-                <p>&copy; 2024 Bangladesh University of Business and Technology</p>
-                <p>Real-time bus tracking system - 100% free, no hardware required</p>
-                <div class="footer-links">
-                    <a href="#" onclick="installPWA()">📱 Install App</a>
-                    <a href="#" onclick="enableNotifications()">🔔 Enable Notifications</a>
-                </div>
-            </div>
-        </footer>
+            <button class="btn btn-light rounded-circle" style="width: 40px; height: 40px;">
+                <i class="bi bi-bell"></i>
+            </button>
+        </div>
     </div>
 
-    <style>
-        .welcome-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+    <!-- Quick Stats -->
+    <div class="px-3 py-4">
+        <div class="row g-3 mb-4">
+            <div class="col-6">
+                <div class="card-modern text-center">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success-light rounded-3 p-2 me-3">
+                            <i class="bi bi-check-circle text-success-custom" style="font-size: 24px;"></i>
+                        </div>
+                        <div>
+                            <h3 class="h4 fw-bold text-dark mb-0">5</h3>
+                            <p class="small text-muted mb-0">Active Buses</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card-modern text-center">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary-light rounded-3 p-2 me-3">
+                            <i class="bi bi-people text-primary-custom" style="font-size: 24px;"></i>
+                        </div>
+                        <div>
+                            <h3 class="h4 fw-bold text-dark mb-0">42</h3>
+                            <p class="small text-muted mb-0">Students Online</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        .main-nav {
-            background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+        <!-- Main Action Cards -->
+        <div class="row g-3 mb-4">
+            <!-- Schedule Card -->
+            <div class="col-12">
+                <a href="#" class="home-card">
+                    <div class="d-flex align-items-center">
+                        <div class="home-card-icon bg-primary-light me-3">
+                            <i class="bi bi-calendar3 text-primary-custom" style="font-size: 32px;"></i>
+                        </div>
+                        <div class="flex-fill">
+                            <h3 class="home-card-title">Schedule</h3>
+                            <p class="home-card-description">View bus schedules and timings for all routes</p>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                </a>
+            </div>
 
-        .main-nav .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+            <!-- Track Your Bus Card -->
+            <div class="col-12">
+                <a href="{{ route('tracker') }}" class="home-card">
+                    <div class="d-flex align-items-center">
+                        <div class="home-card-icon bg-success-light me-3">
+                            <i class="bi bi-geo-alt text-success-custom" style="font-size: 32px;"></i>
+                        </div>
+                        <div class="flex-fill">
+                            <h3 class="home-card-title">Track Your Bus</h3>
+                            <p class="home-card-description">Join a bus and get real-time location updates</p>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                </a>
+            </div>
 
-        .nav-brand h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: #667eea;
-        }
+            <!-- All Buses Card -->
+            <div class="col-12">
+                <a href="{{ route('tracker') }}" class="home-card">
+                    <div class="d-flex align-items-center">
+                        <div class="home-card-icon bg-warning-light me-3">
+                            <i class="bi bi-bus-front text-warning-custom" style="font-size: 32px;"></i>
+                        </div>
+                        <div class="flex-fill">
+                            <h3 class="home-card-title">All Buses</h3>
+                            <p class="home-card-description">View all available buses and their current status</p>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
 
-        .nav-brand p {
-            margin: 0;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .nav-link {
-            padding: 0.5rem 1rem;
-            text-decoration: none;
-            color: #666;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-
-        .nav-link:hover,
-        .nav-link.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 2rem 0;
-        }
-
-        .main-footer {
-            background: #333;
-            color: white;
-            padding: 2rem 0;
-            text-align: center;
-        }
-
-        .footer-content p {
-            margin: 0.5rem 0;
-        }
-
-        .footer-links {
-            margin-top: 1rem;
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-        }
-
-        .footer-links a {
-            color: #667eea;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border: 1px solid #667eea;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-
-        .footer-links a:hover {
-            background: #667eea;
-            color: white;
-        }
-
-        @media (max-width: 768px) {
-            .main-nav .container {
-                flex-direction: column;
-                gap: 1rem;
-            }
+        <!-- Map Preview -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold text-dark mb-0">Live Map</h2>
+                <a href="{{ route('live-map') }}" class="small text-primary-custom text-decoration-none">View Full Map</a>
+            </div>
             
-            .footer-links {
-                flex-direction: column;
-                align-items: center;
-            }
-        }
-    </style>
+            <div class="map-container">
+                <div class="map-placeholder">
+                    <div class="text-center">
+                        <i class="bi bi-geo-alt" style="font-size: 48px; color: #6c757d;"></i>
+                        <p class="small text-muted mt-2">Tap to view live bus locations</p>
+                    </div>
+                </div>
+                <div class="live-badge">
+                    <span class="small fw-semibold text-dark">Live</span>
+                </div>
+            </div>
+        </div>
 
-    <script>
-        // PWA Installation
-        let deferredPrompt;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
-
-        function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    }
-                    deferredPrompt = null;
-                });
-            } else {
-                alert('App is already installed or installation is not available');
-            }
-        }
-
-        // Push Notifications
-        function enableNotifications() {
-            if ('Notification' in window && 'serviceWorker' in navigator) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        console.log('Notification permission granted');
-                        // Subscribe to push notifications
-                        subscribeUserToPush();
-                    } else {
-                        alert('Notification permission denied');
-                    }
-                });
-            } else {
-                alert('Notifications not supported');
-            }
-        }
-
-        function subscribeUserToPush() {
-            navigator.serviceWorker.ready.then(registration => {
-                const vapidPublicKey = 'YOUR_VAPID_PUBLIC_KEY'; // You'll need to generate this
-                
-                registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-                }).then(subscription => {
-                    console.log('User is subscribed:', subscription);
-                    
-                    // Send subscription to server
-                    fetch('/api/push-subscribe', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: JSON.stringify(subscription)
-                    });
-                }).catch(err => {
-                    console.log('Failed to subscribe user: ', err);
-                });
-            });
-        }
-
-        function urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding)
-                .replace(/-/g, '+')
-                .replace(/_/g, '/');
-
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-
-            for (let i = 0; i < rawData.length; ++i) {
-                outputArray[i] = rawData.charCodeAt(i);
-            }
-            return outputArray;
-        }
-    </script>
-</x-app-layout>
+        <!-- Recent Activity -->
+        <div class="mb-4">
+            <h2 class="h5 fw-bold text-dark mb-3">Recent Activity</h2>
+            
+            <div class="card-modern">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success-light rounded-3 p-2 me-3">
+                        <i class="bi bi-check-circle text-success-custom" style="font-size: 20px;"></i>
+                    </div>
+                    <div class="flex-fill">
+                        <h6 class="fw-semibold text-dark mb-1">Bus B1 is now active</h6>
+                        <p class="small text-muted mb-0">Route: Dhanmondi → BUBT Campus</p>
+                    </div>
+                    <span class="small text-muted">2m ago</span>
+                </div>
+            </div>
+            
+            <div class="card-modern">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary-light rounded-3 p-2 me-3">
+                        <i class="bi bi-bell text-primary-custom" style="font-size: 20px;"></i>
+                    </div>
+                    <div class="flex-fill">
+                        <h6 class="fw-semibold text-dark mb-1">Smart notifications enabled</h6>
+                        <p class="small text-muted mb-0">Get alerts 5 minutes before arrival</p>
+                    </div>
+                    <span class="small text-muted">5m ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-layouts.app>

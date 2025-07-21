@@ -8,6 +8,55 @@ let map = null;
 let busMarker = null;
 let busPosition = { lat: 23.7937, lng: 90.3629 }; // Default position (Dhaka)
 
+/**
+ * Update the tracking UI with bus data
+ */
+function updateTrackingUI(bus) {
+    if (!bus) return;
+    
+    // Update bus info pill
+    const busIcon = document.querySelector('.bus-info-pill .bus-icon');
+    const busName = document.querySelector('.bus-info-pill .bus-name');
+    const busStatus = document.querySelector('.bus-info-pill .bus-status');
+    
+    if (busIcon) busIcon.textContent = bus.id;
+    if (busName) busName.textContent = bus.name;
+    
+    if (busStatus) {
+        const statusIndicator = busStatus.querySelector('.status-indicator');
+        if (statusIndicator) {
+            statusIndicator.className = 'status-indicator';
+            if (bus.status === 'active') {
+                statusIndicator.classList.add('status-active');
+                busStatus.innerHTML = `<span class="status-indicator status-active"></span> On Route • Arriving in ${bus.arrivalTime}`;
+            } else if (bus.status === 'delayed') {
+                statusIndicator.classList.add('status-delayed');
+                busStatus.innerHTML = `<span class="status-indicator status-delayed"></span> Delayed • Arriving in ${bus.arrivalTime}`;
+            } else {
+                statusIndicator.classList.add('status-inactive');
+                busStatus.innerHTML = `<span class="status-indicator status-inactive"></span> Not Running`;
+            }
+        }
+    }
+    
+    // Update ETA card
+    const etaTime = document.querySelector('.eta-time');
+    const etaDestination = document.querySelector('.eta-destination');
+    
+    if (etaTime && bus.arrivalTime) etaTime.textContent = bus.arrivalTime;
+    if (etaDestination && bus.nextStop) etaDestination.textContent = `To ${bus.nextStop}`;
+    
+    // Update track info card
+    const currentStop = document.querySelector('.info-item:nth-child(1) .info-value');
+    const nextStop = document.querySelector('.info-item:nth-child(2) .info-value');
+    
+    if (currentStop) currentStop.textContent = bus.currentStop || 'N/A';
+    if (nextStop) nextStop.textContent = bus.nextStop || 'N/A';
+    
+    // Update route timeline
+    updateRouteTimeline(bus);
+}
+
 // Initialize the track page
 function initTrackPage() {
     console.log('Track page initialized');
@@ -19,8 +68,15 @@ function initTrackPage() {
     initBottomSheet();
     
     // Get the bus data from localStorage if available
+    const storedBus = localStorage.getItem('trackingBus');
     const busId = localStorage.getItem('trackingBusId') || 'B1'; // Default to B1 if none selected
-    if (busId) {
+    
+    if (storedBus) {
+        // Use the stored bus data directly
+        currentBus = JSON.parse(storedBus);
+        updateTrackingUI(currentBus);
+        fetchBusData(currentBus.id);
+    } else if (busId) {
         // Get the bus data from the busData object
         fetchBusData(busId);
     } else {
@@ -381,7 +437,9 @@ function initMap() {
             initialZoom = 14; // Larger zoom for desktops
         }
         
-        map = L.map('map').setView([23.7937, 90.3629], initialZoom);
+        map = L.map('map', {
+            zoomControl: false // Disable default zoom control as we have custom controls
+        }).setView([23.7937, 90.3629], initialZoom);
         
         // Add OpenStreetMap tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -398,8 +456,11 @@ function initMap() {
             iconAnchor: [iconSize/2, iconSize/2]
         });
         
-        // Add a marker for the bus
-        busMarker = L.marker([busPosition.lat, busPosition.lng], { icon: busIcon }).addTo(map);
+        // Add a marker for the bus (hidden but used for map positioning)
+        busMarker = L.marker([busPosition.lat, busPosition.lng], { 
+            icon: busIcon,
+            opacity: 0 // Hide the default marker as we're using our custom overlay
+        }).addTo(map);
         
         // Add a circle to show the accuracy radius
         const accuracyRadius = window.innerWidth < 576 ? 400 : 500;
@@ -409,6 +470,9 @@ function initMap() {
             fillOpacity: 0.5,
             radius: accuracyRadius
         }).addTo(map);
+        
+        // Position the custom bus pin overlay in the center of the map
+        updateBusPinPosition();
         
         // Handle window resize events
         window.addEventListener('resize', function() {
@@ -433,6 +497,16 @@ function initBottomSheet() {
     if (bottomSheet && handle) {
         let isExpanded = false;
         
+        // Get handle indicator element
+        const handleIndicator = handle.querySelector('.handle-indicator');
+        
+        // Function to update handle indicator text
+        const updateHandleIndicator = () => {
+            if (handleIndicator) {
+                handleIndicator.textContent = isExpanded ? 'Drag to collapse' : 'Drag to expand';
+            }
+        };
+        
         // Set initial position based on screen size
         const setInitialPosition = () => {
             // For small screens, show less of the bottom sheet initially
@@ -450,69 +524,184 @@ function initBottomSheet() {
         // Set initial position on load
         setInitialPosition();
         
+        // Set initial handle indicator text
+        updateHandleIndicator();
+        
         // Update position on window resize
         window.addEventListener('resize', setInitialPosition);
         
         // Toggle bottom sheet on handle click
+        
         handle.addEventListener('click', function() {
             isExpanded = !isExpanded;
             if (isExpanded) {
                 bottomSheet.classList.add('expanded');
+                bottomSheet.style.transform = 'translateY(0)';
             } else {
                 bottomSheet.classList.remove('expanded');
                 // Reset to initial position when collapsed
                 setInitialPosition();
             }
+            updateHandleIndicator();
         });
         
         // Allow dragging the bottom sheet
         let startY = 0;
         let startHeight = 0;
+        let startTransform = 0;
+        let isDragging = false;
         
+        // Handle touch events for mobile
         handle.addEventListener('touchstart', function(e) {
             startY = e.touches[0].clientY;
             startHeight = parseInt(window.getComputedStyle(bottomSheet).height);
+            const transform = window.getComputedStyle(bottomSheet).transform;
+            startTransform = transform !== 'none' ? parseInt(transform.split(',')[5]) : 0;
+            isDragging = true;
             document.body.style.overflow = 'hidden'; // Prevent scrolling while dragging
         });
         
         handle.addEventListener('touchmove', function(e) {
+            if (!isDragging) return;
+            
             const deltaY = e.touches[0].clientY - startY;
-            const newHeight = Math.max(100, startHeight - deltaY);
+            const windowHeight = window.innerHeight;
             
-            // Adjust max height based on screen size
-            let maxHeight;
-            if (window.innerHeight < 600) {
-                maxHeight = window.innerHeight * 0.6; // Smaller screens
-            } else if (window.innerHeight > 900) {
-                maxHeight = window.innerHeight * 0.7; // Larger screens
+            // If sheet is expanded, adjust height
+            if (isExpanded) {
+                const newHeight = Math.max(100, startHeight - deltaY);
+                
+                // Adjust max height based on screen size
+                let maxHeight;
+                if (windowHeight < 600) {
+                    maxHeight = windowHeight * 0.6; // Smaller screens
+                } else if (windowHeight > 900) {
+                    maxHeight = windowHeight * 0.7; // Larger screens
+                } else {
+                    maxHeight = windowHeight * 0.65; // Medium screens
+                }
+                
+                if (newHeight <= maxHeight) {
+                    bottomSheet.style.height = newHeight + 'px';
+                }
+                
+                // If dragged down significantly, start collapsing
+                if (deltaY > 100) {
+                    isExpanded = false;
+                    bottomSheet.classList.remove('expanded');
+                    setInitialPosition();
+                    bottomSheet.style.height = '';
+                    isDragging = false;
+                    updateHandleIndicator();
+                }
             } else {
-                maxHeight = window.innerHeight * 0.65; // Medium screens
-            }
-            
-            if (newHeight <= maxHeight) {
-                bottomSheet.style.height = newHeight + 'px';
+                // If sheet is collapsed, adjust transform
+                const newTransform = Math.min(0, startTransform - deltaY);
+                
+                // If dragged up significantly, expand
+                if (deltaY < -50) {
+                    isExpanded = true;
+                    bottomSheet.classList.add('expanded');
+                    bottomSheet.style.transform = 'translateY(0)';
+                    bottomSheet.style.height = '';
+                    isDragging = false;
+                    updateHandleIndicator();
+                } else {
+                    bottomSheet.style.transform = `translateY(${newTransform}px)`;
+                }
             }
         });
         
         handle.addEventListener('touchend', function() {
             document.body.style.overflow = ''; // Re-enable scrolling
+            isDragging = false;
             
-            // Snap to positions based on screen size
-            const currentHeight = parseInt(window.getComputedStyle(bottomSheet).height);
-            const windowHeight = window.innerHeight;
-            
-            if (currentHeight < windowHeight * 0.25) {
-                // Collapse
-                bottomSheet.classList.remove('expanded');
+            if (!isExpanded) {
+                // If not expanded, snap to initial position
+                setInitialPosition();
                 bottomSheet.style.height = '';
-                isExpanded = false;
-            } else if (currentHeight > windowHeight * 0.6) {
-                // Expand
-                bottomSheet.classList.add('expanded');
-                bottomSheet.style.height = '';
-                isExpanded = true;
             }
         });
+        
+        // Handle mouse events for desktop
+        handle.addEventListener('mousedown', function(e) {
+            startY = e.clientY;
+            startHeight = parseInt(window.getComputedStyle(bottomSheet).height);
+            const transform = window.getComputedStyle(bottomSheet).transform;
+            startTransform = transform !== 'none' ? parseInt(transform.split(',')[5]) : 0;
+            isDragging = true;
+            document.body.style.overflow = 'hidden'; // Prevent scrolling while dragging
+            
+            // Add global mouse event listeners
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        });
+        
+        function handleMouseMove(e) {
+            if (!isDragging) return;
+            
+            const deltaY = e.clientY - startY;
+            const windowHeight = window.innerHeight;
+            
+            // If sheet is expanded, adjust height
+            if (isExpanded) {
+                const newHeight = Math.max(100, startHeight - deltaY);
+                
+                // Adjust max height based on screen size
+                let maxHeight;
+                if (windowHeight < 600) {
+                    maxHeight = windowHeight * 0.6; // Smaller screens
+                } else if (windowHeight > 900) {
+                    maxHeight = windowHeight * 0.7; // Larger screens
+                } else {
+                    maxHeight = windowHeight * 0.65; // Medium screens
+                }
+                
+                if (newHeight <= maxHeight) {
+                    bottomSheet.style.height = newHeight + 'px';
+                }
+                
+                // If dragged down significantly, start collapsing
+                if (deltaY > 100) {
+                    isExpanded = false;
+                    bottomSheet.classList.remove('expanded');
+                    setInitialPosition();
+                    bottomSheet.style.height = '';
+                    isDragging = false;
+                    updateHandleIndicator();
+                }
+            } else {
+                // If sheet is collapsed, adjust transform
+                const newTransform = Math.min(0, startTransform - deltaY);
+                
+                // If dragged up significantly, expand
+                if (deltaY < -50) {
+                    isExpanded = true;
+                    bottomSheet.classList.add('expanded');
+                    bottomSheet.style.transform = 'translateY(0)';
+                    bottomSheet.style.height = '';
+                    isDragging = false;
+                    updateHandleIndicator();
+                } else {
+                    bottomSheet.style.transform = `translateY(${newTransform}px)`;
+                }
+            }
+        }
+        
+        function handleMouseUp() {
+            document.body.style.overflow = ''; // Re-enable scrolling
+            isDragging = false;
+            
+            if (!isExpanded) {
+                // If not expanded, snap to initial position
+                setInitialPosition();
+                bottomSheet.style.height = '';
+            }
+            
+            // Remove global mouse event listeners
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
     }
 }
 
@@ -546,6 +735,25 @@ function centerMap() {
         
         // Set the view with the adjusted position
         map.setView(adjustedPosition, zoomLevel);
+        
+        // Update the bus pin position
+        updateBusPinPosition();
+    }
+}
+
+// Update the position of the custom bus pin overlay
+function updateBusPinPosition() {
+    // The bus pin overlay is fixed in the center of the map
+    // The map will move to position the actual bus location under the pin
+    const busPin = document.querySelector('.bus-pin-overlay');
+    if (busPin) {
+        // Make sure the bus pin is centered in the map container
+        const mapContainer = document.getElementById('map');
+        if (mapContainer) {
+            busPin.style.top = '50%';
+            busPin.style.left = '50%';
+            busPin.style.transform = 'translate(-50%, -50%)';
+        }
     }
 }
 
@@ -558,7 +766,7 @@ function updateMapPosition(change) {
     busPosition.lat += (Math.random() - 0.5) * 0.001;
     busPosition.lng += (Math.random() - 0.5) * 0.001;
     
-    // Update the marker position
+    // Update the marker position (hidden marker used for positioning)
     busMarker.setLatLng([busPosition.lat, busPosition.lng]);
     
     // Update the accuracy circle
@@ -580,15 +788,27 @@ function updateMapPosition(change) {
         // Don't use centerMap() directly to avoid jarring zoom changes
         // Instead, smoothly pan to the new position
         map.panTo([busPosition.lat, busPosition.lng]);
+        
+        // Update the custom bus pin overlay position
+        updateBusPinPosition();
     }
     
     // Update UI elements with new information
     updateBusInfo();
+    
+    // Update the ETA card with new arrival time
+    updateETACard();
 }
 
 // Update the bus icon based on screen size
 function updateBusIcon() {
     if (!busMarker) return;
+    
+    // Also update the custom bus pin icon if needed
+    const busPin = document.querySelector('.bus-pin-icon i');
+    if (busPin) {
+        // You could update the icon based on bus direction or status here
+    }
     
     // Determine icon size based on screen width
     const iconSize = window.innerWidth < 576 ? 36 : 40;
@@ -605,22 +825,66 @@ function updateBusIcon() {
     busMarker.setIcon(busIcon);
 }
 
+// Update the ETA card with new arrival time
+function updateETACard() {
+    const etaTimeElement = document.querySelector('.eta-time');
+    const etaDestinationElement = document.querySelector('.eta-destination');
+    
+    if (etaTimeElement && etaDestinationElement) {
+        // In a real app, this would calculate based on distance and traffic
+        // For demo, we'll just use a random time between 5-15 minutes
+        const minutes = Math.floor(Math.random() * 10) + 5;
+        etaTimeElement.textContent = `${minutes} min`;
+        
+        // Update the destination based on the current bus route
+        if (currentBus && currentBus.route && currentBus.route.stops) {
+            const nextStop = currentBus.route.stops.find(stop => !stop.completed);
+            if (nextStop) {
+                etaDestinationElement.textContent = `To ${nextStop.name}`;
+            }
+        }
+    }
+}
+
 // Update bus information in the UI
 function updateBusInfo() {
     if (!currentBus) return;
     
-    // Update ETA information
-    const etaTime = document.querySelector('.eta-time');
-    if (etaTime) {
-        // In a real app, this would be calculated based on distance and speed
-        const minutes = Math.floor(Math.random() * 15) + 5;
-        etaTime.textContent = `${minutes} min`;
+    // Update bus info pill
+    const busName = document.querySelector('.bus-name');
+    if (busName) {
+        busName.textContent = currentBus.name || 'Buriganga';
+    }
+    
+    const busIcon = document.querySelector('.bus-icon');
+    if (busIcon) {
+        busIcon.textContent = currentBus.id || 'B1';
     }
     
     // Update bus status information
     const busStatus = document.querySelector('.bus-status span:last-child');
     if (busStatus) {
+        const etaTime = document.querySelector('.eta-time');
         busStatus.textContent = `On Route • Arriving in ${etaTime ? etaTime.textContent : '10 min'}`;
+    }
+    
+    // Update current and next stop in the info card
+    const currentStopValue = document.querySelector('.info-item:nth-child(1) .info-value');
+    const nextStopValue = document.querySelector('.info-item:nth-child(2) .info-value');
+    
+    if (currentStopValue && nextStopValue && currentBus.route && currentBus.route.stops) {
+        // Find the last completed stop and the next stop
+        const completedStops = currentBus.route.stops.filter(stop => stop.completed);
+        const lastCompletedStop = completedStops[completedStops.length - 1];
+        const nextStop = currentBus.route.stops.find(stop => !stop.completed);
+        
+        if (lastCompletedStop) {
+            currentStopValue.textContent = lastCompletedStop.name;
+        }
+        
+        if (nextStop) {
+            nextStopValue.textContent = nextStop.name;
+        }
     }
 }
 
@@ -693,4 +957,356 @@ function showNotification(message, type = 'success') {
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize the track page
     initTrackPage();
+});/**
+ *
+ Update floating info bar
+ */
+function updateFloatingInfoBar() {
+    const busId = document.querySelector('.bus-id');
+    const busName = document.querySelector('.floating-info-bar .bus-name');
+    const etaTime = document.querySelector('.eta-time');
+    const etaTo = document.querySelector('.eta-to');
+    
+    if (busId) busId.textContent = trackingData.busId;
+    if (busName) busName.textContent = trackingData.busName;
+    if (etaTime) etaTime.textContent = trackingData.eta;
+    
+    const currentStop = trackingData.route.find(stop => stop.status === 'current');
+    if (etaTo && currentStop) {
+        etaTo.textContent = `to ${currentStop.name}`;
+    }
+    
+    // Update status cards
+    updateStatusCards();
+}
+
+/**
+ * Update status cards
+ */
+function updateStatusCards() {
+    const speedCard = document.querySelector('.speed-card span');
+    const trafficCard = document.querySelector('.traffic-card span');
+    
+    if (speedCard) speedCard.textContent = `${trackingData.speed} km/h`;
+    if (trafficCard) {
+        // Simulate traffic status based on speed
+        let trafficStatus = 'Normal';
+        let trafficColor = '#4CAF50';
+        
+        if (trackingData.speed < 20) {
+            trafficStatus = 'Heavy';
+            trafficColor = '#F44336';
+        } else if (trackingData.speed < 30) {
+            trafficStatus = 'Moderate';
+            trafficColor = '#FF9800';
+        }
+        
+        trafficCard.textContent = trafficStatus;
+        const trafficIcon = trafficCard.parentElement.querySelector('i');
+        if (trafficIcon) {
+            trafficIcon.style.color = trafficColor;
+        }
+    }
+}
+
+/**
+ * Initialize compact UI components
+ */
+function initializeCompactUI() {
+    // Update floating info bar
+    updateFloatingInfoBar();
+    
+    // Back button functionality
+    const backButton = document.querySelector('.back-button');
+    if (backButton) {
+        backButton.addEventListener('click', function() {
+            window.history.back();
+        });
+    }
+    
+    // Quick action buttons
+    const quickBtns = document.querySelectorAll('.quick-btn');
+    quickBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            if (icon.classList.contains('bi-star')) {
+                // Toggle favorite
+                if (icon.classList.contains('bi-star-fill')) {
+                    icon.className = 'bi bi-star';
+                    this.style.color = '';
+                    showNotification('Removed from favorites');
+                } else {
+                    icon.className = 'bi bi-star-fill';
+                    this.style.color = '#FFC107';
+                    showNotification('Added to favorites');
+                }
+            } else if (icon.classList.contains('bi-share')) {
+                // Share functionality
+                if (navigator.share) {
+                    navigator.share({
+                        title: `${trackingData.busId} - ${trackingData.busName}`,
+                        text: `Track bus ${trackingData.busId} live on BUBT Bus Tracker`,
+                        url: window.location.href
+                    }).catch(err => console.log('Error sharing:', err));
+                } else {
+                    // Fallback for browsers that don't support Web Share API
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(window.location.href);
+                        showNotification('Link copied to clipboard!');
+                    } else {
+                        showNotification('Sharing not supported');
+                    }
+                }
+            }
+        });
+    });
+    
+    // Status card click handlers for more info
+    const statusCards = document.querySelectorAll('.status-card');
+    statusCards.forEach(card => {
+        card.addEventListener('click', function() {
+            if (this.classList.contains('speed-card')) {
+                showNotification(`Current speed: ${trackingData.speed} km/h`);
+            } else if (this.classList.contains('traffic-card')) {
+                const trafficText = this.querySelector('span').textContent;
+                showNotification(`Traffic condition: ${trafficText}`);
+            }
+        });
+    });
+}
+
+// Update the main initialization to use the new compact UI
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Track page initialized with compact design');
+    
+    // Initialize map
+    initializeMap();
+    
+    // Initialize compact UI components
+    initializeCompactUI();
+    
+    // Start real-time updates
+    startRealTimeUpdates();
+    
+    // Initialize bottom sheet
+    initializeBottomSheet();
+    
+    // Initialize map controls
+    initializeMapControls();
 });
+
+// Update the real-time updates function to use the new UI
+function startRealTimeUpdatesCompact() {
+    // Simulate real-time updates every 10 seconds
+    setInterval(function() {
+        // Simulate bus movement
+        simulateBusMovement();
+        
+        // Update compact UI
+        updateFloatingInfoBar();
+        
+        // Update last updated time
+        trackingData.lastUpdated = 'Just now';
+        
+    }, 10000);
+}
+
+/**
+ * Enhanced notification with better positioning for compact design
+ */
+function showCompactNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `compact-notification compact-notification-${type}`;
+    notification.textContent = message;
+    
+    // Position below the floating info bar
+    notification.style.cssText = `
+        position: fixed;
+        top: 140px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        z-index: 1000;
+        opacity: 0;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        max-width: 80%;
+        text-align: center;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(-50%) translateY(0)';
+    }, 100);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(-50%) translateY(-10px)';
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 300);
+    }, 2500);
+}
+
+// Override the original showNotification function
+function showNotification(message, type = 'info') {
+    showCompactNotification(message, type);
+}/**
+
+ * Initialize bus badge click functionality
+ */
+function initializeBusBadgeClick() {
+    const busBadge = document.querySelector('.bus-badge');
+    const busName = document.querySelector('.floating-info-bar .bus-name');
+    
+    if (busBadge && busName) {
+        busBadge.addEventListener('click', function() {
+            showBusNameTooltip(this, busName.textContent);
+        });
+    }
+}
+
+/**
+ * Show bus name tooltip
+ */
+function showBusNameTooltip(element, busNameText) {
+    // Remove any existing tooltip
+    const existingTooltip = element.querySelector('.bus-name-tooltip');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
+    
+    // Create new tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'bus-name-tooltip';
+    tooltip.textContent = busNameText;
+    
+    // Add tooltip to bus badge
+    element.appendChild(tooltip);
+    
+    // Show tooltip with animation
+    setTimeout(() => {
+        tooltip.classList.add('show');
+    }, 10);
+    
+    // Hide tooltip after 2 seconds
+    setTimeout(() => {
+        tooltip.classList.remove('show');
+        setTimeout(() => {
+            if (tooltip.parentNode) {
+                tooltip.parentNode.removeChild(tooltip);
+            }
+        }, 300);
+    }, 2000);
+    
+    // Add haptic feedback if available
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+}
+
+/**
+ * Enhanced initialization with bus badge functionality
+ */
+function initializeEnhancedUI() {
+    // Initialize existing compact UI
+    initializeCompactUI();
+    
+    // Initialize bus badge click functionality
+    initializeBusBadgeClick();
+    
+    // Add click handler for bus badge in the updated initialization
+    const busBadge = document.querySelector('.bus-badge');
+    if (busBadge) {
+        busBadge.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const busName = document.querySelector('.floating-info-bar .bus-name').textContent;
+            showBusNameTooltip(this, busName);
+        });
+    }
+}
+
+// Simple bus badge tooltip functionality
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Track page initialized');
+    
+    // Initialize bus badge click functionality
+    const busBadge = document.querySelector('.bus-badge');
+    const busName = document.querySelector('.floating-info-bar .bus-name');
+    
+    if (busBadge && busName) {
+        busBadge.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showBusNameTooltip(this, busName.textContent);
+        });
+    }
+    
+    // Initialize other components if they exist
+    if (typeof initializeMap === 'function') {
+        initializeMap();
+    }
+    
+    if (typeof initializeCompactUI === 'function') {
+        initializeCompactUI();
+    }
+    
+    if (typeof startRealTimeUpdates === 'function') {
+        startRealTimeUpdates();
+    }
+    
+    if (typeof initializeBottomSheet === 'function') {
+        initializeBottomSheet();
+    }
+    
+    if (typeof initializeMapControls === 'function') {
+        initializeMapControls();
+    }
+});
+
+/**
+ * Show bus name tooltip when bus badge is clicked
+ */
+function showBusNameTooltip(element, busNameText) {
+    // Remove any existing tooltip
+    const existingTooltip = element.querySelector('.bus-name-tooltip');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
+    
+    // Create new tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'bus-name-tooltip';
+    tooltip.textContent = busNameText;
+    
+    // Add tooltip to bus badge
+    element.appendChild(tooltip);
+    
+    // Show tooltip with animation
+    setTimeout(() => {
+        tooltip.classList.add('show');
+    }, 10);
+    
+    // Hide tooltip after 2.5 seconds
+    setTimeout(() => {
+        tooltip.classList.remove('show');
+        setTimeout(() => {
+            if (tooltip.parentNode) {
+                tooltip.parentNode.removeChild(tooltip);
+            }
+        }, 300);
+    }, 2500);
+    
+    // Add haptic feedback if available
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+}

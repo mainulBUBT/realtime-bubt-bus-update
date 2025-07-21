@@ -101,51 +101,253 @@ function loadScript(src) {
 // Splash screen handling moved to splash.js
 
 /**
- * Initialize bus dropdown functionality
+ * Initialize search and filter functionality
  */
 function initBusDropdown() {
-    const dropdownHeader = document.getElementById('bus-dropdown-header');
-    const dropdownMenu = document.getElementById('bus-dropdown-menu');
-    const dropdownItems = document.querySelectorAll('.dropdown-item');
+    const searchInput = document.getElementById('bus-search');
+    const filterToggle = document.getElementById('filter-toggle');
+    const filterDropdown = document.getElementById('filter-dropdown');
+    const filterClose = document.getElementById('filter-close');
+    const searchResults = document.getElementById('search-results');
     
-    // Toggle dropdown menu
-    if (dropdownHeader) {
-        dropdownHeader.addEventListener('click', function() {
-            this.classList.toggle('active');
-            dropdownMenu.classList.toggle('show');
+    if (!searchInput || !filterToggle || !filterDropdown) {
+        console.warn('Search elements not found, skipping search initialization');
+        return;
+    }
+    
+    // Filter toggle functionality
+    filterToggle.addEventListener('click', function() {
+        filterDropdown.classList.toggle('show');
+        filterToggle.classList.toggle('active');
+        searchResults.classList.remove('show');
+    });
+    
+    // Filter close functionality
+    if (filterClose) {
+        filterClose.addEventListener('click', function() {
+            filterDropdown.classList.remove('show');
+            filterToggle.classList.remove('active');
         });
     }
     
-    // Handle dropdown item selection
-    dropdownItems.forEach(item => {
-        item.addEventListener('click', function() {
+    // Handle filter option selection
+    const filterOptions = document.querySelectorAll('.filter-option');
+    filterOptions.forEach(option => {
+        option.addEventListener('click', function() {
             const busId = this.getAttribute('data-bus-id');
-            const busName = this.textContent;
             
-            // Update dropdown header text
-            const headerText = dropdownHeader.querySelector('span');
-            if (headerText) {
-                headerText.textContent = busName;
-            }
-            
-            // Close dropdown
-            dropdownHeader.classList.remove('active');
-            dropdownMenu.classList.remove('show');
+            // Update active filter
+            filterOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
             
             // Filter bus cards
             filterBusCards(busId);
             
-            // Set active class
-            dropdownItems.forEach(di => di.classList.remove('active'));
-            this.classList.add('active');
+            // Close filter dropdown
+            filterDropdown.classList.remove('show');
+            filterToggle.classList.remove('active');
+            
+            // Update search placeholder
+            const busText = this.querySelector('span').textContent;
+            if (busId === 'all') {
+                searchInput.placeholder = 'Search buses or routes...';
+            } else {
+                searchInput.placeholder = `Search in ${busText}...`;
+            }
         });
     });
     
-    // Close dropdown when clicking outside
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        
+        if (query.length > 0) {
+            showSearchResults(query);
+            filterDropdown.classList.remove('show');
+            filterToggle.classList.remove('active');
+        } else {
+            searchResults.classList.remove('show');
+            clearSearchHighlight();
+        }
+    });
+    
+    // Search focus event
+    searchInput.addEventListener('focus', function() {
+        if (this.value.trim().length > 0) {
+            showSearchResults(this.value.trim().toLowerCase());
+        }
+    });
+    
+    // Close dropdowns when clicking outside
     document.addEventListener('click', function(event) {
-        if (!event.target.closest('.bus-dropdown') && dropdownMenu.classList.contains('show')) {
-            dropdownHeader.classList.remove('active');
-            dropdownMenu.classList.remove('show');
+        if (!event.target.closest('.search-dropdown-wrapper')) {
+            filterDropdown.classList.remove('show');
+            searchResults.classList.remove('show');
+            filterToggle.classList.remove('active');
+        }
+    });
+    
+    // Add clear search functionality
+    addClearSearchButton();
+}
+
+/**
+ * Show search results
+ */
+function showSearchResults(query) {
+    const searchResults = document.getElementById('search-results');
+    const results = [];
+    
+    // Search through bus data
+    Object.keys(busData).forEach(busId => {
+        const bus = busData[busId];
+        const searchText = `${busId} ${bus.name} ${bus.route.join(' ')}`.toLowerCase();
+        
+        if (searchText.includes(query)) {
+            results.push({
+                id: busId,
+                name: bus.name,
+                route: bus.route.join(' → ')
+            });
+        }
+    });
+    
+    // Display results
+    if (results.length > 0) {
+        let resultsHTML = '';
+        results.forEach(result => {
+            resultsHTML += `
+                <div class="search-result-item" data-bus-id="${result.id}">
+                    <div class="search-result-icon">${result.id}</div>
+                    <div class="search-result-info">
+                        <div class="search-result-name">${result.name}</div>
+                        <div class="search-result-route">${result.route}</div>
+                    </div>
+                </div>
+            `;
+        });
+        searchResults.innerHTML = resultsHTML;
+        
+        // Add click handlers to search results
+        searchResults.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const busId = this.getAttribute('data-bus-id');
+                selectBusFromSearch(busId);
+            });
+        });
+        
+        // Highlight matching cards
+        highlightSearchResults(results.map(r => r.id));
+    } else {
+        searchResults.innerHTML = `
+            <div class="search-no-results">
+                <i class="bi bi-search"></i>
+                <div>No buses found for "${query}"</div>
+            </div>
+        `;
+    }
+    
+    searchResults.classList.add('show');
+}
+
+/**
+ * Select bus from search results
+ */
+function selectBusFromSearch(busId) {
+    const searchInput = document.getElementById('bus-search');
+    const searchResults = document.getElementById('search-results');
+    const bus = busData[busId];
+    
+    if (!bus) return;
+    
+    // Update search input
+    searchInput.value = `${busId} - ${bus.name}`;
+    
+    // Hide search results
+    searchResults.classList.remove('show');
+    
+    // Filter to show only selected bus
+    filterBusCards(busId);
+    
+    // Highlight the selected bus card
+    highlightSearchResults([busId]);
+    
+    // Show bus modal after a short delay
+    setTimeout(() => {
+        showOnThisBusModal(bus);
+    }, 300);
+}
+
+/**
+ * Highlight search results
+ */
+function highlightSearchResults(busIds) {
+    const busCards = document.querySelectorAll('.home-bus-card');
+    
+    busCards.forEach(card => {
+        const cardBusId = card.getAttribute('data-bus-id');
+        if (busIds.includes(cardBusId)) {
+            card.classList.add('highlighted');
+        } else {
+            card.classList.remove('highlighted');
+        }
+    });
+}
+
+/**
+ * Clear search highlight
+ */
+function clearSearchHighlight() {
+    const busCards = document.querySelectorAll('.home-bus-card');
+    busCards.forEach(card => {
+        card.classList.remove('highlighted');
+    });
+}
+
+/**
+ * Add clear search button
+ */
+function addClearSearchButton() {
+    const searchInput = document.getElementById('bus-search');
+    const searchContainer = document.querySelector('.search-input-container');
+    
+    if (!searchInput || !searchContainer) return;
+    
+    // Create clear button
+    const clearButton = document.createElement('button');
+    clearButton.className = 'search-clear';
+    clearButton.innerHTML = '<i class="bi bi-x"></i>';
+    
+    // Insert before filter toggle
+    const filterToggle = document.querySelector('.filter-toggle');
+    if (filterToggle) {
+        searchContainer.insertBefore(clearButton, filterToggle);
+    }
+    
+    // Show/hide clear button based on input
+    searchInput.addEventListener('input', function() {
+        if (this.value.length > 0) {
+            clearButton.classList.add('show');
+        } else {
+            clearButton.classList.remove('show');
+        }
+    });
+    
+    // Clear search functionality
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        searchInput.placeholder = 'Search buses or routes...';
+        clearButton.classList.remove('show');
+        document.getElementById('search-results').classList.remove('show');
+        clearSearchHighlight();
+        filterBusCards('all');
+        
+        // Reset filter to "All Buses"
+        const filterOptions = document.querySelectorAll('.filter-option');
+        filterOptions.forEach(opt => opt.classList.remove('active'));
+        const allBusesOption = document.querySelector('.filter-option[data-bus-id="all"]');
+        if (allBusesOption) {
+            allBusesOption.classList.add('active');
         }
     });
 }
@@ -160,14 +362,17 @@ function filterBusCards(busId) {
         // Show all buses
         busCards.forEach(card => {
             card.style.display = 'flex';
+            card.classList.remove('hidden');
         });
     } else {
         // Show only selected bus
         busCards.forEach(card => {
             if (card.getAttribute('data-bus-id') === busId) {
                 card.style.display = 'flex';
+                card.classList.remove('hidden');
             } else {
                 card.style.display = 'none';
+                card.classList.add('hidden');
             }
         });
     }
@@ -573,24 +778,11 @@ function showBusTrackingScreen(busId) {
     const bus = busData[busId];
     if (!bus) return;
     
-    // Update bus details in tracking screen
-    const trackScreen = document.getElementById('track-screen');
-    trackScreen.querySelector('.bus-icon-small').textContent = bus.id;
-    trackScreen.querySelector('.bus-name-small').textContent = bus.name;
+    // Store bus data in localStorage for track.html to use
+    localStorage.setItem('trackingBus', JSON.stringify(bus));
     
-    // Navigate to track screen
-    navigateToScreen('track-screen');
-    
-    // Initialize the bottom sheet in collapsed state
-    const bottomSheet = document.querySelector('.timeline-bottom-sheet');
-    if (bottomSheet) {
-        bottomSheet.classList.remove('expanded');
-    }
-    
-    // Show notification
-    setTimeout(function() {
-        showNotification(`Tracking ${bus.name} bus`, 'success');
-    }, 500);
+    // Navigate to track.html
+    window.location.href = 'track.html';
 }
 
 /**
@@ -609,7 +801,6 @@ function initNewHomePage() {
         });
     });
 }/**
-
  * Initialize track page functionality
  */
 function initTrackPage() {
@@ -697,3 +888,145 @@ function initTrackPage() {
         });
     }
 }
+
+// Drawer Menu Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const menuBtn = document.getElementById('menu-btn');
+    const drawer = document.getElementById('side-drawer');
+    const drawerOverlay = document.getElementById('drawer-overlay');
+    const drawerClose = document.getElementById('drawer-close');
+    const drawerItems = document.querySelectorAll('.drawer-item');
+    const navItems = document.querySelectorAll('.nav-item');
+    
+    // Open drawer when menu button is clicked
+    menuBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        drawer.classList.add('active');
+        drawerOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling when drawer is open
+    });
+    
+    // Close drawer when overlay is clicked
+    drawerOverlay.addEventListener('click', function() {
+        drawer.classList.remove('active');
+        drawerOverlay.classList.remove('active');
+        document.body.style.overflow = ''; // Re-enable scrolling
+    });
+    
+    // Close drawer when close button is clicked
+    drawerClose.addEventListener('click', function() {
+        drawer.classList.remove('active');
+        drawerOverlay.classList.remove('active');
+        document.body.style.overflow = ''; // Re-enable scrolling
+    });
+    
+    // Function to navigate between screens
+    function navigateToScreen(screenId) {
+        // Hide all screens
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(screen => {
+            screen.style.display = 'none';
+        });
+        
+        // Show the selected screen
+        const selectedScreen = document.getElementById(screenId);
+        if (selectedScreen) {
+            selectedScreen.style.display = 'block';
+        } else {
+            console.error(`Screen with ID ${screenId} not found`);
+        }
+    }
+    
+    // Function to update page title based on screen
+    function updatePageTitle(screenId) {
+        let title = 'BUBT Bus Tracker';
+        
+        switch(screenId) {
+            case 'home-screen':
+                title = 'Home - BUBT Bus Tracker';
+                break;
+            case 'chuti-screen':
+                title = 'Chuti Kobe - BUBT Bus Tracker';
+                break;
+            case 'developer-screen':
+                title = 'Developer - BUBT Bus Tracker';
+                break;
+            default:
+                break;
+        }
+        
+        document.title = title;
+    }
+    
+    // Handle drawer item clicks
+    drawerItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all drawer items
+            drawerItems.forEach(i => i.classList.remove('active'));
+            
+            // Add active class to clicked item
+            this.classList.add('active');
+            
+            // Get the screen to show
+            const screenId = this.getAttribute('data-screen');
+            
+            // Update bottom nav to match
+            navItems.forEach(navItem => {
+                if (navItem.getAttribute('data-screen') === screenId) {
+                    navItem.classList.add('active');
+                } else {
+                    navItem.classList.remove('active');
+                }
+            });
+            
+            // Close the drawer
+            drawer.classList.remove('active');
+            drawerOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+            
+            // Show the selected screen
+            navigateToScreen(screenId);
+            
+            // Update page title
+            updatePageTitle(screenId);
+        });
+    });
+    
+    // Handle bottom nav item clicks
+    navItems.forEach(item => {
+        if (!item.classList.contains('menu-btn')) { // Skip the menu button
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all nav items
+                navItems.forEach(i => i.classList.remove('active'));
+                
+                // Add active class to clicked item
+                this.classList.add('active');
+                
+                // Get the screen to show
+                const screenId = this.getAttribute('data-screen');
+                
+                // Update drawer items to match
+                drawerItems.forEach(drawerItem => {
+                    if (drawerItem.getAttribute('data-screen') === screenId) {
+                        drawerItem.classList.add('active');
+                    } else {
+                        drawerItem.classList.remove('active');
+                    }
+                });
+                
+                // Show the selected screen
+                navigateToScreen(screenId);
+                
+                // Log screen navigation for analytics
+                console.log(`Navigated to screen: ${screenId}`);
+                
+                // Update page title based on screen
+                updatePageTitle(screenId);
+            });
+        }
+    });
+});

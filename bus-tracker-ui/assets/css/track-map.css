@@ -1,0 +1,425 @@
+/* Styles for the Bus Tracking Map and Bottom Sheet */
+
+/* Map container */
+#map {
+    width: 100%;
+    height: calc(100vh - 116px); /* Full height minus header and bottom nav */
+    z-index: 10;
+}
+
+/* Map controls */
+.map-controls {
+    position: absolute;
+    top: 70px;
+    right: 10px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.map-control-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 18px;
+}
+
+/* Bus Marker */
+.bus-marker-icon {
+    background: none;
+}
+
+.marker-icon {
+    background: #1a73e8;
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    border: 2px solid white;
+}
+
+/* ETA Card */
+.eta-card {
+    position: absolute;
+    top: 70px;
+    left: 10px;
+    background: white;
+    padding: 10px 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    width: 150px;
+}
+
+.eta-header {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.eta-time {
+    font-size: 20px;
+    font-weight: bold;
+    color: #1a73e8;
+}
+
+.eta-destination {
+    font-size: 13px;
+    color: #333;
+}
+
+/* Bus Info Pill */
+.bus-info-pill {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 40px;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    width: 90%;
+    max-width: 400px;
+}
+
+.bus-icon {
+    background: #1a73e8;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.bus-info {
+    flex-grow: 1;
+}
+
+.bus-name {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0;
+    color: #333;
+}
+
+.bus-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #666;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-active {
+    background: #4CAF50;
+}
+
+.status-delayed {
+    background: #FFC107;
+}
+
+.status-inactive {
+    background: #F44336;
+}
+
+.bus-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+}
+
+.action-btn:hover {
+    background: #f1f1f1;
+}
+
+/* Bottom Sheet */
+.bottom-sheet {
+    position: fixed;
+    bottom: 56px; /* Bottom nav height */
+    left: 0;
+    width: 100%;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transition: transform 0.3s ease-out;
+    transform: translateY(calc(100% - 120px));
+}
+
+.bottom-sheet.expanded {
+    transform: translateY(0);
+    height: 80vh;
+    overflow-y: auto;
+}
+
+.bottom-sheet-handle {
+    padding: 15px 0 5px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.handle-bar {
+    width: 40px;
+    height: 5px;
+    background-color: #ddd;
+    border-radius: 3px;
+    margin: 0 auto;
+}
+
+.bottom-sheet-content {
+    padding: 0 20px 20px;
+}
+
+/* Bus Info Card */
+.track-info-card {
+    background: #f9f9f9;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-item {
+    width: 48%;
+}
+
+.info-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.info-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+}
+
+.info-value.normal {
+    color: #4CAF50;
+}
+
+.info-value.heavy {
+    color: #F44336;
+}
+
+/* Route Timeline */
+.route-timeline {
+    margin-bottom: 20px;
+}
+
+.timeline-header {
+    margin-bottom: 15px;
+}
+
+.route-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.route-stats {
+    font-size: 12px;
+    color: #666;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #ddd;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #ddd;
+    z-index: 1;
+}
+
+.timeline-item.completed .timeline-marker {
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.timeline-item.current .timeline-marker {
+    background: #1a73e8;
+    border-color: #1a73e8;
+}
+
+.timeline-content {
+    position: relative;
+}
+
+.time-badge {
+    display: inline-block;
+    background: #f1f1f1;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.timeline-content h4 {
+    font-size: 15px;
+    margin: 0 0 5px;
+    color: #333;
+}
+
+.timeline-content p {
+    font-size: 12px;
+    color: #666;
+    margin: 0 0 5px;
+}
+
+.progress-bar {
+    height: 4px;
+    background: #eee;
+    border-radius: 2px;
+    margin-top: 10px;
+}
+
+.progress {
+    height: 100%;
+    background: #1a73e8;
+    border-radius: 2px;
+}
+
+/* Notification Subscribe */
+.notification-subscribe {
+    background: #f9f9f9;
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9f1fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a73e8;
+    font-size: 18px;
+}
+
+.notification-text {
+    flex-grow: 1;
+}
+
+.notification-text h4 {
+    font-size: 14px;
+    margin: 0 0 5px;
+    color: #333;
+}
+
+.notification-text p {
+    font-size: 12px;
+    color: #666;
+    margin: 0;
+}
+
+.subscribe-btn {
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 15px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* Media Queries */
+@media (max-width: 576px) {
+    .bottom-sheet {
+        transform: translateY(calc(100% - 100px));
+    }
+
+    .bus-info-pill {
+        width: calc(100% - 20px);
+    }
+}
+
+@media (min-width: 992px) {
+    .bottom-sheet {
+        transform: translateY(calc(100% - 140px));
+    }
+
+    .bottom-sheet.expanded {
+        height: 70vh;
+    }
+}

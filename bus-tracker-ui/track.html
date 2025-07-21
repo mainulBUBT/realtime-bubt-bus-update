@@ -11,9 +11,11 @@
     <!-- Bootstrap Icons -->
     <link href="assets/css/bootstrap-icons.min.css" rel="stylesheet">
     <!-- Leaflet CSS for OpenStreetMap -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
     <!-- Leaflet JavaScript for OpenStreetMap -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
     <!-- Custom CSS -->
     <link href="assets/css/style.css" rel="stylesheet">
 
@@ -31,43 +33,57 @@
 
         <!-- Full Page Map -->
         <div id="map" class="full-map"></div>
-        
+
+        <!-- Bus Pin Overlay -->
+        <div class="bus-pin-overlay">
+            <div class="bus-pin">
+                <div class="bus-pin-icon">
+                    <i class="bi bi-bus-front"></i>
+                </div>
+                <div class="bus-pin-pulse"></div>
+            </div>
+        </div>
+
         <!-- Map Controls -->
         <div class="map-controls">
             <button class="map-control-btn" id="center-map"><i class="bi bi-geo-alt"></i></button>
             <button class="map-control-btn" id="zoom-in"><i class="bi bi-plus"></i></button>
             <button class="map-control-btn" id="zoom-out"><i class="bi bi-dash"></i></button>
         </div>
-        
-        <!-- ETA Card -->
-        <div class="eta-card">
-            <div class="eta-header">Estimated Time of Arrival</div>
-            <div class="eta-time">10 min</div>
-            <div class="eta-destination">To Mirpur-1</div>
-        </div>
-        
-        <!-- Bus Info Pill -->
-        <div class="bus-info-pill">
-            <div class="bus-icon">B1</div>
-            <div class="bus-info">
-                <h3 class="bus-name">Buriganga</h3>
-                <div class="bus-status">
-                    <span class="status-indicator status-active"></span>
-                    <span>On Route • Arriving in 10 min</span>
+
+        <!-- Compact Floating Info Bar -->
+        <div class="floating-info-bar">
+            <div class="bus-badge">
+                <span class="bus-id">B1</span>
+                <div class="bus-pulse"></div>
+            </div>
+            <div class="info-content">
+                <div class="bus-name">Buriganga</div>
+                <div class="eta-info">
+                    <i class="bi bi-clock"></i>
+                    <span class="eta-time">10 min</span>
+                    <span class="eta-to">to Mirpur-1</span>
                 </div>
             </div>
-            <div class="bus-actions">
-                <button class="action-btn"><i class="bi bi-star"></i></button>
-                <button class="action-btn"><i class="bi bi-share"></i></button>
+            <div class="quick-actions">
+                <button class="quick-btn" title="Favorite">
+                    <i class="bi bi-star"></i>
+                </button>
+                <button class="quick-btn" title="Share">
+                    <i class="bi bi-share"></i>
+                </button>
             </div>
         </div>
 
+
+
         <!-- Bottom Sheet for Timeline -->
         <div class="bottom-sheet">
-            <div class="bottom-sheet-handle">
+            <div class="bottom-sheet-handle" title="Drag to expand or collapse">
                 <div class="handle-bar"></div>
+                <div class="handle-indicator">Drag to expand</div>
             </div>
-            
+
             <div class="bottom-sheet-content">
                 <!-- Bus Info Card -->
                 <div class="track-info-card">
@@ -102,7 +118,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Route Timeline -->
                 <div class="route-timeline">
                     <div class="timeline-header">
@@ -158,7 +174,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Notification Subscribe -->
                 <div class="notification-subscribe">
                     <div class="notification-icon">
@@ -173,7 +189,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item">
@@ -184,16 +200,16 @@
             <i class="bi bi-bus-front nav-icon"></i>
             <span class="nav-label">Track</span>
         </a>
-        <a href="#" class="nav-item">
-            <i class="bi bi-person nav-icon"></i>
-            <span class="nav-label">Profile</span>
+        <a href="#" class="nav-item menu-btn" id="menu-btn">
+            <i class="bi bi-list nav-icon"></i>
+            <span class="nav-label">Menu</span>
         </a>
     </nav>
 
     <!-- JavaScript Libraries -->
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- App JavaScript -->
     <script src="assets/js/track.js"></script>
 </body>

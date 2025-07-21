@@ -1,0 +1,5009 @@
+/* BUBT Bus Tracker - Mobile First Design */
+
+:root {
+    --primary-color: #4CAF50;
+    --primary-dark: #388E3C;
+    --primary-light: #C8E6C9;
+    --secondary-color: #6c757d;
+    --success-color: #4CAF50;
+    --warning-color: #FFC107;
+    --danger-color: #F44336;
+    --light-bg: #f8f9fa;
+    --dark-bg: #212529;
+    --border-radius: 12px;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --text-color: #333333;
+    --text-light: #757575;
+    --white: #FFFFFF;
+}
+
+/* Global Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--light-bg);
+    color: var(--text-color);
+    line-height: 1.6;
+    padding-bottom: 65px;
+    /* Match bottom navbar height */
+    padding-top: 0;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    /* Remove tap highlight on mobile */
+}
+
+a {
+    text-decoration: none;
+    color: var(--primary-color);
+}
+
+/* Splash Screen */
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    overflow: hidden;
+    padding: 0;
+}
+
+.splash-screen.animate .app-name {
+    animation: fadeInUp 0.8s ease-out 0.5s forwards;
+}
+
+.splash-screen.animate .app-tagline {
+    animation: fadeInUp 0.8s ease-out 0.7s forwards;
+}
+
+.splash-screen.animate .splash-loading {
+    animation: fadeInUp 0.8s ease-out 1.2s forwards;
+}
+
+.splash-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.1);
+}
+
+.splash-content {
+    text-align: center;
+    color: white;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
+    position: relative;
+}
+
+.splash-logo {
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 30px auto;
+    opacity: 0;
+    animation: logoFadeIn 1s ease-out 0.2s forwards;
+    color: white;
+    font-size: 4rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    flex-shrink: 0;
+}
+
+@keyframes logoFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) rotate(-10deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.app-name {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0 auto 12px auto;
+    letter-spacing: -0.02em;
+    opacity: 0;
+    transform: translateY(20px);
+    line-height: 1.2;
+    text-align: center;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+.app-tagline {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin: 0 auto;
+    letter-spacing: 0.3px;
+    opacity: 0;
+    transform: translateY(20px);
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+.splash-spacer {
+    flex: 1;
+    min-height: 40px;
+    max-height: 80px;
+}
+
+.splash-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    opacity: 0;
+    transform: translateY(20px);
+    margin: 0 auto 40px auto;
+    flex-shrink: 0;
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.5px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.6;
+    }
+}
+
+/* Auth Screens */
+.auth-container {
+    display: none;
+    height: 100vh;
+    padding: 20px;
+    background-color: var(--white);
+}
+
+.auth-container.active {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-illustration {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 30px;
+}
+
+.auth-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.auth-description {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-form {
+    width: 100%;
+    max-width: 320px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid #ddd;
+}
+
+.social-login {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 320px;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: white;
+    font-weight: 500;
+}
+
+.social-btn img {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #ddd;
+}
+
+.divider::before {
+    margin-right: 10px;
+}
+
+.divider::after {
+    margin-left: 10px;
+}
+
+/* Header */
+.home-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: 65px;
+}
+
+.home-menu i,
+.home-notification i {
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.home-menu i:active,
+.home-notification i:active {
+    transform: scale(0.9);
+}
+
+.home-title h1 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+/* Bus Dropdown */
+.bus-dropdown-container {
+    padding: 15px 20px;
+    background-color: var(--light-bg);
+    margin-top: 0;
+}
+
+.bus-dropdown {
+    position: relative;
+    width: 100%;
+    z-index: 90;
+}
+
+.dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropdown-header:active {
+    background-color: #f9f9f9;
+}
+
+.dropdown-header i {
+    transition: transform 0.3s ease;
+    color: var(--primary-color);
+}
+
+.dropdown-header.active i {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    z-index: 95;
+}
+
+.dropdown-menu.show {
+    max-height: 300px;
+    opacity: 1;
+}
+
+.dropdown-item {
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:active {
+    background-color: #f5f5f5;
+}
+
+.dropdown-item:hover {
+    background-color: var(--primary-light);
+}
+
+.dropdown-item.active {
+    background-color: var(--primary-light);
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Bus Cards */
+.home-content {
+    padding: 15px 20px;
+}
+
+.home-section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 18px;
+    color: var(--text-color);
+    padding-left: 5px;
+}
+
+.home-bus-card {
+    display: flex;
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.home-bus-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.home-bus-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 65px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 0;
+    position: relative;
+}
+
+.home-bus-left::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 8px solid var(--primary-color);
+}
+
+.home-bus-badge {
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
+}
+
+.home-bus-middle {
+    flex: 1;
+    padding: 16px;
+}
+
+.home-bus-name {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+    color: var(--text-color);
+}
+
+.home-bus-schedule {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.home-bus-schedule::before {
+    content: '\F285';
+    font-family: 'bootstrap-icons';
+    margin-right: 5px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.home-bus-right {
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+}
+
+.home-bus-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.home-bus-status.active {
+    background-color: var(--success-color);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.home-bus-status.active::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgba(76, 175, 80, 0.1);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 2s infinite;
+}
+
+.home-bus-status.delayed {
+    background-color: var(--warning-color);
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+}
+
+.home-bus-status.inactive {
+    background-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.2);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    overflow: auto;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 15% auto 0;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    position: relative;
+}
+
+.modal-bus-icon {
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-right: 15px;
+}
+
+.modal-bus-info {
+    flex: 1;
+}
+
+.modal-bus-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.modal-bus-status {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-active {
+    background-color: var(--success-color);
+}
+
+.status-delayed {
+    background-color: var(--warning-color);
+}
+
+.status-inactive {
+    background-color: var(--secondary-color);
+}
+
+.modal-close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-section {
+    margin-bottom: 20px;
+}
+
+.modal-section h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.schedule-info,
+.modal-status-info {
+    display: flex;
+    justify-content: space-between;
+}
+
+.schedule-item,
+.status-item {
+    flex: 1;
+    background-color: var(--light-bg);
+    padding: 10px;
+    border-radius: 8px;
+    margin-right: 10px;
+}
+
+.schedule-item:last-child,
+.status-item:last-child {
+    margin-right: 0;
+}
+
+.schedule-label,
+.status-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 5px;
+}
+
+.schedule-value,
+.status-value {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.modal-route-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.route-stop {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    position: relative;
+}
+
+.route-marker {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    margin-right: 15px;
+    position: relative;
+    z-index: 2;
+}
+
+.route-stop.current .route-marker {
+    background-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.route-stop:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 22px;
+    left: 6px;
+    width: 2px;
+    height: calc(100% - 12px);
+    background-color: var(--secondary-color);
+    z-index: 1;
+}
+
+.route-info {
+    font-size: 0.95rem;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    text-align: center;
+}
+
+.modal-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.modal-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Confirmation Modal */
+.confirmation-content {
+    margin-top: 30%;
+}
+
+.confirmation-header {
+    background-color: white;
+    padding: 20px 20px 10px;
+    text-align: center;
+    position: relative;
+}
+
+.confirmation-header h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* On This Bus Modal */
+.on-this-bus-content {
+    margin-top: 30%;
+}
+
+.on-this-bus-header {
+    background-color: white;
+    padding: 20px 20px 10px;
+    text-align: center;
+    position: relative;
+}
+
+.on-this-bus-header h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.confirmation-close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+.confirmation-body {
+    padding: 10px 20px 20px;
+    text-align: center;
+}
+
+.confirmation-body p {
+    margin-bottom: 20px;
+    color: var(--text-light);
+}
+
+.confirmation-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.confirmation-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin: 0 5px;
+}
+
+.yes-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.yes-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.no-btn {
+    background-color: var(--light-bg);
+    color: var(--text-color);
+}
+
+.no-btn:hover {
+    background-color: #e9ecef;
+}
+
+/* Success Message */
+.success-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    z-index: 1100;
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 90%;
+    width: 320px;
+}
+
+.success-message.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.success-icon {
+    font-size: 3rem;
+    color: var(--success-color);
+    margin-bottom: 15px;
+}
+
+.success-text h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 10px 0;
+}
+
+.success-text p {
+    color: var(--text-light);
+    margin: 0;
+}
+
+/* Notification */
+.notification {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    color: var(--text-color);
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: bottom 0.3s ease;
+    text-align: center;
+    max-width: 90%;
+    width: auto;
+}
+
+.notification.show {
+    bottom: 20px;
+}
+
+.notification-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.notification-warning {
+    background-color: var(--warning-color);
+    color: #333;
+}
+
+.notification-error {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.app-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.location-header {
+    display: flex;
+    align-items: center;
+}
+
+.location-name {
+    font-weight: 600;
+    margin-left: 5px;
+}
+
+.header-icon {
+    font-size: 1.5rem;
+}
+
+/* Search Bar */
+.search-bar {
+    background-color: white;
+    border-radius: 25px;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    margin: 15px;
+    box-shadow: var(--shadow);
+}
+
+.search-bar input {
+    border: none;
+    flex: 1;
+    padding: 5px;
+    font-size: 1rem;
+}
+
+.search-bar input:focus {
+    outline: none;
+}
+
+.search-icon {
+    color: var(--text-light);
+    margin-right: 10px;
+}
+
+.filter-icon {
+    color: var(--text-light);
+    margin-left: 10px;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+}
+
+.action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+}
+
+.action-icon {
+    width: 50px;
+    height: 50px;
+    background-color: var(--primary-light);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.action-icon i {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+}
+
+.action-label {
+    font-size: 0.8rem;
+    color: var(--text-color);
+    text-align: center;
+}
+
+/* Map Container */
+.map-container {
+    height: 300px;
+    background-color: #e5e5e5;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    margin: 0 15px 20px;
+}
+
+.map-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Bus List */
+.section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 20px 15px 10px;
+}
+
+.bus-list {
+    padding: 0 15px;
+}
+
+.bus-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: var(--shadow);
+}
+
+.bus-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.bus-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    margin-right: 12px;
+}
+
+.bus-info {
+    flex: 1;
+}
+
+.bus-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.bus-route {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.bus-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+.bus-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-active {
+    background-color: var(--success-color);
+}
+
+.status-delayed {
+    background-color: var(--warning-color);
+}
+
+.status-inactive {
+    background-color: var(--secondary-color);
+}
+
+.bus-time {
+    color: var(--text-light);
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 5px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    height: 65px;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 8px 0;
+    position: relative;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.nav-icon {
+    font-size: 1.4rem;
+    color: var(--text-light);
+    margin-bottom: 4px;
+    transition: all 0.2s ease;
+}
+
+.nav-label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.nav-item.active {
+    color: var(--primary-color);
+}
+
+.nav-item.active .nav-icon,
+.nav-item.active .nav-label {
+    color: var(--primary-color);
+}
+
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    transition: all 0.2s ease;
+}
+
+/* Account Page */
+.account-header {
+    background-color: var(--primary-color);
+    padding: 30px 15px;
+    color: white;
+    text-align: center;
+}
+
+.profile-pic {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: white;
+    margin: 0 auto 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.profile-pic img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.edit-profile {
+    display: inline-flex;
+    align-items: center;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.edit-icon {
+    margin-left: 5px;
+}
+
+.account-menu {
+    background-color: white;
+    border-radius: 12px 12px 0 0;
+    margin-top: -20px;
+    padding: 20px 0;
+}
+
+.menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 15px;
+}
+
+.menu-icon i {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.menu-content {
+    flex: 1;
+}
+
+.menu-title {
+    font-weight: 500;
+}
+
+.menu-arrow {
+    color: var(--text-light);
+}
+
+/* Animations */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+    .splash-content {
+        padding: 30px 15px;
+    }
+    
+    .splash-logo {
+        width: 100px;
+        height: 100px;
+        font-size: 3.2rem;
+        margin-bottom: 25px;
+    }
+    
+    .app-name {
+        font-size: 1.8rem;
+    }
+    
+    .app-tagline {
+        font-size: 1rem;
+    }
+    
+    .splash-spacer {
+        min-height: 30px;
+        max-height: 60px;
+    }
+
+    .auth-illustration {
+        width: 150px;
+        height: 150px;
+    }
+
+    .map-container {
+        height: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .splash-content {
+        padding: 25px 15px;
+    }
+    
+    .splash-logo {
+        width: 90px;
+        height: 90px;
+        font-size: 2.8rem;
+        margin-bottom: 20px;
+    }
+    
+    .app-name {
+        font-size: 1.6rem;
+    }
+    
+    .app-tagline {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .splash-content {
+        padding: 20px 10px;
+    }
+    
+    .splash-logo {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5rem;
+        margin-bottom: 18px;
+    }
+    
+    .app-name {
+        font-size: 1.4rem;
+    }
+    
+    .app-tagline {
+        font-size: 0.9rem;
+    }
+}
+
+/* Height-based responsive adjustments */
+@media (max-height: 600px) {
+    .splash-content {
+        padding: 20px 15px;
+    }
+    
+    .splash-logo {
+        width: 90px;
+        height: 90px;
+        font-size: 2.8rem;
+        margin-bottom: 20px;
+    }
+    
+    .splash-spacer {
+        min-height: 20px;
+        max-height: 40px;
+    }
+    
+    .splash-loading {
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-height: 500px) {
+    .splash-content {
+        padding: 15px;
+        justify-content: space-evenly;
+    }
+    
+    .splash-logo {
+        width: 70px;
+        height: 70px;
+        font-size: 2.2rem;
+        margin-bottom: 15px;
+    }
+    
+    .app-name {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+    }
+    
+    .app-tagline {
+        font-size: 0.9rem;
+    }
+    
+    .splash-spacer {
+        min-height: 15px;
+        max-height: 25px;
+    }
+    
+    .splash-loading {
+        margin-bottom: 15px;
+    }
+}
+
+/* Permission Screen */
+.permission-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    padding: 20px;
+    background-color: white;
+    z-index: 9000;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.permission-container.active {
+    display: flex;
+}
+
+.permission-illustration {
+    width: 180px;
+    height: 180px;
+    margin-bottom: 25px;
+    object-fit: contain;
+}
+
+.permission-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 15px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.permission-description {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 0 15px;
+    line-height: 1.5;
+    max-width: 400px;
+}
+
+.permission-buttons {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+}
+
+.btn-allow {
+    background-color: var(--primary-color);
+    color: white;
+    margin-bottom: 12px;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.btn-allow:active {
+    transform: scale(0.98);
+}
+
+.btn-deny {
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1px solid #ddd;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+/* Bus Details Header */
+.bus-details-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.large-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+}
+
+/* Route Timeline */
+.route-timeline {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #ddd;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 25px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: white;
+    border: 2px solid #ddd;
+    top: 0;
+}
+
+.timeline-item.completed .timeline-marker {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.timeline-item.current .timeline-marker {
+    background-color: white;
+    border: 4px solid var(--primary-color);
+}
+
+.timeline-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: var(--shadow);
+}
+
+.timeline-content h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.timeline-content p {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin: 0;
+}
+
+.timeline-item.completed .timeline-content h4 {
+    color: var(--primary-color);
+}
+
+.timeline-item.current .timeline-content {
+    border: 2px solid var(--primary-color);
+}
+
+.timeline-item.current .timeline-content h4 {
+    color: var(--primary-color);
+}
+
+/* Back Button */
+.back-button {
+    font-size: 1.5rem;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+/* Screen Display */
+.screen {
+    display: none;
+    width: 100%;
+    min-height: calc(100vh - 65px);
+    /* Account for bottom navbar */
+    padding-bottom: 15px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.screen.active {
+    display: block !important;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Current and Next Stop */
+.current-stop,
+.next-stop {
+    font-weight: 500;
+}
+
+.current-stop {
+    color: var(--primary-color);
+}
+
+.next-stop {
+    color: var(--warning-color);
+}
+
+/* T
+rack Screen Redesign */
+.track-header {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.bus-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border-radius: 0 0 20px 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.bus-actions {
+    display: flex;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.action-btn i {
+    font-size: 1.2rem;
+}
+
+/* Tabs */
+.track-tabs {
+    display: flex;
+    padding: 0 15px;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid #ddd;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Map View */
+.track-map {
+    height: 250px;
+    position: relative;
+}
+
+.map-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+}
+
+.eta-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 10px 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    min-width: 120px;
+}
+
+.eta-header {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-bottom: 5px;
+}
+
+.eta-time {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.eta-destination {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Track Info Card */
+.track-info-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-item {
+    flex: 1;
+}
+
+.info-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 5px;
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Next Stops Preview */
+.next-stops-preview {
+    padding: 0 15px 20px;
+}
+
+.stops-list {
+    background-color: white;
+    border-radius: 12px;
+    padding: 10px 15px;
+    box-shadow: var(--shadow);
+}
+
+.stop-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.stop-item:last-child {
+    border-bottom: none;
+}
+
+.stop-time {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    width: 60px;
+}
+
+.stop-marker {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #ddd;
+    margin: 0 15px;
+    position: relative;
+}
+
+.stop-marker::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    bottom: -15px;
+    left: 5px;
+    width: 2px;
+    background-color: #ddd;
+    z-index: -1;
+}
+
+.stop-item:first-child .stop-marker::before {
+    top: 0;
+}
+
+.stop-item:last-child .stop-marker::before {
+    bottom: 0;
+}
+
+.stop-marker.current {
+    background-color: var(--primary-color);
+    width: 16px;
+    height: 16px;
+    border: 3px solid var(--primary-light);
+    margin: 0 13px;
+}
+
+.stop-info {
+    flex: 1;
+}
+
+.stop-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.stop-eta {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* Timeline Redesign */
+.timeline-header {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 0 15px 20px;
+    box-shadow: var(--shadow);
+}
+
+.route-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.route-stats {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.timeline {
+    position: relative;
+    padding-left: 40px;
+    margin: 0 15px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #ddd;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -25px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #ddd;
+    top: 15px;
+    z-index: 1;
+}
+
+.timeline-item.completed .timeline-marker {
+    background-color: var(--primary-color);
+}
+
+.timeline-item.current .timeline-marker {
+    background-color: white;
+    border: 3px solid var(--primary-color);
+    width: 20px;
+    height: 20px;
+    left: -27px;
+}
+
+.timeline-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: var(--shadow);
+    position: relative;
+}
+
+.time-badge {
+    position: absolute;
+    top: -10px;
+    right: 15px;
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.timeline-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    padding-top: 5px;
+}
+
+.timeline-content p {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+.timeline-item.completed .timeline-content h4 {
+    color: var(--primary-color);
+}
+
+.timeline-item.current .timeline-content {
+    border: 2px solid var(--primary-color);
+}
+
+.progress-bar {
+    height: 6px;
+    background-color: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 3px;
+}
+
+/* Bus Details Card */
+.bus-details-card {
+    padding: 0 15px 20px;
+    margin-top: 20px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.detail-item {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+}
+
+.detail-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 12px;
+}
+
+.detail-icon i {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.detail-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 2px;
+}
+
+.detail-value {
+    font-weight: 600;
+}
+
+/* Fix for syntax error */
+/* Bus Details Header - Fixed */
+.bus-details-header {
+    margin-top: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border-radius: 0 0 20px 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Quick Actions - Fixed */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 0 15px;
+    margin-bottom: 20px;
+}
+
+/* Bus Trackers */
+.bus-trackers {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.tracker-count {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.track-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.track-btn.active {
+    background-color: var(--success-color);
+}
+
+/* Map Markers */
+.bus-marker {
+    position: absolute;
+    transform: translate(-50%, -50%);
+}
+
+.marker-icon {
+    width: 36px;
+    height: 36px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.bus-marker.current .marker-icon {
+    background-color: var(--success-color);
+    border: 3px solid white;
+}
+
+/* Map Controls */
+.map-overlay-controls {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+}
+
+.map-control-btn {
+    width: 36px;
+    height: 36px;
+    background-color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    color: var(--text-light);
+}
+
+.map-control-btn.active {
+    color: var(--primary-color);
+}
+
+/* Tracking Status */
+.tracking-status {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 15px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tracking-badge {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.tracking-badge i {
+    margin-right: 5px;
+}
+
+.tracking-info {
+    display: flex;
+    gap: 15px;
+}
+
+/* Notification Subscribe */
+.notification-subscribe {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 15px 0;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
+
+/* Responsive notification subscribe */
+@media (min-width: 768px) {
+    .notification-subscribe {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 576px) {
+    .notification-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+}
+
+.notification-text {
+    flex: 1;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.notification-text h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+    transition: all 0.3s ease;
+}
+
+.notification-text p {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin: 0;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 576px) {
+    .notification-text h4 {
+        font-size: 0.9rem;
+    }
+    
+    .notification-text p {
+        font-size: 0.75rem;
+    }
+}
+
+.subscribe-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    align-self: flex-start;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.subscribe-btn:active {
+    transform: scale(0.95);
+    background-color: var(--primary-dark);
+}
+
+@media (min-width: 768px) {
+    .subscribe-btn {
+        margin-left: 10px;
+        align-self: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .subscribe-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Trip Info */
+.trip-detail-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+    margin: 20px 0 10px;
+}
+
+.section-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.view-all {
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+/* Schedule Cards */
+.schedule-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+}
+
+.schedule-time {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-right: 15px;
+    min-width: 60px;
+}
+
+.schedule-route {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.route-icon {
+    width: 24px;
+    height: 24px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+/* Welcome Banner */
+.welcome-banner {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 20px 15px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.welcome-banner h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.welcome-banner p {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* Track Banner */
+.track-banner {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 15px;
+    margin-top: 60px;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.bus-route-banner {
+    margin-bottom: 15px;
+}
+
+.route-line-visual {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    margin: 0 20px;
+    height: 30px;
+}
+
+.route-line-visual::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-50%);
+}
+
+.route-point {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: white;
+    position: relative;
+    z-index: 1;
+}
+
+.route-point.start {
+    background-color: var(--warning-color);
+}
+
+.route-point.current {
+    width: 16px;
+    height: 16px;
+    background-color: white;
+    border: 3px solid var(--warning-color);
+}
+
+.route-point.end {
+    background-color: var(--warning-color);
+}
+
+.route-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.route-start,
+.route-end {
+    opacity: 0.8;
+}
+
+.route-current {
+    font-weight: 600;
+}
+
+/* Track Page Specific Styles */
+.track-banner .bus-details-header {
+    margin-top: 0;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+}
+
+/* Remove tabs */
+.track-tabs {
+    display: none;
+}
+
+/* Show all content */
+.tab-content {
+    display: block;
+}
+
+/* Adjust map container */
+.track-map {
+    margin-top: 15px;
+}
+
+/* Adjust timeline */
+.route-timeline {
+    margin-top: 20px;
+}
+
+/* Info value normal */
+.info-value.normal {
+    color: var(--success-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .tracking-status {
+        flex-direction: column;
+    }
+
+    .tracking-info {
+        margin: 10px 0;
+    }
+
+    .track-btn {
+        width: 100%;
+    }
+}
+
+/* Fixed header */
+.app-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+/* Mo
+dal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    overflow: auto;
+}
+
+.modal.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border-radius: 20px 20px 0 0;
+    max-height: 80%;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border-radius: 20px 20px 0 0;
+    position: relative;
+}
+
+.modal-bus-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-right: 15px;
+}
+
+.modal-bus-info {
+    flex: 1;
+}
+
+.modal-bus-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.modal-bus-status {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 1.8rem;
+    color: white;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-section {
+    margin-bottom: 25px;
+}
+
+.modal-section h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--text-color);
+}
+
+.schedule-info {
+    display: flex;
+    justify-content: space-between;
+    background-color: var(--light-bg);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.schedule-item {
+    text-align: center;
+    flex: 1;
+}
+
+.schedule-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 5px;
+}
+
+.schedule-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.modal-route-list {
+    position: relative;
+    padding-left: 30px;
+}
+
+.modal-route-list::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #ddd;
+}
+
+.route-stop {
+    position: relative;
+    padding: 10px 0;
+}
+
+.route-stop-marker {
+    position: absolute;
+    left: -30px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #ddd;
+    top: 12px;
+}
+
+.route-stop.current .route-stop-marker {
+    background-color: var(--primary-color);
+    border: 3px solid var(--primary-light);
+    width: 20px;
+    height: 20px;
+    left: -32px;
+}
+
+.route-stop-name {
+    font-weight: 500;
+}
+
+.route-stop.current .route-stop-name {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.modal-status-info {
+    background-color: var(--light-bg);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.status-item {
+    margin-bottom: 15px;
+}
+
+.status-item:last-child {
+    margin-bottom: 0;
+}
+
+.status-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 5px;
+}
+
+.status-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.modal-footer {
+    padding: 15px 20px 25px;
+    text-align: center;
+}
+
+.modal-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.modal-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Updated bus card styles */
+.bus-card {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bus-card:hover,
+.bus-card:active {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Con
+firmation Modal Styles */
+.confirmation-content {
+    max-height: 300px;
+    border-radius: 20px 20px 0 0;
+}
+
+.confirmation-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 20px;
+    border-radius: 20px 20px 0 0;
+    position: relative;
+    text-align: center;
+}
+
+.confirmation-header h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.confirmation-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 1.8rem;
+    color: white;
+    cursor: pointer;
+}
+
+.confirmation-body {
+    padding: 20px;
+    text-align: center;
+}
+
+.confirmation-body p {
+    margin-bottom: 20px;
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.confirmation-bus-name {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.confirmation-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.confirmation-btn {
+    padding: 12px;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.yes-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.no-btn {
+    background-color: var(--light-bg);
+    color: var(--text-color);
+    border: 1px solid #ddd;
+}
+
+/* Developer Screen Styles */
+.developer-content {
+    padding: 15px;
+    padding-top: 75px;
+}
+
+.developer-card {
+    background-color: white;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.developer-header {
+    background-color: var(--primary-light);
+    padding: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.developer-icon {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-right: 10px;
+}
+
+.developer-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--primary-dark);
+}
+
+.developer-body {
+    padding: 15px;
+}
+
+.developer-body p {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.tech-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tech-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.tech-list li:last-child {
+    border-bottom: none;
+}
+
+.tech-name {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-right: 5px;
+}
+
+.team-member {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.team-member:last-child {
+    border-bottom: none;
+}
+
+.member-avatar {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    margin-right: 15px;
+}
+
+.member-info h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.member-info p {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin: 0;
+}
+
+.version-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.version-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.version-item:last-child {
+    border-bottom: none;
+}
+
+.version-label {
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.version-value {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.contact-link {
+    display: flex;
+    align-items: center;
+    color: var(--primary-color);
+    font-weight: 500;
+    margin-top: 10px;
+    text-decoration: none;
+}
+
+.contact-link i {
+    margin-right: 8px;
+}
+
+/* Home Screen Redesign */
+.home-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.home-map-container {
+    height: 50vh;
+    position: relative;
+    overflow: hidden;
+    margin-top: 60px;
+    width: 100%;
+    background-color: #e5e5e5;
+}
+
+.user-marker {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    width: 16px;
+    height: 16px;
+}
+
+.user-marker-dot {
+    width: 16px;
+    height: 16px;
+    background-color: #4285F4;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.user-marker-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background-color: rgba(66, 133, 244, 0.2);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    z-index: -1;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+    }
+}
+
+.nearest-buses-panel {
+    background-color: white;
+    border-radius: 20px 20px 0 0;
+    margin-top: -20px;
+    padding: 20px 15px;
+    position: relative;
+    z-index: 20;
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+    min-height: 200px;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.panel-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.refresh-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--light-bg);
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.nearest-buses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.nearest-bus-item {
+    display: flex;
+    align-items: center;
+    background-color: var(--light-bg);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.nearest-bus-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    margin-right: 12px;
+}
+
+.nearest-bus-info {
+    flex: 1;
+}
+
+.nearest-bus-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.nearest-bus-distance {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.track-bus-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.home-quick-actions {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.quick-action-btn {
+    flex: 1;
+    background-color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: var(--shadow);
+}
+
+.quick-action-btn i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.quick-action-btn span {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Make the bus markers on home page smaller than the tracking page */
+.home-map-container .bus-marker .marker-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+}
+
+/* 
+Fix for home page layout issues */
+#home-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding-bottom: 60px;
+    overflow: hidden;
+}
+
+.home-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+
+.home-map-container .map-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.home-map-container .bus-marker {
+    position: absolute;
+    transform: translate(-50%, -50%);
+}
+
+.home-map-container .marker-icon {
+    width: 30px;
+    height: 30px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 0.9rem;
+}
+
+.nearest-buses-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.refresh-btn i {
+    font-size: 1.2rem;
+}
+
+/* Make sure the quick actions are visible */
+.home-quick-actions {
+    margin-top: auto;
+    padding: 15px;
+    background-color: white;
+}
+
+/*
+ Home Screen Redesign - Simplified */
+#home-screen {
+    padding-top: 60px;
+    padding-bottom: 80px;
+    background-color: #f8f9fa;
+}
+
+.home-main-map {
+    position: relative;
+    height: 40vh;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.home-map-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.home-map-controls {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+}
+
+.home-map-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: white;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.home-bus-markers {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.home-bus-marker {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 0.9rem;
+}
+
+.home-user-location {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.user-dot {
+    width: 16px;
+    height: 16px;
+    background-color: #4285F4;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.user-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background-color: rgba(66, 133, 244, 0.2);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    z-index: -1;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+    }
+}
+
+.home-buses-section {
+    padding: 0 15px;
+    margin-bottom: 20px;
+}
+
+.home-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.home-section-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.home-refresh-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--light-bg);
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.home-buses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.home-bus-item {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+}
+
+.home-bus-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    margin-right: 12px;
+}
+
+.home-bus-details {
+    flex: 1;
+}
+
+.home-bus-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.home-bus-info {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.home-track-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.home-actions {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 15px;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.home-action-btn {
+    flex: 1;
+    background-color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: var(--shadow);
+}
+
+/* New Home Screen Design */
+#home-screen {
+    background-color: #f5f5f5;
+    min-height: 100vh;
+    padding-top: 60px;
+    padding-bottom: 80px;
+    display: none;
+}
+
+#home-screen.active {
+    display: block;
+}
+
+.home-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+
+.home-location {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.home-location i {
+    margin-right: 8px;
+}
+
+.home-notification {
+    font-size: 1.3rem;
+}
+
+.home-content {
+    padding: 70px 15px 20px;
+}
+
+.home-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text-color);
+}
+
+.home-bus-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-bus-card:active {
+    transform: scale(0.98);
+}
+
+.home-bus-left {
+    margin-right: 15px;
+}
+
+.home-bus-badge {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.home-bus-middle {
+    flex: 1;
+}
+
+.home-bus-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+}
+
+.home-bus-schedule {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin: 0;
+}
+
+.home-bus-right {
+    display: flex;
+    align-items: center;
+}
+
+.home-bus-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-left: 10px;
+}
+
+.home-bus-status.active {
+    background-color: var(--success-color);
+}
+
+.home-bus-status.delayed {
+    background-color: var(--warning-color);
+}
+
+.home-bus-status.inactive {
+    background-color: var(--secondary-color);
+}
+
+.home-bottom-actions {
+    position: fixed;
+    bottom: 80px;
+    left: 0;
+    right: 0;
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    background-color: #f5f5f5;
+}
+
+.home-action-button {
+    flex: 1;
+    background-color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.home-action-button i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.home-action-button span {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* On This Bus Modal - Removed */
+
+/* On This Bus Modal Buttons - Removed */
+
+/* New Home Screen Design */
+.home-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+
+.home-location {
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.home-location i {
+    margin-right: 8px;
+}
+
+.home-notification {
+    font-size: 1.5rem;
+}
+
+.home-content {
+    padding: 70px 15px 80px;
+}
+
+.home-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.home-bus-card {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.home-bus-left {
+    margin-right: 15px;
+}
+
+.home-bus-badge {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.home-bus-middle {
+    flex: 1;
+}
+
+.home-bus-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.home-bus-schedule {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin: 0;
+}
+
+.home-bus-right {
+    display: flex;
+    align-items: center;
+}
+
+.home-bus-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.home-bus-status.active {
+    background-color: var(--success-color);
+}
+
+.home-bus-status.delayed {
+    background-color: var(--warning-color);
+}
+
+.home-bus-status.inactive {
+    background-color: var(--secondary-color);
+}
+
+.home-bottom-actions {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 15px;
+    background-color: white;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.home-action-button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: transparent;
+    border: none;
+    padding: 10px;
+}
+
+.home-action-button i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.home-action-button span {
+    font-size: 0.8rem;
+    color: var(--text-color);
+}
+
+.splas h-loading {
+    margin-top: 20px;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    animation: pulse-text 1.5s infinite;
+}
+
+@keyframes pulse-text {
+    0% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
+}
+
+/* Track Page - Full Page Map with Bottom Sheet */
+#track-screen {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.track-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.back-button {
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.bus-details-title {
+    display: flex;
+    align-items: center;
+}
+
+.bus-icon-small {
+    width: 30px;
+    height: 30px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.bus-name-small {
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.bus-actions {
+    font-size: 1.3rem;
+}
+
+.track-map-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    padding-top: 60px;
+    padding-bottom: 60px;
+}
+
+/* Full Page Map */
+.full-map {
+    flex: 1;
+    width: 100%;
+    height: calc(100vh - 60px); /* Subtract header height */
+    position: relative;
+    z-index: 1;
+    margin-top: 60px; /* Account for fixed header */
+}
+
+/* Bus Info Pill */
+.bus-info-pill {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    border-radius: 50px;
+    padding: 8px 15px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    max-width: 90%;
+    width: auto;
+}
+
+.bus-icon {
+    width: 36px;
+    height: 36px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.bus-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.bus-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bus-status {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-active {
+    background-color: var(--success-color);
+}
+
+.status-delayed {
+    background-color: var(--warning-color);
+}
+
+.status-inactive {
+    background-color: var(--danger-color);
+}
+
+.bus-actions {
+    display: flex;
+    gap: 5px;
+    margin-left: 10px;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #f5f5f5;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.action-btn:active {
+    background-color: #e0e0e0;
+    transform: scale(0.95);
+}
+
+/* ETA Card */
+.eta-card {
+    position: fixed;
+    top: 130px;
+    right: 15px;
+    background-color: white;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    width: auto;
+    max-width: 150px;
+    text-align: center;
+}
+
+.eta-header {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-bottom: 5px;
+}
+
+.eta-time {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.eta-destination {
+    font-size: 0.8rem;
+    color: var(--text-color);
+}
+
+.map-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.bus-location-marker {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--primary-color);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.3rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
+.map-controls {
+    position: absolute;
+    top: 80px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 10;
+}
+
+.map-control-button, .map-control-btn {
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 1.2rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.map-control-button:active, .map-control-btn:active {
+    background-color: #f0f0f0;
+    transform: scale(0.95);
+}
+
+/* Timeline Bottom Sheet */
+.timeline-bottom-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border-radius: 20px 20px 0 0;
+    padding: 0 15px 80px;
+    z-index: 50;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    transform: translateY(calc(100% - 120px));
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Bottom Sheet for Route Timeline */
+.bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border-radius: 20px 20px 0 0;
+    padding: 0 15px 80px;
+    z-index: 100;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    transform: translateY(calc(100% - 120px));
+    max-height: 80vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Media queries for responsive design */
+@media (max-width: 576px) {
+    .bottom-sheet {
+        transform: translateY(calc(100% - 100px));
+        padding: 0 10px 80px;
+    }
+    
+    .bus-info-pill {
+        max-width: 85%;
+        padding: 6px 12px;
+    }
+    
+    .bus-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+    
+    .bus-name {
+        font-size: 0.9rem;
+    }
+    
+    .bus-status {
+        font-size: 0.7rem;
+    }
+    
+    .action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+    }
+    
+    .eta-card {
+        top: 120px;
+        max-width: 120px;
+        padding: 8px;
+    }
+    
+    .eta-time {
+        font-size: 1rem;
+    }
+    
+    .map-controls {
+        top: 70px;
+    }
+    
+    .map-control-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .bottom-sheet {
+        transform: translateY(calc(100% - 140px));
+        max-width: 600px;
+        left: 50%;
+        margin-left: -300px;
+    }
+    
+    .bus-info-pill {
+        max-width: 400px;
+    }
+}
+
+.bottom-sheet.expanded {
+    transform: translateY(0);
+}
+
+.bottom-sheet-content {
+    padding: 10px 0;
+}
+
+.timeline-bottom-sheet.expanded {
+    transform: translateY(0);
+}
+
+.bottom-sheet-handle {
+    padding: 10px 0;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.handle-bar {
+    width: 40px;
+    height: 5px;
+    background-color: #ddd;
+    border-radius: 3px;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.timeline-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.timeline-eta {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.eta-time {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Timeline Styling */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #ddd;
+}
+
+.timeline-item {
+    position: relative;
+    padding: 15px 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: white;
+    border: 2px solid #ddd;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.timeline-item.completed .timeline-marker {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.timeline-item.current .timeline-marker {
+    background-color: white;
+    border-color: var(--primary-color);
+    border-width: 3px;
+}
+
+.timeline-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.timeline-stop {
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.timeline-item.current .timeline-stop {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.timeline-time {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+/*
+ On This Bus Confirmation Modal - Fixed */
+#on-this-bus-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+}
+
+#on-this-bus-modal.show {
+    display: block;
+}
+
+.confirmation-content {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+#on-this-bus-modal.show .confirmation-content {
+    transform: translateY(0);
+}
+
+.confirmation-header {
+    text-align: center;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.confirmation-header h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.confirmation-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 1.5rem;
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+.confirmation-body {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.confirmation-body p {
+    margin: 0;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+.confirmation-bus-name {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.confirmation-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.confirmation-btn {
+    padding: 12px;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.yes-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.yes-btn:active {
+    background-color: var(--primary-dark);
+}
+
+.no-btn {
+    background-color: var(--light-bg);
+    color: var(--text-color);
+    border: 1px solid #ddd;
+}
+
+.no-btn:active {
+    background-color: #e5e5e5;
+}/* On T
+his Bus Confirmation Modal - Professional Design */
+#on-this-bus-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+#on-this-bus-modal.show {
+    display: block;
+}
+
+.confirmation-content {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border-radius: 24px 24px 0 0;
+    padding: 25px 20px;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.15);
+}
+
+#on-this-bus-modal.show .confirmation-content {
+    transform: translateY(0);
+}
+
+.confirmation-header {
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.bus-icon-large {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    color: white;
+    font-size: 2rem;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.confirmation-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.confirmation-close {
+    position: absolute;
+    top: -5px;
+    right: 0;
+    font-size: 1.8rem;
+    color: var(--text-light);
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.confirmation-close:active {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.confirmation-body {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.confirmation-bus-details {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--light-bg);
+    border-radius: 16px;
+}
+
+.bus-badge-large {
+    width: 50px;
+    height: 50px;
+    background-color: var(--primary-color);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.bus-id-badge {
+    color: white;
+    font-weight: 700;
+    font-size: 1.4rem;
+}
+
+.bus-info-large {
+    text-align: left;
+}
+
+.bus-name-large {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+.bus-status-large {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.status-dot.active {
+    background-color: var(--success-color);
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.confirmation-message {
+    margin: 0 0 15px;
+    color: var(--text-color);
+    line-height: 1.6;
+    font-size: 0.95rem;
+    padding: 0 10px;
+}
+
+.on-this-bus-bus-name {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.confirmation-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    background-color: rgba(76, 175, 80, 0.1);
+    border-radius: 12px;
+    margin: 0 auto;
+    max-width: 90%;
+}
+
+.confirmation-note i {
+    color: var(--primary-color);
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+.confirmation-note span {
+    font-size: 0.85rem;
+    color: var(--text-color);
+}
+
+.confirmation-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.confirmation-btn {
+    padding: 15px;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirmation-btn i {
+    margin-right: 8px;
+    font-size: 1.2rem;
+}
+
+.yes-btn {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.yes-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+}
+
+.no-btn {
+    background-color: var(--light-bg);
+    color: var(--text-color);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.no-btn:active {
+    background-color: #e5e5e5;
+    transform: scale(0.98);
+}/* Addit
+ional status dot styles */
+.status-dot.delayed {
+    background-color: var(--warning-color);
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.2);
+}
+
+.status-dot.inactive {
+    background-color: var(--secondary-color);
+    box-shadow: 0 0 0 2px rgba(108, 117, 125, 0.2);
+}/* Profess
+ional Bus Confirmation Modal - Enhanced Design */
+#on-this-bus-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.7) 100%);
+    z-index: 2000;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#on-this-bus-modal.show {
+    display: block;
+}
+
+.confirmation-content {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    border-radius: 28px 28px 0 0;
+    padding: 0;
+    transform: translateY(100%);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.15), 0 -5px 20px rgba(0, 0, 0, 0.1);
+    max-height: 85vh;
+    overflow: hidden;
+}
+
+#on-this-bus-modal.show .confirmation-content {
+    transform: translateY(0);
+}
+
+/* Modal Handle */
+.modal-handle {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0 8px;
+}
+
+.handle-indicator {
+    width: 36px;
+    height: 4px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+}
+
+/* Header Section */
+.confirmation-header {
+    text-align: center;
+    padding: 20px 24px 16px;
+    position: relative;
+}
+
+.header-icon-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 16px;
+}
+
+.bus-icon-large {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #2E7D32 100%);
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 2.2rem;
+    box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+    position: relative;
+    z-index: 2;
+}
+
+.pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 72px;
+    height: 72px;
+    border: 2px solid var(--primary-color);
+    border-radius: 20px;
+    opacity: 0.6;
+    animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.6;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0;
+    }
+}
+
+.confirmation-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: var(--text-color);
+    letter-spacing: -0.02em;
+}
+
+.confirmation-subtitle {
+    font-size: 1rem;
+    color: var(--text-light);
+    margin: 0;
+    font-weight: 400;
+}
+
+.confirmation-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.confirmation-close i {
+    font-size: 1.4rem;
+    color: var(--text-light);
+}
+
+.confirmation-close:active {
+    background-color: rgba(0, 0, 0, 0.1);
+    transform: scale(0.95);
+}
+
+/* Bus Card Section */
+.confirmation-body {
+    padding: 0 24px 20px;
+}
+
+.bus-card-modal {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.bus-card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.bus-badge-container {
+    position: relative;
+}
+
+.bus-badge-large {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #2E7D32 100%);
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.25);
+    position: relative;
+    z-index: 2;
+}
+
+.bus-badge-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #2E7D32 100%);
+    border-radius: 16px;
+    opacity: 0.3;
+    filter: blur(8px);
+    transform: scale(1.1);
+}
+
+.bus-id-badge {
+    color: white;
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+.bus-info-container {
+    flex: 1;
+}
+
+.bus-name-large {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: var(--text-color);
+    letter-spacing: -0.01em;
+}
+
+.bus-status-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-indicator-large {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-dot-large {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--success-color);
+}
+
+.status-indicator-large.active .status-pulse {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--success-color);
+    animation: status-pulse 2s infinite;
+}
+
+@keyframes status-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+.bus-status-text {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.bus-eta-container {
+    text-align: center;
+}
+
+.eta-badge {
+    background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+    border-radius: 12px;
+    padding: 8px 12px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 48px;
+}
+
+.eta-time {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.eta-unit {
+    font-size: 0.7rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Benefits Section */
+.benefits-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(76, 175, 80, 0.05);
+    border-radius: 16px;
+    border: 1px solid rgba(76, 175, 80, 0.1);
+}
+
+.benefit-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #2E7D32 100%);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.benefit-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.benefit-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.benefit-desc {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+/* Action Buttons */
+.confirmation-actions {
+    padding: 20px 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.action-btn {
+    position: relative;
+    border: none;
+    border-radius: 16px;
+    padding: 18px 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.primary-action {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #2E7D32 100%);
+    color: white;
+    box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+}
+
+.primary-action:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.btn-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    z-index: 2;
+}
+
+.btn-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.primary-action:active .btn-shine {
+    left: 100%;
+}
+
+.secondary-action {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-color);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.secondary-action:active {
+    background-color: rgba(0, 0, 0, 0.1);
+    transform: scale(0.98);
+}
+
+.action-btn i {
+    font-size: 1.3rem;
+}

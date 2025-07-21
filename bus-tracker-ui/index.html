@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUBT Bus Tracker</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="assets/css/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="assets/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-logo">
+                <i class="bi bi-bus-front"></i>
+            </div>
+            <h1 class="app-name">BUBT CommuteMate</h1>
+            <div class="splash-tagline">Your University Shuttle Companion</div>
+            <div class="splash-spacer"></div>
+            <div class="splash-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Permission Screen -->
+    <div id="permission-screen" class="permission-container">
+        <img src="assets/images/location-permission.png" alt="Location Permission" class="permission-illustration">
+        <h2 class="permission-title">Allow "CommuteMate" to use your location?</h2>
+        <p class="permission-description">Your location is used to show your position on the map and provide accurate
+            bus arrival times. We never share your location with others.</p>
+        <div class="permission-buttons">
+            <button class="btn btn-allow" id="allow-once">Allow Once</button>
+            <button class="btn btn-allow" id="allow-while-using">Allow While Using App</button>
+            <button class="btn btn-deny" id="dont-allow">Don't Allow</button>
+        </div>
+    </div>
+
+    <!-- Home Screen -->
+    <div id="home-screen" class="screen">
+        <!-- Header -->
+        <div class="home-header">
+            <div class="home-menu">
+                <i class="bi bi-list"></i>
+            </div>
+            <div class="home-title">
+                <h1>BUBT Bus Tracker</h1>
+            </div>
+            <div class="home-notification">
+                <i class="bi bi-bell"></i>
+            </div>
+        </div>
+
+        <!-- Bus Dropdown -->
+        <div class="bus-dropdown-container">
+            <div class="bus-dropdown">
+                <div class="dropdown-header" id="bus-dropdown-header">
+                    <span>Select Bus</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="dropdown-menu" id="bus-dropdown-menu">
+                    <div class="dropdown-item" data-bus-id="all">All Buses</div>
+                    <div class="dropdown-item" data-bus-id="B1">B1 - Buriganga</div>
+                    <div class="dropdown-item" data-bus-id="B2">B2 - Brahmaputra</div>
+                    <div class="dropdown-item" data-bus-id="B3">B3 - Padma</div>
+                    <div class="dropdown-item" data-bus-id="B4">B4 - Meghna</div>
+                    <div class="dropdown-item" data-bus-id="B5">B5 - Jamuna</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bus Cards -->
+        <div class="home-content">
+            <h2 class="home-section-title">Available Buses</h2>
+
+            <div class="home-bus-card" data-bus-id="B1">
+                <div class="home-bus-left">
+                    <div class="home-bus-badge">B1</div>
+                </div>
+                <div class="home-bus-middle">
+                    <h3 class="home-bus-name">Buriganga</h3>
+                    <p class="home-bus-schedule">Departure: 7:00 AM | Return: 5:00 PM</p>
+                </div>
+                <div class="home-bus-right">
+                    <span class="home-bus-status active"></span>
+                </div>
+            </div>
+
+            <div class="home-bus-card" data-bus-id="B2">
+                <div class="home-bus-left">
+                    <div class="home-bus-badge">B2</div>
+                </div>
+                <div class="home-bus-middle">
+                    <h3 class="home-bus-name">Brahmaputra</h3>
+                    <p class="home-bus-schedule">Departure: 7:00 AM | Return: 5:00 PM</p>
+                </div>
+                <div class="home-bus-right">
+                    <span class="home-bus-status delayed"></span>
+                </div>
+            </div>
+
+            <div class="home-bus-card" data-bus-id="B3">
+                <div class="home-bus-left">
+                    <div class="home-bus-badge">B3</div>
+                </div>
+                <div class="home-bus-middle">
+                    <h3 class="home-bus-name">Padma</h3>
+                    <p class="home-bus-schedule">Departure: 7:00 AM | Return: 5:00 PM</p>
+                </div>
+                <div class="home-bus-right">
+                    <span class="home-bus-status active"></span>
+                </div>
+            </div>
+
+            <div class="home-bus-card" data-bus-id="B4">
+                <div class="home-bus-left">
+                    <div class="home-bus-badge">B4</div>
+                </div>
+                <div class="home-bus-middle">
+                    <h3 class="home-bus-name">Meghna</h3>
+                    <p class="home-bus-schedule">Departure: 4:10 PM | Return: 9:25 PM</p>
+                </div>
+                <div class="home-bus-right">
+                    <span class="home-bus-status inactive"></span>
+                </div>
+            </div>
+
+            <div class="home-bus-card" data-bus-id="B5">
+                <div class="home-bus-left">
+                    <div class="home-bus-badge">B5</div>
+                </div>
+                <div class="home-bus-middle">
+                    <h3 class="home-bus-name">Jamuna</h3>
+                    <p class="home-bus-schedule">Departure: 7:00 AM | Return: 5:00 PM</p>
+                </div>
+                <div class="home-bus-right">
+                    <span class="home-bus-status active"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bus Details Modal -->
+    <div id="bus-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-bus-icon">B1</div>
+                <div class="modal-bus-info">
+                    <h3 class="modal-bus-name">Buriganga</h3>
+                    <p class="modal-bus-status"><span class="status-indicator status-active"></span> <span
+                            class="modal-status-text">On Route</span></p>
+                </div>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h4>Schedule</h4>
+                    <div class="schedule-info">
+                        <div class="schedule-item">
+                            <div class="schedule-label">Departure</div>
+                            <div class="schedule-value modal-departure-time">7:00 AM</div>
+                        </div>
+                        <div class="schedule-item">
+                            <div class="schedule-label">Return</div>
+                            <div class="schedule-value modal-return-time">5:00 PM</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <h4>Route</h4>
+                    <div class="modal-route-list">
+                        <!-- Route stops will be populated dynamically -->
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <h4>Current Status</h4>
+                    <div class="modal-status-info">
+                        <div class="status-item">
+                            <div class="status-label">Current Stop</div>
+                            <div class="status-value modal-current-stop">Shyamoli</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Next Stop</div>
+                            <div class="status-value modal-next-stop">Mirpur-1</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Arriving In</div>
+                            <div class="status-value modal-arrival-time">10 min</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn on-this-bus-btn">I'm on this bus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- On This Bus Confirmation Modal -->
+    <div id="on-this-bus-modal" class="modal">
+        <div class="confirmation-content">
+            <div class="confirmation-header">
+                <div class="bus-icon-large">
+                    <i class="bi bi-bus-front"></i>
+                </div>
+                <h3>Are you on this bus?</h3>
+                <div class="confirmation-close">&times;</div>
+            </div>
+            <div class="confirmation-body">
+                <div class="confirmation-bus-details">
+                    <div class="bus-badge-large"><span class="bus-id-badge">B1</span></div>
+                    <div class="bus-info-large">
+                        <div class="bus-name-large"><span class="on-this-bus-bus-name">Buriganga</span></div>
+                        <div class="bus-status-large"><span class="status-dot active"></span> On Route</div>
+                    </div>
+                </div>
+                <p class="confirmation-message">Confirming your presence on this bus will help other students track its
+                    location accurately and improve arrival time predictions.</p>
+                <div class="confirmation-note">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Your location will only be shared while you're on the bus</span>
+                </div>
+            </div>
+            <div class="confirmation-buttons">
+                <button class="confirmation-btn yes-btn on-this-bus-yes">
+                    <i class="bi bi-check-circle"></i>
+                    Yes, I'm on this bus
+                </button>
+                <button class="confirmation-btn no-btn on-this-bus-no">
+                    <i class="bi bi-x-circle"></i>
+                    No, cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buses Screen -->
+    <div id="buses-screen" class="screen">
+        <div class="app-header">
+            <h2>All Buses</h2>
+            <i class="bi bi-search header-icon"></i>
+        </div>
+
+        <div class="search-bar">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" placeholder="Search bus routes">
+        </div>
+
+        <div class="bus-list">
+            <div class="bus-card" data-bus-id="B1">
+                <div class="bus-header">
+                    <div class="bus-icon">B1</div>
+                    <div class="bus-info">
+                        <h4 class="bus-name">Buriganga</h4>
+                        <p class="bus-route">Asad Gate → Shyamoli → Mirpur-1 → Rainkhola → BUBT</p>
+                    </div>
+                </div>
+                <div class="bus-details">
+                    <div class="bus-status">
+                        <span class="status-indicator status-active"></span>
+                        <span>On Route</span>
+                    </div>
+                    <div class="bus-time">Current: Shyamoli</div>
+                </div>
+            </div>
+            <div class="bus-card" data-bus-id="B2">
+                <div class="bus-header">
+                    <div class="bus-icon">B2</div>
+                    <div class="bus-info">
+                        <h4 class="bus-name">Brahmaputra</h4>
+                        <p class="bus-route">Hemayetpur → Amin Bazar → Gabtoli → Mirpur-1 → BUBT</p>
+                    </div>
+                </div>
+                <div class="bus-details">
+                    <div class="bus-status">
+                        <span class="status-indicator status-delayed"></span>
+                        <span>Delayed</span>
+                    </div>
+                    <div class="bus-time">Current: Gabtoli</div>
+                </div>
+            </div>
+            <div class="bus-card" data-bus-id="B3">
+                <div class="bus-header">
+                    <div class="bus-icon">B3</div>
+                    <div class="bus-info">
+                        <h4 class="bus-name">Padma</h4>
+                        <p class="bus-route">Shyamoli → Agargaon → Kazipara → Mirpur-10 → BUBT</p>
+                    </div>
+                </div>
+                <div class="bus-details">
+                    <div class="bus-status">
+                        <span class="status-indicator status-active"></span>
+                        <span>On Route</span>
+                    </div>
+                    <div class="bus-time">Current: Kazipara</div>
+                </div>
+            </div>
+            <div class="bus-card" data-bus-id="B4">
+                <div class="bus-header">
+                    <div class="bus-icon">B4</div>
+                    <div class="bus-info">
+                        <h4 class="bus-name">Meghna</h4>
+                        <p class="bus-route">Mirpur-14 → Mirpur-10 → Mirpur-11 → Proshikha → BUBT</p>
+                    </div>
+                </div>
+                <div class="bus-details">
+                    <div class="bus-status">
+                        <span class="status-indicator status-inactive"></span>
+                        <span>Not Running</span>
+                    </div>
+                    <div class="bus-time">Next: 4:10 PM</div>
+                </div>
+            </div>
+            <div class="bus-card" data-bus-id="B5">
+                <div class="bus-header">
+                    <div class="bus-icon">B5</div>
+                    <div class="bus-info">
+                        <h4 class="bus-name">Jamuna</h4>
+                        <p class="bus-route">ECB Chattar → Kalshi Bridge → Mirpur-12 → Duaripara → BUBT</p>
+                    </div>
+                </div>
+                <div class="bus-details">
+                    <div class="bus-status">
+                        <span class="status-indicator status-active"></span>
+                        <span>On Route</span>
+                    </div>
+                    <div class="bus-time">Current: Mirpur-12</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Developer Screen -->
+    <div id="developer-screen" class="screen">
+        <div class="app-header">
+            <h2>Developer</h2>
+            <i class="bi bi-gear header-icon"></i>
+        </div>
+
+        <div class="developer-content">
+            <div class="developer-card">
+                <div class="developer-header">
+                    <h3>App Information</h3>
+                </div>
+                <div class="developer-body">
+                    <div class="info-item">
+                        <div class="info-label">Version</div>
+                        <div class="info-value">1.0.0</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Last Updated</div>
+                        <div class="info-value">June 15, 2023</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Framework</div>
+                        <div class="info-value">HTML5, CSS3, JavaScript</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="developer-card">
+                <div class="developer-header">
+                    <h3>Developer Options</h3>
+                </div>
+                <div class="developer-body">
+                    <div class="developer-option">
+                        <label class="switch">
+                            <input type="checkbox" id="debug-mode">
+                            <span class="slider round"></span>
+                        </label>
+                        <div class="option-text">Debug Mode</div>
+                    </div>
+                    <div class="developer-option">
+                        <label class="switch">
+                            <input type="checkbox" id="test-notifications">
+                            <span class="slider round"></span>
+                        </label>
+                        <div class="option-text">Test Notifications</div>
+                    </div>
+                    <div class="developer-option">
+                        <label class="switch">
+                            <input type="checkbox" id="mock-location">
+                            <span class="slider round"></span>
+                        </label>
+                        <div class="option-text">Mock Location Data</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="developer-card">
+                <div class="developer-header">
+                    <h3>Actions</h3>
+                </div>
+                <div class="developer-body">
+                    <button class="dev-btn" id="clear-cache">Clear Cache</button>
+                    <button class="dev-btn" id="reset-app">Reset App</button>
+                    <button class="dev-btn" id="test-api">Test API Connection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Track Screen -->
+    <div id="track-screen" class="screen">
+        <!-- Bus Details Header -->
+        <div class="track-header">
+            <div class="back-button">
+                <i class="bi bi-arrow-left"></i>
+            </div>
+            <div class="bus-details-title">
+                <div class="bus-icon-small">B1</div>
+                <div class="bus-name-small">Buriganga</div>
+            </div>
+            <div class="bus-actions">
+                <i class="bi bi-star"></i>
+            </div>
+        </div>
+
+        <!-- Full Page Map -->
+        <div class="track-map-container">
+            <img src="assets/images/map-placeholder.png" alt="Map" class="map-placeholder">
+            <div class="bus-location-marker">
+                <i class="bi bi-bus-front"></i>
+            </div>
+
+            <!-- Map Controls -->
+            <div class="map-controls">
+                <button class="map-control-button" id="center-map">
+                    <i class="bi bi-geo-alt"></i>
+                </button>
+                <button class="map-control-button" id="zoom-in">
+                    <i class="bi bi-plus"></i>
+                </button>
+                <button class="map-control-button" id="zoom-out">
+                    <i class="bi bi-dash"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Timeline Bottom Sheet -->
+        <div class="timeline-bottom-sheet">
+            <div class="bottom-sheet-handle">
+                <div class="handle-bar"></div>
+            </div>
+
+            <div class="timeline-header">
+                <h3 class="timeline-title">Route Timeline</h3>
+                <div class="timeline-eta">ETA: <span class="eta-time">8:00 AM</span></div>
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-item completed">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-stop">Asad Gate</div>
+                        <div class="timeline-time">7:00 AM</div>
+                    </div>
+                </div>
+                <div class="timeline-item completed">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-stop">Shyamoli</div>
+                        <div class="timeline-time">7:15 AM</div>
+                    </div>
+                </div>
+                <div class="timeline-item current">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-stop">Mirpur-1</div>
+                        <div class="timeline-time">7:30 AM</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-stop">Rainkhola</div>
+                        <div class="timeline-time">7:45 AM</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-stop">BUBT Campus</div>
+                        <div class="timeline-time">8:00 AM</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" data-screen="home-screen">
+            <i class="bi bi-house-door nav-icon"></i>
+            <span class="nav-label">Home</span>
+        </a>
+        <a href="#" class="nav-item" data-screen="buses-screen">
+            <i class="bi bi-bus-front nav-icon"></i>
+            <span class="nav-label">Buses</span>
+        </a>
+        <a href="#" class="nav-item" data-screen="developer-screen">
+            <i class="bi bi-code-square nav-icon"></i>
+            <span class="nav-label">Developer</span>
+        </a>
+    </nav>
+
+    <!-- Bootstrap JS -->
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <!-- Splash Screen JS -->
+    <script src="assets/js/splash.js"></script>
+    <!-- Custom JS -->
+    <script src="assets/js/app.js"></script>
+</body>
+
+</html>

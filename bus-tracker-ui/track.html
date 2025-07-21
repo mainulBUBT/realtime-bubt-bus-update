@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUBT Bus Tracker - Live Tracking</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="assets/css/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Leaflet CSS for OpenStreetMap -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+    <!-- Leaflet JavaScript for OpenStreetMap -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+    <!-- Custom CSS -->
+    <link href="assets/css/style.css" rel="stylesheet">
+
+<body>
+    <!-- Track Screen -->
+    <div id="track-screen" class="screen active">
+        <!-- Header -->
+        <div class="app-header track-header">
+            <div class="location-header">
+                <i class="bi bi-arrow-left back-button"></i>
+                <span class="location-name">Live Tracking</span>
+            </div>
+            <i class="bi bi-bell header-icon"></i>
+        </div>
+
+        <!-- Full Page Map -->
+        <div id="map" class="full-map"></div>
+        
+        <!-- Map Controls -->
+        <div class="map-controls">
+            <button class="map-control-btn" id="center-map"><i class="bi bi-geo-alt"></i></button>
+            <button class="map-control-btn" id="zoom-in"><i class="bi bi-plus"></i></button>
+            <button class="map-control-btn" id="zoom-out"><i class="bi bi-dash"></i></button>
+        </div>
+        
+        <!-- ETA Card -->
+        <div class="eta-card">
+            <div class="eta-header">Estimated Time of Arrival</div>
+            <div class="eta-time">10 min</div>
+            <div class="eta-destination">To Mirpur-1</div>
+        </div>
+        
+        <!-- Bus Info Pill -->
+        <div class="bus-info-pill">
+            <div class="bus-icon">B1</div>
+            <div class="bus-info">
+                <h3 class="bus-name">Buriganga</h3>
+                <div class="bus-status">
+                    <span class="status-indicator status-active"></span>
+                    <span>On Route • Arriving in 10 min</span>
+                </div>
+            </div>
+            <div class="bus-actions">
+                <button class="action-btn"><i class="bi bi-star"></i></button>
+                <button class="action-btn"><i class="bi bi-share"></i></button>
+            </div>
+        </div>
+
+        <!-- Bottom Sheet for Timeline -->
+        <div class="bottom-sheet">
+            <div class="bottom-sheet-handle">
+                <div class="handle-bar"></div>
+            </div>
+            
+            <div class="bottom-sheet-content">
+                <!-- Bus Info Card -->
+                <div class="track-info-card">
+                    <div class="info-row">
+                        <div class="info-item">
+                            <div class="info-label">Current Stop</div>
+                            <div class="info-value">Shyamoli</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Next Stop</div>
+                            <div class="info-value">Mirpur-1</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-item">
+                            <div class="info-label">Speed</div>
+                            <div class="info-value">32 km/h</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Traffic Status</div>
+                            <div class="info-value normal">Normal</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-item">
+                            <div class="info-label">Last Updated</div>
+                            <div class="info-value">Just now</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Trip Status</div>
+                            <div class="info-value">On Schedule</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Route Timeline -->
+                <div class="route-timeline">
+                    <div class="timeline-header">
+                        <div class="route-info">
+                            <div class="route-name">Complete Route</div>
+                            <div class="route-stats">5 stops • 12.5 km • 60 min</div>
+                        </div>
+                    </div>
+
+                    <div class="timeline">
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <div class="time-badge">7:00 AM</div>
+                                <h4>Asad Gate</h4>
+                                <p>Departed</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <div class="time-badge">7:15 AM</div>
+                                <h4>Shyamoli</h4>
+                                <p>Departed</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item current">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <div class="time-badge">7:35 AM</div>
+                                <h4>Mirpur-1</h4>
+                                <p>Arriving in 10 minutes</p>
+                                <div class="progress-bar">
+                                    <div class="progress" style="width: 70%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <div class="time-badge">7:45 AM</div>
+                                <h4>Rainkhola</h4>
+                                <p>Estimated arrival</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <div class="time-badge">8:00 AM</div>
+                                <h4>BUBT</h4>
+                                <p>Final destination</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notification Subscribe -->
+                <div class="notification-subscribe">
+                    <div class="notification-icon">
+                        <i class="bi bi-bell"></i>
+                    </div>
+                    <div class="notification-text">
+                        <h4>Get notified when bus arrives</h4>
+                        <p>We'll send you a notification when the bus is near your stop</p>
+                    </div>
+                    <button class="subscribe-btn">Subscribe</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <i class="bi bi-house-door nav-icon"></i>
+            <span class="nav-label">Home</span>
+        </a>
+        <a href="#" class="nav-item active">
+            <i class="bi bi-bus-front nav-icon"></i>
+            <span class="nav-label">Track</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="bi bi-person nav-icon"></i>
+            <span class="nav-label">Profile</span>
+        </a>
+    </nav>
+
+    <!-- JavaScript Libraries -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- App JavaScript -->
+    <script src="assets/js/track.js"></script>
+</body>
+
+</html>

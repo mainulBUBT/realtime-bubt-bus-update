@@ -46,70 +46,57 @@
 
     <!-- Home Screen -->
     <div id="home-screen" class="screen active-screen">
-        <!-- Header -->
-        <div class="home-header">
-            <div class="home-menu">
-                <i class="bi bi-list"></i>
-            </div>
-            <div class="home-title">
-                <h1>BUBT Bus Tracker</h1>
-            </div>
-            <div class="home-notification">
-                <i class="bi bi-bell"></i>
-            </div>
-        </div>
-
-        <!-- Search and Filter Bar -->
-        <div class="search-filter-container">
-            <div class="search-dropdown-wrapper">
-                <!-- Search Input -->
-                <div class="search-input-container">
-                    <i class="bi bi-search search-icon"></i>
-                    <input type="text" class="search-input" id="bus-search" placeholder="Search buses or routes...">
-                    <button class="filter-toggle" id="filter-toggle">
-                        <i class="bi bi-funnel"></i>
-                    </button>
+        <!-- Modern Mobile Header -->
+        <div class="mobile-header">
+            <div class="header-top">
+                <button class="menu-btn" id="menu-btn">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="header-title">
+                    <h1>BUBT Bus Tracker</h1>
+                    <span class="location-indicator">
+                        <i class="bi bi-geo-alt"></i>
+                        Dhaka, Bangladesh
+                    </span>
                 </div>
-                
-                <!-- Filter Dropdown -->
-                <div class="filter-dropdown" id="filter-dropdown">
-                    <div class="filter-header">
-                        <span>Filter by Bus</span>
-                        <button class="filter-close" id="filter-close">
-                            <i class="bi bi-x"></i>
-                        </button>
+                <button class="notification-btn" id="notification-btn">
+                    <i class="bi bi-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
+            </div>
+
+            <!-- Bus Dropdown Selector -->
+            <div class="bus-dropdown-container">
+                <div class="bus-dropdown" id="bus-dropdown">
+                    <div class="dropdown-header" id="dropdown-header">
+                        <span>Select Bus Route</span>
+                        <i class="bi bi-chevron-down"></i>
                     </div>
-                    <div class="filter-options">
-                        <div class="filter-option active" data-bus-id="all">
-                            <i class="bi bi-check-circle"></i>
+                    <div class="dropdown-menu" id="dropdown-menu">
+                        <div class="dropdown-item active" data-bus-id="all">
                             <span>All Buses</span>
                         </div>
-                        <div class="filter-option" data-bus-id="B1">
+                        <div class="dropdown-item" data-bus-id="B1">
                             <div class="bus-badge-mini">B1</div>
                             <span>Buriganga</span>
                         </div>
-                        <div class="filter-option" data-bus-id="B2">
+                        <div class="dropdown-item" data-bus-id="B2">
                             <div class="bus-badge-mini">B2</div>
                             <span>Brahmaputra</span>
                         </div>
-                        <div class="filter-option" data-bus-id="B3">
+                        <div class="dropdown-item" data-bus-id="B3">
                             <div class="bus-badge-mini">B3</div>
                             <span>Padma</span>
                         </div>
-                        <div class="filter-option" data-bus-id="B4">
+                        <div class="dropdown-item" data-bus-id="B4">
                             <div class="bus-badge-mini">B4</div>
                             <span>Meghna</span>
                         </div>
-                        <div class="filter-option" data-bus-id="B5">
+                        <div class="dropdown-item" data-bus-id="B5">
                             <div class="bus-badge-mini">B5</div>
                             <span>Jamuna</span>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Search Results -->
-                <div class="search-results" id="search-results">
-                    <!-- Dynamic search results will appear here -->
                 </div>
             </div>
         </div>
@@ -191,16 +178,44 @@
 
     <!-- Chuti Kobe Screen -->
     <div id="chuti-screen" class="screen">
-        <!-- Header -->
-        <div class="home-header">
-            <div class="home-menu">
-                <i class="bi bi-list"></i>
+        <!-- Modern Mobile Header -->
+        <div class="mobile-header">
+            <div class="header-top">
+                <button class="menu-btn" id="chuti-menu-btn">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="header-title">
+                    <h1>Chuti Kobe</h1>
+                    <span class="location-indicator">
+                        <i class="bi bi-geo-alt"></i>
+                        Dhaka, Bangladesh
+                    </span>
+                </div>
+                <button class="notification-btn" id="chuti-notification-btn">
+                    <i class="bi bi-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
             </div>
-            <div class="home-title">
-                <h1>Chuti Kobe</h1>
-            </div>
-            <div class="home-notification">
-                <i class="bi bi-bell"></i>
+
+            <!-- Holiday Dropdown Selector -->
+            <div class="bus-dropdown-container">
+                <div class="bus-dropdown" id="holiday-dropdown">
+                    <div class="dropdown-header" id="holiday-dropdown-header">
+                        <span>Select Holiday Type</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="dropdown-menu" id="holiday-dropdown-menu">
+                        <div class="dropdown-item active" data-holiday-type="all">
+                            <span>All Holidays</span>
+                        </div>
+                        <div class="dropdown-item" data-holiday-type="national">
+                            <span>National Holidays</span>
+                        </div>
+                        <div class="dropdown-item" data-holiday-type="university">
+                            <span>University Holidays</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -314,7 +329,7 @@
             </a>
         </div>
     </div>
-    
+
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <a href="#" class="nav-item active" data-screen="home-screen">
@@ -333,6 +348,8 @@
 
     <!-- Bootstrap JS -->
     <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="assets/js/jquery.min.js"></script>
     <!-- Splash Screen JS -->
     <script src="assets/js/splash.js"></script>
     <!-- Custom JS -->

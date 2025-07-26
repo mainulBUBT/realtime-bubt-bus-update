@@ -1,0 +1,638 @@
+/* Map Performance Optimization Styles */
+
+/* Optimized bus marker styles */
+.bus-marker-icon.optimized {
+    background: none;
+    border: none;
+    transition: transform 0.2s ease;
+}
+
+.bus-marker-icon.optimized:hover {
+    transform: scale(1.1);
+}
+
+.bus-marker-icon.optimized .marker-icon {
+    background: #1a73e8;
+    color: white;
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    border: 2px solid white;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    will-change: transform;
+}
+
+/* Cluster marker styles */
+.bus-cluster-marker {
+    background: none;
+    border: none;
+}
+
+.cluster-icon {
+    background: #ff6b35;
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 3px solid white;
+    font-size: 14px;
+}
+
+/* Map container optimizations */
+.map-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.map-container .leaflet-container {
+    background: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Tile loading optimization */
+.leaflet-tile-container {
+    will-change: transform;
+}
+
+.leaflet-tile {
+    will-change: transform;
+    image-rendering: optimizeSpeed;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+}
+
+/* Loading indicator for tiles */
+.map-loading-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+}
+
+.map-loading-indicator.active {
+    display: block;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #1a73e8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Optimized controls */
+.leaflet-control-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.leaflet-control-zoom {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.leaflet-control-zoom a {
+    background: white;
+    color: #333;
+    border: none;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    font-size: 18px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.leaflet-control-zoom a:hover {
+    background: #f8f9fa;
+    color: #1a73e8;
+}
+
+.leaflet-control-zoom a:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.leaflet-control-zoom a:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+/* Scale control optimization */
+.leaflet-control-scale {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 11px;
+    line-height: 1.2;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+/* Attribution control optimization */
+.leaflet-control-attribution {
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 4px;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .bus-marker-icon.optimized .marker-icon {
+        font-size: 12px;
+    }
+    
+    .cluster-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 12px;
+    }
+    
+    .leaflet-control-zoom a {
+        width: 36px;
+        height: 36px;
+        line-height: 36px;
+        font-size: 16px;
+    }
+    
+    .leaflet-control-attribution {
+        font-size: 9px;
+    }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .bus-marker-icon.optimized .marker-icon {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+    
+    .cluster-icon {
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* Performance optimizations for animations */
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+    will-change: transform;
+}
+
+.leaflet-zoom-animated {
+    will-change: transform;
+}
+
+.leaflet-interactive {
+    will-change: transform;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    .bus-marker-icon.optimized,
+    .bus-marker-icon.optimized .marker-icon,
+    .leaflet-control-zoom a {
+        transition: none;
+    }
+    
+    .leaflet-zoom-animated {
+        animation: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .map-container .leaflet-container {
+        background: #1a1a1a;
+        filter: invert(1) hue-rotate(180deg);
+    }
+    
+    .bus-marker-icon.optimized .marker-icon,
+    .cluster-icon {
+        filter: invert(1) hue-rotate(180deg);
+    }
+    
+    .leaflet-control-zoom a {
+        background: #2a2a2a;
+        color: #fff;
+    }
+    
+    .leaflet-control-scale,
+    .leaflet-control-attribution {
+        background: rgba(42, 42, 42, 0.9);
+        color: #fff;
+    }
+}
+
+/* Offline indicator */
+.map-offline-indicator {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ff6b35;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 1001;
+    display: none;
+}
+
+.map-offline-indicator.active {
+    display: block;
+}
+
+/* Connection quality indicator */
+.connection-quality-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    z-index: 1001;
+    transition: background-color 0.3s ease;
+}
+
+.connection-quality-indicator.excellent {
+    background: #4CAF50;
+}
+
+.connection-quality-indicator.good {
+    background: #8BC34A;
+}
+
+.connection-quality-indicator.fair {
+    background: #FFC107;
+}
+
+.connection-quality-indicator.poor {
+    background: #FF9800;
+}
+
+.connection-quality-indicator.offline {
+    background: #F44336;
+}
+
+/* Tile error handling */
+.leaflet-tile-error {
+    background: #f8f9fa url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiBmaWxsPSIjRjhGOUZBIi8+CjxwYXRoIGQ9Ik0xMjggNjRMMTkyIDEyOEwxMjggMTkyTDY0IDEyOEwxMjggNjRaIiBzdHJva2U9IiNEREQiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4K') center/50% no-repeat;
+}
+
+/* Smooth transitions for map interactions */
+.leaflet-container {
+    transition: filter 0.3s ease;
+}
+
+.leaflet-container.loading {
+    filter: brightness(0.9);
+}
+
+/* Performance monitoring overlay (development only) */
+.performance-monitor {
+    position: absolute;
+    top: 50px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 11px;
+    z-index: 1002;
+    display: none;
+}
+
+.performance-monitor.active {
+    display: block;
+}
+
+.performance-monitor .metric {
+    margin-bottom: 5px;
+}
+
+.performance-monitor .metric:last-child {
+    margin-bottom: 0;
+}
+
+.performance-monitor .metric-value {
+    color: #4CAF50;
+}
+
+.performance-monitor .metric-value.warning {
+    color: #FFC107;
+}
+
+.performance-monitor .metric-value.error {
+    color: #F44336;
+}
+/
+* Stoppage Validation UI Styles */
+.validation-container {
+    position: absolute;
+    bottom: 80px;
+    left: 10px;
+    right: 10px;
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.validation-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.validation-status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.validation-status-indicator.valid {
+    background: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.validation-status-indicator.invalid {
+    background: #F44336;
+    box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.2);
+}
+
+.validation-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.distance-to-stop {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.validation-details {
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.validation-summary {
+    margin-bottom: 10px;
+}
+
+.validation-success {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #4CAF50;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.validation-warning {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #FF9800;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.closest-stop {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.gps-accuracy {
+    font-size: 11px;
+    color: #999;
+    margin-top: 3px;
+}
+
+.stop-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.stop-detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.stop-detail.within-radius {
+    background: rgba(76, 175, 80, 0.1);
+    color: #2E7D32;
+}
+
+.stop-detail.outside-radius {
+    background: rgba(158, 158, 158, 0.1);
+    color: #666;
+}
+
+.stop-name {
+    font-weight: 500;
+}
+
+.stop-distance {
+    color: #666;
+}
+
+.stop-radius {
+    font-size: 10px;
+    color: #999;
+}
+
+.validation-error {
+    background: rgba(244, 67, 54, 0.1);
+    color: #D32F2F;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+/* Geofencing visualization on map */
+.geofence-circle {
+    pointer-events: none;
+}
+
+.geofence-corridor {
+    pointer-events: none;
+}
+
+/* Admin panel geofencing styles */
+.admin-geofencing-panel {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.geofencing-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.geofencing-toggle {
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.geofencing-toggle:hover {
+    background: #1557b0;
+}
+
+.geofencing-toggle.active {
+    background: #4CAF50;
+}
+
+.geofencing-toggle.inactive {
+    background: #666;
+}
+
+.geofencing-legend {
+    display: flex;
+    gap: 20px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.legend-color.stop {
+    background: rgba(26, 115, 232, 0.6);
+    border: 2px solid #1a73e8;
+}
+
+.legend-color.corridor {
+    background: rgba(255, 107, 53, 0.3);
+    border: 1px dashed #ff6b35;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .validation-container {
+        bottom: 70px;
+        left: 5px;
+        right: 5px;
+        padding: 12px;
+    }
+    
+    .validation-status {
+        margin-bottom: 8px;
+    }
+    
+    .validation-label {
+        font-size: 13px;
+    }
+    
+    .distance-to-stop {
+        font-size: 12px;
+    }
+    
+    .geofencing-controls {
+        flex-direction: column;
+    }
+    
+    .geofencing-toggle {
+        width: 100%;
+    }
+    
+    .geofencing-legend {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .validation-status-indicator.valid {
+        background: #2E7D32;
+        border: 2px solid #1B5E20;
+    }
+    
+    .validation-status-indicator.invalid {
+        background: #D32F2F;
+        border: 2px solid #B71C1C;
+    }
+    
+    .stop-detail.within-radius {
+        background: #E8F5E8;
+        border: 1px solid #4CAF50;
+    }
+    
+    .stop-detail.outside-radius {
+        background: #F5F5F5;
+        border: 1px solid #999;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .validation-status-indicator {
+        transition: none;
+    }
+    
+    .geofencing-toggle {
+        transition: none;
+    }
+}

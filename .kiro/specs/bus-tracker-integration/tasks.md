@@ -52,8 +52,8 @@
     - Write unit tests for token generation and validation
     - _Requirements: 6.1, 6.2, 6.8, 6.12_
 
-- [ ] 4. Optimize OpenStreetMap and Leaflet for smooth performance
-  - [ ] 4.1 Optimize Leaflet map performance for traffic and smooth rendering
+- [x] 4. Optimize OpenStreetMap and Leaflet for smooth performance
+  - [x] 4.1 Optimize Leaflet map performance for traffic and smooth rendering
     - Implement tile caching strategy for OpenStreetMap to reduce server requests
     - Add map clustering for multiple bus markers to improve performance
     - Configure optimal zoom levels and bounds for Dhaka region to minimize data loading
@@ -62,7 +62,7 @@
     - Configure Leaflet options for smooth panning and zooming on mobile devices
     - _Requirements: New map performance optimization_
 
-  - [ ] 4.2 Create stoppage coordinate validation system
+  - [x] 4.2 Create stoppage coordinate validation system
     - Define precise coordinates and radius for each bus stop (Asad Gate, Shyamoli, Mirpur-1, Rainkhola, BUBT)
     - Implement geofencing validation to reject GPS data outside stoppage radius
     - Create route corridor validation between stops to detect users off the expected path
@@ -71,21 +71,21 @@
     - Create visual indicators on admin panel showing stoppage boundaries and coverage areas
     - _Requirements: 5.1, 5.6, 5.7, 6.5, 6.6_
 
-  - [ ] 4.3 Implement browser geolocation integration
+  - [x] 4.3 Implement browser geolocation integration
     - Create JavaScript GPS permission request handler matching existing UI
     - Implement continuous location tracking with 15-30 second intervals
     - Add location accuracy validation and error handling
     - Create "I'm on this bus" functionality with device token association
     - _Requirements: 1.1, 1.2, 1.3, 3.3, 3.4_
 
-  - [ ] 4.4 Build LocationService for GPS data processing
+  - [x] 4.4 Build LocationService for GPS data processing
     - Create service class to receive and validate GPS coordinates
     - Implement route radius validation against bus stop coordinates
     - Add speed validation to detect impossible location jumps
     - Create location aggregation logic for multiple users on same bus
     - _Requirements: 5.6, 5.7, 6.5, 6.6, 3.7_
 
-  - [ ] 4.5 Implement advanced bus tracking reliability system
+  - [x] 4.5 Implement advanced bus tracking reliability system
     - Create location source validation to only accept GPS when user clicks "I'm on this bus"
     - Implement movement consistency tracking (speed + direction validation)
     - Add user clustering logic to group users within 20-30 meters and ignore outliers
@@ -95,7 +95,7 @@
     - Create fallback strategy for "No active tracking" scenarios with last known location
     - _Requirements: 6.4, 6.5, 6.7, 6.9, 6.10, 3.3, 3.5_
 
-  - [ ] 4.6 Build device trust and clustering algorithms
+  - [x] 4.6 Build device trust and clustering algorithms
     - Implement device trust score calculation based on frequency, consistency, and accuracy
     - Create user clustering algorithm to detect users within 20-30 meter radius
     - Add outlier detection to ignore users far from the main group
@@ -104,10 +104,10 @@
     - Add trust score decay for inactive devices and boost for consistent contributors
     - _Requirements: 6.1, 6.2, 6.8, 6.10, 6.12_
 
-- [ ] 5. Create GPS location collection and validation system
+- [x] 5. Create GPS location collection and validation system
 
-- [ ] 6. Build bus schedule management system with route timeline progression
-  - [ ] 6.1 Create BusScheduleService for round-trip schedule management
+- [-] 6. Build bus schedule management system with route timeline progression
+  - [x] 6.1 Create BusScheduleService for round-trip schedule management
     - Implement logic to determine active buses based on departure/return schedule (e.g., 7:00 AM departure, 5:00 PM return)
     - Add validation to only accept GPS data during scheduled trip times
     - Create methods to determine trip direction (campus→city morning, city→campus evening)
@@ -115,7 +115,7 @@
     - Implement route reversal logic for return trips (BUBT→Rainkhola→Mirpur-1→Shyamoli→Asad Gate)
     - _Requirements: 5.2, 5.5, 5.9, 5.10_
 
-  - [ ] 6.2 Implement route coordinate validation for sequential stop progression
+  - [x] 6.2 Implement route coordinate validation for sequential stop progression
     - Create RouteValidator class to validate GPS coordinates against sequential route stops
     - Implement StopCoordinateManager for stops like Asad Gate, Shyamoli, Mirpur-1, Rainkhola, BUBT
     - Add distance calculation methods for stop coverage radius and route progression validation

@@ -1,406 +1,632 @@
-// Global device fingerprint instance
-let deviceFingerprint = null;
-let deviceToken = null;
-
-// Wait for the DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize device fingerprinting first
-    initDeviceFingerprinting().then(() => {
-        // Initialize the app after device token is ready
-        initApp();
-    });
-});
-
 /**
- * Initialize device fingerprinting
- * @returns {Promise<void>}
+ * Bus Tracker Geolocation Integration
+ * Handles GPS permission requests, continuous tracking, and "I'm on this bus" functionality
  */
-async function initDeviceFingerprinting() {
-    try {
-        console.log("Initializing device fingerprinting...");
+
+class BusTracker {
+    constructor() {
+        this.deviceFingerprint = new DeviceFingerprint();
+        this.stoppageValidator = new StoppageValidator();
+        this.isTracking = false;
+        this.watchId = null;
+        this.deviceToken = null;
+        this.currentBusId = null;
+        this.trackingStartTime = null;
+        this.locationHistory = [];
+        this.trackingInterval = 20000; // 20 seconds default
+        this.accuracyThreshold = 50; // meters
+        this.callbacks = {
+            onLocationUpdate: [],
+            onTrackingStart: [],
+            onTrackingStop: [],
+            onError: []
+        };
         
-        // Create device fingerprint instance
-        deviceFingerprint = new DeviceFingerprint();
-        
-        // Get or generate device token
-        deviceToken = await deviceFingerprint.getOrGenerateToken();
-        
-        console.log("Device token ready:", deviceToken.substring(0, 8) + "...");
-        
-        // Store token globally for use in other functions
-        window.busTrackerDeviceToken = deviceToken;
-        
-    } catch (error) {
-        console.error("Failed to initialize device fingerprinting:", error);
-        
-        // Generate a fallback token
-        deviceToken = 'fallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        window.busTrackerDeviceToken = deviceToken;
+        this.init();
     }
-}
 
-function initApp() {
-    console.log("App initialized with device token!");
-    
-    // Initialize menu functionality
-    initMenu();
-    
-    // Initialize dropdown functionality
-    initDropdowns();
-    
-    // Initialize bus cards
-    initBusCards();
-    
-    // Initialize device token display (for debugging)
-    displayDeviceTokenInfo();
-}
-
-/**
- * Display device token information for debugging
- */
-function displayDeviceTokenInfo() {
-    // Only show in development mode
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        console.log("Device Token Info:");
-        console.log("- Token:", deviceToken);
-        console.log("- Stored Token:", deviceFingerprint?.getStoredToken());
-        console.log("- Token Valid:", deviceFingerprint?.isTokenValid());
-        
-        // Add debug info to page if in development
-        const debugInfo = document.createElement('div');
-        debugInfo.id = 'debug-device-token';
-        debugInfo.style.cssText = `
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            z-index: 9999;
-            max-width: 200px;
-            word-break: break-all;
-        `;
-        debugInfo.innerHTML = `
-            <strong>Device Token:</strong><br>
-            ${deviceToken.substring(0, 16)}...<br>
-            <small>Valid: ${deviceFingerprint?.isTokenValid() ? 'Yes' : 'No'}</small>
-        `;
-        document.body.appendChild(debugInfo);
-        
-        // Remove debug info after 10 seconds
-        setTimeout(() => {
-            debugInfo.remove();
-        }, 10000);
-    }
-}
-
-function initMenu() {
-    // Get menu buttons and drawer elements
-    const menuBtns = document.querySelectorAll('.menu-btn');
-    const drawer = document.getElementById('side-drawer');
-    const drawerOverlay = document.getElementById('drawer-overlay');
-    const drawerClose = document.getElementById('drawer-close');
-    
-    // Add click event to menu buttons
-    menuBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            drawer.classList.add('active');
-            drawerOverlay.classList.add('active');
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
-        });
-    });
-    
-    // Close drawer when clicking the close button
-    drawerClose.addEventListener('click', closeDrawer);
-    
-    // Close drawer when clicking the overlay
-    drawerOverlay.addEventListener('click', closeDrawer);
-    
-    function closeDrawer() {
-        drawer.classList.remove('active');
-        drawerOverlay.classList.remove('active');
-        document.body.style.overflow = ''; // Enable scrolling
-    }
-    
-    // Handle navigation items
-    const navItems = document.querySelectorAll('.nav-item, .drawer-item');
-    navItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            // Prevent default behavior for links
-            e.preventDefault();
+    /**
+     * Initialize the bus tracker
+     */
+    async init() {
+        try {
+            // Generate device token
+            this.deviceToken = await this.deviceFingerprint.generateDeviceToken();
+            console.log('Device token generated:', this.deviceToken.substring(0, 8) + '...');
             
-            // Get the target screen
-            const targetScreen = this.getAttribute('data-screen');
-            
-            // Hide all screens
-            document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.remove('active-screen');
-            });
-            
-            // Show the target screen
-            document.getElementById(targetScreen).classList.add('active-screen');
-            
-            // Update active state for navigation items
-            navItems.forEach(navItem => {
-                navItem.classList.remove('active');
-            });
-            
-            // Set this item as active
-            this.classList.add('active');
-            
-            // Close the drawer if it's open
-            closeDrawer();
-        });
-    });
-}
-
-function initDropdowns() {
-    console.log("Initializing dropdown functionality");
-    
-    // Bus dropdown
-    const busDropdownHeader = document.getElementById('dropdown-header');
-    const busDropdownMenu = document.getElementById('dropdown-menu');
-    const busDropdownItems = document.querySelectorAll('#dropdown-menu .dropdown-item');
-    
-    // Holiday dropdown
-    const holidayDropdownHeader = document.getElementById('holiday-dropdown-header');
-    const holidayDropdownMenu = document.getElementById('holiday-dropdown-menu');
-    const holidayDropdownItems = document.querySelectorAll('#holiday-dropdown-menu .dropdown-item');
-    
-    // Toggle bus dropdown
-    if (busDropdownHeader && busDropdownMenu) {
-        busDropdownHeader.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent event bubbling
-            busDropdownHeader.classList.toggle('active');
-            busDropdownMenu.classList.toggle('show');
-            
-            // Close holiday dropdown if open
-            if (holidayDropdownHeader && holidayDropdownMenu) {
-                holidayDropdownHeader.classList.remove('active');
-                holidayDropdownMenu.classList.remove('show');
+            // Check geolocation support
+            if (!navigator.geolocation) {
+                throw new Error('Geolocation is not supported by this browser');
             }
             
-            console.log("Bus dropdown toggled");
-        });
-        
-        // Handle bus dropdown item selection
-        busDropdownItems.forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.stopPropagation(); // Prevent event bubbling
-                
-                // Update active state
-                busDropdownItems.forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Update header text
-                busDropdownHeader.querySelector('span').textContent = this.querySelector('span').textContent;
-                
-                // Close dropdown
-                busDropdownHeader.classList.remove('active');
-                busDropdownMenu.classList.remove('show');
-                
-                // Filter bus cards
-                const busId = this.getAttribute('data-bus-id');
-                filterBusCards(busId);
-                
-                console.log("Selected bus: " + busId);
-            });
+            // Initialize UI elements
+            this.initializeUI();
+            
+            // Check for existing tracking session
+            this.restoreTrackingSession();
+            
+        } catch (error) {
+            console.error('Bus tracker initialization failed:', error);
+            this.handleError(error);
+        }
+    }
+
+    /**
+     * Request GPS permission with user-friendly UI
+     */
+    async requestGPSPermission() {
+        return new Promise((resolve, reject) => {
+            // Show permission request UI
+            this.showPermissionRequestUI();
+            
+            // Request permission
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    console.log('GPS permission granted');
+                    this.hidePermissionRequestUI();
+                    this.showPermissionGrantedUI();
+                    resolve(position);
+                },
+                (error) => {
+                    console.error('GPS permission denied:', error);
+                    this.hidePermissionRequestUI();
+                    this.showPermissionDeniedUI(error);
+                    reject(error);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
         });
     }
-    
-    // Toggle holiday dropdown
-    if (holidayDropdownHeader && holidayDropdownMenu) {
-        holidayDropdownHeader.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent event bubbling
-            holidayDropdownHeader.classList.toggle('active');
-            holidayDropdownMenu.classList.toggle('show');
+
+    /**
+     * Start continuous location tracking for a specific bus
+     */
+    async startTracking(busId) {
+        if (this.isTracking) {
+            console.warn('Tracking already active');
+            return;
+        }
+
+        try {
+            // Request permission if not already granted
+            await this.requestGPSPermission();
             
-            // Close bus dropdown if open
-            if (busDropdownHeader && busDropdownMenu) {
-                busDropdownHeader.classList.remove('active');
-                busDropdownMenu.classList.remove('show');
+            this.currentBusId = busId;
+            this.isTracking = true;
+            this.trackingStartTime = Date.now();
+            this.locationHistory = [];
+            
+            // Start continuous tracking
+            this.watchId = navigator.geolocation.watchPosition(
+                (position) => this.handleLocationUpdate(position),
+                (error) => this.handleLocationError(error),
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 30000
+                }
+            );
+            
+            // Store tracking session
+            this.storeTrackingSession();
+            
+            // Update UI
+            this.updateTrackingUI(true);
+            
+            // Trigger callbacks
+            this.triggerCallbacks('onTrackingStart', { busId, deviceToken: this.deviceToken });
+            
+            console.log(`Started tracking bus ${busId}`);
+            
+        } catch (error) {
+            console.error('Failed to start tracking:', error);
+            this.handleError(error);
+        }
+    }
+
+    /**
+     * Stop location tracking
+     */
+    stopTracking() {
+        if (!this.isTracking) {
+            console.warn('No active tracking to stop');
+            return;
+        }
+
+        // Clear watch
+        if (this.watchId) {
+            navigator.geolocation.clearWatch(this.watchId);
+            this.watchId = null;
+        }
+
+        // Calculate tracking session stats
+        const sessionDuration = Date.now() - this.trackingStartTime;
+        const locationCount = this.locationHistory.length;
+        
+        const sessionStats = {
+            busId: this.currentBusId,
+            deviceToken: this.deviceToken,
+            duration: sessionDuration,
+            locationCount: locationCount,
+            startTime: this.trackingStartTime,
+            endTime: Date.now()
+        };
+
+        // Reset tracking state
+        this.isTracking = false;
+        this.currentBusId = null;
+        this.trackingStartTime = null;
+        
+        // Clear stored session
+        this.clearTrackingSession();
+        
+        // Update UI
+        this.updateTrackingUI(false);
+        
+        // Trigger callbacks
+        this.triggerCallbacks('onTrackingStop', sessionStats);
+        
+        console.log('Stopped tracking:', sessionStats);
+    }
+
+    /**
+     * Handle location updates
+     */
+    async handleLocationUpdate(position) {
+        if (!this.isTracking) return;
+
+        const { latitude, longitude, accuracy, speed, heading } = position.coords;
+        const timestamp = position.timestamp;
+
+        // Validate accuracy
+        if (accuracy > this.accuracyThreshold) {
+            console.warn(`Low GPS accuracy: ${accuracy}m (threshold: ${this.accuracyThreshold}m)`);
+            // Still process but flag as low accuracy
+        }
+
+        // Validate location against bus stops
+        const validation = this.stoppageValidator.validateStoppageRadius(latitude, longitude);
+        
+        // Create location data object
+        const locationData = {
+            deviceToken: this.deviceToken,
+            busId: this.currentBusId,
+            latitude: latitude,
+            longitude: longitude,
+            accuracy: accuracy,
+            speed: speed || null,
+            heading: heading || null,
+            timestamp: timestamp,
+            validation: validation,
+            sessionId: this.generateSessionId()
+        };
+
+        // Add to history
+        this.locationHistory.push(locationData);
+        
+        // Keep only recent history (last 50 points)
+        if (this.locationHistory.length > 50) {
+            this.locationHistory = this.locationHistory.slice(-50);
+        }
+
+        // Send to server
+        await this.sendLocationToServer(locationData);
+        
+        // Update UI
+        this.updateLocationUI(locationData);
+        
+        // Trigger callbacks
+        this.triggerCallbacks('onLocationUpdate', locationData);
+        
+        console.log('Location update:', {
+            lat: latitude.toFixed(6),
+            lng: longitude.toFixed(6),
+            accuracy: Math.round(accuracy),
+            valid: validation.isValid
+        });
+    }
+
+    /**
+     * Handle location errors
+     */
+    handleLocationError(error) {
+        console.error('Location error:', error);
+        
+        let errorMessage = 'Location error occurred';
+        
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                errorMessage = 'GPS permission denied. Please enable location access.';
+                this.showPermissionDeniedUI(error);
+                break;
+            case error.POSITION_UNAVAILABLE:
+                errorMessage = 'GPS position unavailable. Please check your location settings.';
+                break;
+            case error.TIMEOUT:
+                errorMessage = 'GPS request timed out. Retrying...';
+                break;
+        }
+        
+        this.showErrorMessage(errorMessage);
+        this.triggerCallbacks('onError', { error, message: errorMessage });
+    }
+
+    /**
+     * Send location data to server
+     */
+    async sendLocationToServer(locationData) {
+        try {
+            const response = await fetch('/api/bus-location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                },
+                body: JSON.stringify(locationData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
             }
+
+            const result = await response.json();
+            console.log('Location sent to server:', result);
             
-            console.log("Holiday dropdown toggled");
-        });
-        
-        // Handle holiday dropdown item selection
-        holidayDropdownItems.forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.stopPropagation(); // Prevent event bubbling
-                
-                // Update active state
-                holidayDropdownItems.forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Update header text
-                holidayDropdownHeader.querySelector('span').textContent = this.querySelector('span').textContent;
-                
-                // Close dropdown
-                holidayDropdownHeader.classList.remove('active');
-                holidayDropdownMenu.classList.remove('show');
-                
-                // Filter holidays (if needed)
-                const holidayType = this.getAttribute('data-holiday-type');
-                filterHolidays(holidayType);
-                
-                console.log("Selected holiday type: " + holidayType);
-            });
-        });
+        } catch (error) {
+            console.error('Failed to send location to server:', error);
+            // Store for retry later
+            this.storeFailedLocation(locationData);
+        }
     }
-    
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(event) {
-        // Bus dropdown
-        if (busDropdownHeader && busDropdownMenu && !event.target.closest('.bus-dropdown')) {
-            busDropdownHeader.classList.remove('active');
-            busDropdownMenu.classList.remove('show');
-        }
+
+    /**
+     * Initialize UI elements
+     */
+    initializeUI() {
+        // Create tracking button if it doesn't exist
+        this.createTrackingButton();
         
-        // Holiday dropdown
-        if (holidayDropdownHeader && holidayDropdownMenu && !event.target.closest('#holiday-dropdown')) {
-            holidayDropdownHeader.classList.remove('active');
-            holidayDropdownMenu.classList.remove('show');
-        }
-    });
-    
-    // Filter bus cards based on selected bus
-    function filterBusCards(busId) {
-        const busCards = document.querySelectorAll('.home-bus-card');
+        // Create status indicators
+        this.createStatusIndicators();
         
-        busCards.forEach(card => {
-            const cardBusId = card.getAttribute('data-bus-id');
-            
-            if (busId === 'all' || cardBusId === busId) {
-                card.style.display = '';
+        // Create permission UI
+        this.createPermissionUI();
+    }
+
+    /**
+     * Create "I'm on this bus" button
+     */
+    createTrackingButton() {
+        const existingButton = document.querySelector('.tracking-button');
+        if (existingButton) return;
+
+        const button = document.createElement('button');
+        button.className = 'tracking-button btn btn-primary';
+        button.innerHTML = `
+            <i class="bi bi-geo-alt"></i>
+            <span class="button-text">I'm on this Bus</span>
+        `;
+        
+        button.addEventListener('click', () => {
+            if (this.isTracking) {
+                this.stopTracking();
             } else {
-                card.style.display = 'none';
+                const busId = this.getCurrentBusId();
+                if (busId) {
+                    this.startTracking(busId);
+                } else {
+                    this.showErrorMessage('Please select a bus first');
+                }
             }
         });
+
+        // Add to appropriate container
+        const container = document.querySelector('.bus-actions') || document.querySelector('.bottom-sheet-content');
+        if (container) {
+            container.appendChild(button);
+        }
     }
-    
-    // Filter holidays based on selected type
-    function filterHolidays(holidayType) {
-        const holidayItems = document.querySelectorAll('.chuti-item');
+
+    /**
+     * Create status indicators
+     */
+    createStatusIndicators() {
+        const statusContainer = document.createElement('div');
+        statusContainer.className = 'tracking-status-container';
+        statusContainer.innerHTML = `
+            <div class="tracking-status">
+                <div class="status-indicator" id="tracking-indicator"></div>
+                <span class="status-text" id="tracking-status-text">Not tracking</span>
+            </div>
+            <div class="location-info" id="location-info" style="display: none;">
+                <div class="accuracy-info">GPS Accuracy: <span id="accuracy-value">-</span></div>
+                <div class="validation-info">Location Status: <span id="validation-status">-</span></div>
+            </div>
+        `;
+
+        const container = document.querySelector('.bus-info-pill') || document.querySelector('.track-info-card');
+        if (container) {
+            container.appendChild(statusContainer);
+        }
+    }
+
+    /**
+     * Create permission request UI
+     */
+    createPermissionUI() {
+        const permissionModal = document.createElement('div');
+        permissionModal.className = 'permission-modal';
+        permissionModal.id = 'gps-permission-modal';
+        permissionModal.innerHTML = `
+            <div class="permission-modal-content">
+                <div class="permission-icon">
+                    <i class="bi bi-geo-alt-fill"></i>
+                </div>
+                <h3>Enable Location Access</h3>
+                <p>To track buses in real-time, we need access to your location. Your location data is only used for bus tracking and is not stored permanently.</p>
+                <div class="permission-buttons">
+                    <button class="btn btn-primary" id="grant-permission">Enable Location</button>
+                    <button class="btn btn-secondary" id="deny-permission">Not Now</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(permissionModal);
+
+        // Add event listeners
+        document.getElementById('grant-permission').addEventListener('click', () => {
+            this.requestGPSPermission();
+        });
+
+        document.getElementById('deny-permission').addEventListener('click', () => {
+            this.hidePermissionRequestUI();
+        });
+    }
+
+    /**
+     * Update tracking UI state
+     */
+    updateTrackingUI(isTracking) {
+        const button = document.querySelector('.tracking-button');
+        const indicator = document.getElementById('tracking-indicator');
+        const statusText = document.getElementById('tracking-status-text');
+        const locationInfo = document.getElementById('location-info');
+
+        if (button) {
+            if (isTracking) {
+                button.className = 'tracking-button btn btn-danger';
+                button.innerHTML = `
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <span class="button-text">Stop Tracking</span>
+                `;
+            } else {
+                button.className = 'tracking-button btn btn-primary';
+                button.innerHTML = `
+                    <i class="bi bi-geo-alt"></i>
+                    <span class="button-text">I'm on this Bus</span>
+                `;
+            }
+        }
+
+        if (indicator) {
+            indicator.className = `status-indicator ${isTracking ? 'active' : 'inactive'}`;
+        }
+
+        if (statusText) {
+            statusText.textContent = isTracking ? 'Tracking active' : 'Not tracking';
+        }
+
+        if (locationInfo) {
+            locationInfo.style.display = isTracking ? 'block' : 'none';
+        }
+    }
+
+    /**
+     * Update location UI with current data
+     */
+    updateLocationUI(locationData) {
+        const accuracyValue = document.getElementById('accuracy-value');
+        const validationStatus = document.getElementById('validation-status');
+
+        if (accuracyValue) {
+            accuracyValue.textContent = `±${Math.round(locationData.accuracy)}m`;
+            accuracyValue.className = locationData.accuracy <= 20 ? 'good' : 
+                                     locationData.accuracy <= 50 ? 'fair' : 'poor';
+        }
+
+        if (validationStatus) {
+            validationStatus.textContent = locationData.validation.isValid ? 
+                `Valid (${locationData.validation.closestStop})` : 
+                `Outside area (${locationData.validation.distanceToClosest}m from ${locationData.validation.closestStop})`;
+            validationStatus.className = locationData.validation.isValid ? 'valid' : 'invalid';
+        }
+    }
+
+    /**
+     * Show/hide permission UI
+     */
+    showPermissionRequestUI() {
+        const modal = document.getElementById('gps-permission-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    hidePermissionRequestUI() {
+        const modal = document.getElementById('gps-permission-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    showPermissionGrantedUI() {
+        this.showSuccessMessage('Location access granted! You can now track buses.');
+    }
+
+    showPermissionDeniedUI(error) {
+        this.showErrorMessage('Location access is required for bus tracking. Please enable it in your browser settings.');
+    }
+
+    /**
+     * Show success/error messages
+     */
+    showSuccessMessage(message) {
+        this.showMessage(message, 'success');
+    }
+
+    showErrorMessage(message) {
+        this.showMessage(message, 'error');
+    }
+
+    showMessage(message, type) {
+        // Remove existing messages
+        const existingMessage = document.querySelector('.tracking-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `tracking-message ${type}`;
+        messageDiv.textContent = message;
+
+        document.body.appendChild(messageDiv);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 5000);
+    }
+
+    /**
+     * Session management
+     */
+    storeTrackingSession() {
+        const sessionData = {
+            busId: this.currentBusId,
+            deviceToken: this.deviceToken,
+            startTime: this.trackingStartTime,
+            isActive: true
+        };
+
+        try {
+            localStorage.setItem('bus_tracking_session', JSON.stringify(sessionData));
+        } catch (error) {
+            console.warn('Failed to store tracking session:', error);
+        }
+    }
+
+    restoreTrackingSession() {
+        try {
+            const sessionData = localStorage.getItem('bus_tracking_session');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                if (session.isActive && session.busId) {
+                    console.log('Restoring tracking session for bus:', session.busId);
+                    // Don't auto-restart, just update UI to show previous state
+                    this.currentBusId = session.busId;
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to restore tracking session:', error);
+        }
+    }
+
+    clearTrackingSession() {
+        try {
+            localStorage.removeItem('bus_tracking_session');
+        } catch (error) {
+            console.warn('Failed to clear tracking session:', error);
+        }
+    }
+
+    /**
+     * Utility methods
+     */
+    getCurrentBusId() {
+        // Try to get from URL, localStorage, or current page context
+        const urlParams = new URLSearchParams(window.location.search);
+        const busIdFromUrl = urlParams.get('bus');
         
-        // This is just a placeholder - in a real app, you would add data attributes to the holiday items
-        if (holidayType === 'all') {
-            holidayItems.forEach(item => {
-                item.style.display = '';
-            });
-        } else {
-            // For demo purposes, let's just show/hide based on the type
-            // In a real app, you would check data attributes
-            holidayItems.forEach((item, index) => {
-                if (holidayType === 'national' && (index === 0 || index === 2)) {
-                    item.style.display = '';
-                } else if (holidayType === 'university' && index === 1) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
+        if (busIdFromUrl) return busIdFromUrl;
+        
+        const busIdFromStorage = localStorage.getItem('trackingBusId');
+        if (busIdFromStorage) return busIdFromStorage;
+        
+        // Try to extract from page elements
+        const busIcon = document.querySelector('.bus-icon');
+        if (busIcon) return busIcon.textContent.trim();
+        
+        return null;
+    }
+
+    generateSessionId() {
+        return `${this.deviceToken.substring(0, 8)}_${Date.now()}`;
+    }
+
+    storeFailedLocation(locationData) {
+        try {
+            const failedLocations = JSON.parse(localStorage.getItem('failed_locations') || '[]');
+            failedLocations.push(locationData);
+            
+            // Keep only last 10 failed locations
+            if (failedLocations.length > 10) {
+                failedLocations.splice(0, failedLocations.length - 10);
+            }
+            
+            localStorage.setItem('failed_locations', JSON.stringify(failedLocations));
+        } catch (error) {
+            console.warn('Failed to store failed location:', error);
+        }
+    }
+
+    /**
+     * Event handling
+     */
+    on(event, callback) {
+        if (this.callbacks[event]) {
+            this.callbacks[event].push(callback);
+        }
+    }
+
+    triggerCallbacks(event, data) {
+        if (this.callbacks[event]) {
+            this.callbacks[event].forEach(callback => {
+                try {
+                    callback(data);
+                } catch (error) {
+                    console.error(`Callback error for ${event}:`, error);
                 }
             });
         }
     }
-}
 
-function initBusCards() {
-    // Get all bus cards
-    const busCards = document.querySelectorAll('.home-bus-card');
-    
-    // Add click event to bus cards
-    busCards.forEach(card => {
-        card.addEventListener('click', function() {
-            // Get bus ID
-            const busId = this.getAttribute('data-bus-id');
-            
-            // Navigate to bus details page
-            console.log(`Navigating to bus details for ${busId}`);
-            // For Laravel, we'll use a route instead of direct HTML navigation
-            window.location.href = `/track/${busId}`;
-        });
-    });
-}
-
-/**
- * Get the current device token
- * @returns {string|null} Current device token
- */
-function getDeviceToken() {
-    return deviceToken || window.busTrackerDeviceToken || null;
-}
-
-/**
- * Validate device token with backend
- * @param {string} token - Token to validate
- * @returns {Promise<boolean>} Validation result
- */
-async function validateDeviceTokenWithBackend(token) {
-    try {
-        const response = await fetch('/api/device-token/validate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-            },
-            body: JSON.stringify({ token: token })
-        });
+    /**
+     * Cleanup
+     */
+    destroy() {
+        this.stopTracking();
+        this.clearTrackingSession();
         
-        const result = await response.json();
-        return result.valid === true;
-    } catch (error) {
-        console.error('Token validation failed:', error);
-        return false;
-    }
-}
-
-/**
- * Register device token with backend
- * @param {string} token - Token to register
- * @param {object} fingerprint - Fingerprint data
- * @returns {Promise<boolean>} Registration result
- */
-async function registerDeviceTokenWithBackend(token, fingerprint) {
-    try {
-        const response = await fetch('/api/device-token/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-            },
-            body: JSON.stringify({ 
-                token: token,
-                fingerprint: fingerprint
-            })
-        });
+        // Remove UI elements
+        const elements = [
+            '.tracking-button',
+            '.tracking-status-container',
+            '#gps-permission-modal',
+            '.tracking-message'
+        ];
         
-        const result = await response.json();
-        return result.success === true;
-    } catch (error) {
-        console.error('Token registration failed:', error);
-        return false;
+        elements.forEach(selector => {
+            const element = document.querySelector(selector);
+            if (element) {
+                element.remove();
+            }
+        });
     }
 }
 
-// Helper function to show notifications
-function showNotification(message, type = 'info') {
-    // Create notification element if it doesn't exist
-    let notification = document.querySelector('.notification');
-    if (!notification) {
-        notification = document.createElement('div');
-        notification.className = 'notification';
-        document.body.appendChild(notification);
-    }
-    
-    // Set message and show notification
-    notification.textContent = message;
-    notification.className = `notification notification-${type}`;
-    notification.classList.add('show');
-    
-    // Hide notification after 3 seconds
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 3000);
-}
+// Export for use in other modules
+window.BusTracker = BusTracker;

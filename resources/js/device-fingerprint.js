@@ -1,95 +1,89 @@
 /**
- * Device Fingerprinting Utility
- * Generates unique browser fingerprints for device identification
- * and manages local storage for device tokens
+ * Device Fingerprinting and Token Management
+ * Generates unique device tokens for anonymous user identification
  */
+
 class DeviceFingerprint {
     constructor() {
-        this.storageKey = 'bus_tracker_device_token';
+        this.tokenKey = 'bus_tracker_device_token';
         this.fingerprintKey = 'bus_tracker_fingerprint';
+        this.cachedFingerprint = null;
+        this.cachedToken = null;
     }
 
     /**
-     * Generate a comprehensive browser fingerprint
-     * @returns {Promise<object>} Fingerprint data object
+     * Generate comprehensive device fingerprint
      */
     async generateFingerprint() {
+        if (this.cachedFingerprint) {
+            return this.cachedFingerprint;
+        }
+
         const fingerprint = {
             // Screen information
             screen: {
                 width: screen.width,
                 height: screen.height,
-                availWidth: screen.availWidth,
-                availHeight: screen.availHeight,
                 colorDepth: screen.colorDepth,
                 pixelDepth: screen.pixelDepth,
-                orientation: screen.orientation ? screen.orientation.type : null
+                availWidth: screen.availWidth,
+                availHeight: screen.availHeight
             },
-
+            
             // Navigator information
             navigator: {
                 userAgent: navigator.userAgent,
                 language: navigator.language,
-                languages: navigator.languages ? navigator.languages.join(',') : null,
+                languages: navigator.languages ? navigator.languages.join(',') : '',
                 platform: navigator.platform,
                 cookieEnabled: navigator.cookieEnabled,
                 doNotTrack: navigator.doNotTrack,
-                hardwareConcurrency: navigator.hardwareConcurrency,
-                maxTouchPoints: navigator.maxTouchPoints,
-                vendor: navigator.vendor,
-                vendorSub: navigator.vendorSub,
-                productSub: navigator.productSub,
-                appName: navigator.appName,
-                appVersion: navigator.appVersion
+                hardwareConcurrency: navigator.hardwareConcurrency || 0,
+                maxTouchPoints: navigator.maxTouchPoints || 0,
+                deviceMemory: navigator.deviceMemory || 0
             },
-
-            // Timezone information
+            
+            // Timezone
             timezone: {
                 offset: new Date().getTimezoneOffset(),
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                zone: Intl.DateTimeFormat().resolvedOptions().timeZone
             },
-
-            // Canvas fingerprinting
-            canvas: await this.getCanvasFingerprint(),
-
-            // WebGL fingerprinting
-            webgl: this.getWebGLFingerprint(),
-
-            // Audio context fingerprinting
-            audio: await this.getAudioFingerprint(),
-
-            // Performance timing
-            timing: this.getTimingFingerprint(),
-
-            // Additional browser features
-            features: {
-                localStorage: this.hasLocalStorage(),
-                sessionStorage: this.hasSessionStorage(),
-                indexedDB: this.hasIndexedDB(),
-                webWorkers: typeof Worker !== 'undefined',
-                webSockets: typeof WebSocket !== 'undefined',
-                geolocation: 'geolocation' in navigator,
-                touchSupport: 'ontouchstart' in window,
-                deviceMemory: navigator.deviceMemory || null,
-                connection: navigator.connection ? {
-                    effectiveType: navigator.connection.effectiveType,
-                    downlink: navigator.connection.downlink,
-                    rtt: navigator.connection.rtt
-                } : null
-            },
-
-            // Timestamp for fingerprint generation
+            
+            // Canvas fingerprint
+            canvas: await this.generateCanvasFingerprint(),
+            
+            // WebGL fingerprint
+            webgl: this.generateWebGLFingerprint(),
+            
+            // Audio context fingerprint
+            audio: await this.generateAudioFingerprint(),
+            
+            // Connection information
+            connection: this.getConnectionInfo(),
+            
+            // Battery information (if available)
+            battery: await this.getBatteryInfo(),
+            
+            // Timestamp
             timestamp: Date.now()
         };
+
+        this.cachedFingerprint = fingerprint;
+        
+        // Store in localStorage for consistency
+        try {
+            localStorage.setItem(this.fingerprintKey, JSON.stringify(fingerprint));
+        } catch (error) {
+            console.warn('Failed to store fingerprint:', error);
+        }
 
         return fingerprint;
     }
 
     /**
-     * Generate canvas fingerprint
-     * @returns {Promise<string>} Canvas fingerprint hash
+     * Generate canvas-based fingerprint
      */
-    async getCanvasFingerprint() {
+    async generateCanvasFingerprint() {
         try {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -103,9 +97,9 @@ class DeviceFingerprint {
             ctx.fillStyle = '#f60';
             ctx.fillRect(125, 1, 62, 20);
             ctx.fillStyle = '#069';
-            ctx.fillText('Bus Tracker Fingerprint', 2, 15);
+            ctx.fillText('Bus Tracker 🚌', 2, 15);
             ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-            ctx.fillText('Device ID Generation', 4, 35);
+            ctx.fillText('Device ID', 4, 35);
             
             // Draw some shapes
             ctx.globalCompositeOperation = 'multiply';
@@ -116,49 +110,53 @@ class DeviceFingerprint {
             ctx.fill();
             
             return canvas.toDataURL();
-        } catch (e) {
-            return 'canvas_not_supported';
+        } catch (error) {
+            console.warn('Canvas fingerprint failed:', error);
+            return 'canvas_unavailable';
         }
     }
 
     /**
-     * Generate WebGL fingerprint
-     * @returns {object} WebGL fingerprint data
+     * Generate WebGL-based fingerprint
      */
-    getWebGLFingerprint() {
+    generateWebGLFingerprint() {
         try {
             const canvas = document.createElement('canvas');
             const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
             
             if (!gl) {
-                return { supported: false };
+                return 'webgl_unavailable';
             }
 
-            return {
-                supported: true,
+            const info = {
                 vendor: gl.getParameter(gl.VENDOR),
                 renderer: gl.getParameter(gl.RENDERER),
                 version: gl.getParameter(gl.VERSION),
                 shadingLanguageVersion: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
                 maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
                 maxViewportDims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
-                maxVertexAttribs: gl.getParameter(gl.MAX_VERTEX_ATTRIBS),
-                extensions: gl.getSupportedExtensions()
+                maxVertexAttribs: gl.getParameter(gl.MAX_VERTEX_ATTRIBS)
             };
-        } catch (e) {
-            return { supported: false, error: e.message };
+
+            // Get supported extensions
+            const extensions = gl.getSupportedExtensions();
+            info.extensions = extensions ? extensions.sort().join(',') : '';
+
+            return info;
+        } catch (error) {
+            console.warn('WebGL fingerprint failed:', error);
+            return 'webgl_error';
         }
     }
 
     /**
      * Generate audio context fingerprint
-     * @returns {Promise<string>} Audio fingerprint
      */
-    async getAudioFingerprint() {
+    async generateAudioFingerprint() {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) {
-                return 'audio_not_supported';
+                return 'audio_unavailable';
             }
 
             const context = new AudioContext();
@@ -167,10 +165,9 @@ class DeviceFingerprint {
             const gain = context.createGain();
             const scriptProcessor = context.createScriptProcessor(4096, 1, 1);
 
+            gain.gain.value = 0; // Mute
             oscillator.type = 'triangle';
-            oscillator.frequency.setValueAtTime(10000, context.currentTime);
-
-            gain.gain.setValueAtTime(0, context.currentTime);
+            oscillator.frequency.value = 10000;
 
             oscillator.connect(analyser);
             analyser.connect(scriptProcessor);
@@ -180,189 +177,147 @@ class DeviceFingerprint {
             oscillator.start(0);
 
             return new Promise((resolve) => {
-                scriptProcessor.onaudioprocess = function(bins) {
-                    const samples = bins.inputBuffer.getChannelData(0);
-                    let sum = 0;
-                    for (let i = 0; i < samples.length; i++) {
-                        sum += Math.abs(samples[i]);
+                let samples = [];
+                scriptProcessor.onaudioprocess = (event) => {
+                    const sample = event.inputBuffer.getChannelData(0)[0];
+                    if (sample) {
+                        samples.push(sample);
+                        if (samples.length > 1000) {
+                            oscillator.stop();
+                            context.close();
+                            
+                            // Create hash from samples
+                            const hash = samples.slice(0, 50).reduce((acc, val) => {
+                                return acc + val.toString();
+                            }, '');
+                            
+                            resolve(hash.substring(0, 50));
+                        }
                     }
-                    
+                };
+
+                // Timeout fallback
+                setTimeout(() => {
                     oscillator.stop();
                     context.close();
-                    
-                    resolve(sum.toString());
-                };
+                    resolve('audio_timeout');
+                }, 1000);
             });
-        } catch (e) {
+        } catch (error) {
+            console.warn('Audio fingerprint failed:', error);
             return 'audio_error';
         }
     }
 
     /**
-     * Get performance timing fingerprint
-     * @returns {object} Timing data
+     * Get connection information
      */
-    getTimingFingerprint() {
-        try {
-            const timing = performance.timing;
-            return {
-                navigationStart: timing.navigationStart,
-                loadEventEnd: timing.loadEventEnd,
-                domContentLoadedEventEnd: timing.domContentLoadedEventEnd,
-                responseEnd: timing.responseEnd,
-                requestStart: timing.requestStart,
-                domainLookupEnd: timing.domainLookupEnd,
-                domainLookupStart: timing.domainLookupStart,
-                connectEnd: timing.connectEnd,
-                connectStart: timing.connectStart
-            };
-        } catch (e) {
-            return { error: 'timing_not_available' };
-        }
-    }
-
-    /**
-     * Check if localStorage is available
-     * @returns {boolean}
-     */
-    hasLocalStorage() {
-        try {
-            const test = 'test';
-            localStorage.setItem(test, test);
-            localStorage.removeItem(test);
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    /**
-     * Check if sessionStorage is available
-     * @returns {boolean}
-     */
-    hasSessionStorage() {
-        try {
-            const test = 'test';
-            sessionStorage.setItem(test, test);
-            sessionStorage.removeItem(test);
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    /**
-     * Check if IndexedDB is available
-     * @returns {boolean}
-     */
-    hasIndexedDB() {
-        return 'indexedDB' in window;
-    }
-
-    /**
-     * Generate a hash from fingerprint data
-     * @param {object} fingerprint - Fingerprint data
-     * @returns {string} Hash string
-     */
-    async hashFingerprint(fingerprint) {
-        const jsonString = JSON.stringify(fingerprint);
+    getConnectionInfo() {
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         
-        if (crypto && crypto.subtle) {
-            // Use Web Crypto API if available
+        if (!connection) {
+            return 'connection_unavailable';
+        }
+
+        return {
+            effectiveType: connection.effectiveType,
+            downlink: connection.downlink,
+            rtt: connection.rtt,
+            saveData: connection.saveData
+        };
+    }
+
+    /**
+     * Get battery information
+     */
+    async getBatteryInfo() {
+        try {
+            if ('getBattery' in navigator) {
+                const battery = await navigator.getBattery();
+                return {
+                    charging: battery.charging,
+                    level: Math.round(battery.level * 100),
+                    chargingTime: battery.chargingTime,
+                    dischargingTime: battery.dischargingTime
+                };
+            }
+        } catch (error) {
+            console.warn('Battery info failed:', error);
+        }
+        
+        return 'battery_unavailable';
+    }
+
+    /**
+     * Generate device token from fingerprint
+     */
+    async generateDeviceToken() {
+        if (this.cachedToken) {
+            return this.cachedToken;
+        }
+
+        // Check if token exists in localStorage
+        const storedToken = localStorage.getItem(this.tokenKey);
+        if (storedToken) {
+            this.cachedToken = storedToken;
+            return storedToken;
+        }
+
+        // Generate new token
+        const fingerprint = await this.generateFingerprint();
+        const fingerprintString = JSON.stringify(fingerprint);
+        
+        // Create hash from fingerprint
+        const token = await this.hashString(fingerprintString);
+        
+        // Store token
+        try {
+            localStorage.setItem(this.tokenKey, token);
+            this.cachedToken = token;
+        } catch (error) {
+            console.warn('Failed to store device token:', error);
+        }
+
+        return token;
+    }
+
+    /**
+     * Hash string using Web Crypto API
+     */
+    async hashString(str) {
+        try {
             const encoder = new TextEncoder();
-            const data = encoder.encode(jsonString);
+            const data = encoder.encode(str);
             const hashBuffer = await crypto.subtle.digest('SHA-256', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        } else {
-            // Fallback to simple hash function
-            return this.simpleHash(jsonString);
-        }
-    }
-
-    /**
-     * Simple hash function fallback
-     * @param {string} str - String to hash
-     * @returns {string} Hash string
-     */
-    simpleHash(str) {
-        let hash = 0;
-        if (str.length === 0) return hash.toString();
-        
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32-bit integer
-        }
-        
-        return Math.abs(hash).toString(16);
-    }
-
-    /**
-     * Store device token in local storage
-     * @param {string} token - Device token to store
-     */
-    storeToken(token) {
-        if (this.hasLocalStorage()) {
-            try {
-                localStorage.setItem(this.storageKey, token);
-                localStorage.setItem(this.storageKey + '_timestamp', Date.now().toString());
-                return true;
-            } catch (e) {
-                console.warn('Failed to store device token:', e);
-                return false;
+        } catch (error) {
+            console.warn('Crypto hash failed, using fallback:', error);
+            // Fallback hash function
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
             }
+            return Math.abs(hash).toString(16);
         }
-        return false;
     }
 
     /**
-     * Get stored device token from local storage
-     * @returns {string|null} Stored token or null
+     * Get stored device token
      */
     getStoredToken() {
-        if (this.hasLocalStorage()) {
-            try {
-                return localStorage.getItem(this.storageKey);
-            } catch (e) {
-                console.warn('Failed to retrieve device token:', e);
-                return null;
-            }
+        if (this.cachedToken) {
+            return this.cachedToken;
         }
-        return null;
-    }
 
-    /**
-     * Store fingerprint data in local storage
-     * @param {object} fingerprint - Fingerprint data to store
-     */
-    storeFingerprint(fingerprint) {
-        if (this.hasLocalStorage()) {
-            try {
-                localStorage.setItem(this.fingerprintKey, JSON.stringify(fingerprint));
-                return true;
-            } catch (e) {
-                console.warn('Failed to store fingerprint:', e);
-                return false;
-            }
+        const storedToken = localStorage.getItem(this.tokenKey);
+        if (storedToken) {
+            this.cachedToken = storedToken;
+            return storedToken;
         }
-        return false;
-    }
 
-    /**
-     * Get stored fingerprint from local storage
-     * @returns {object|null} Stored fingerprint or null
-     */
-    getStoredFingerprint() {
-        if (this.hasLocalStorage()) {
-            try {
-                const stored = localStorage.getItem(this.fingerprintKey);
-                return stored ? JSON.parse(stored) : null;
-            } catch (e) {
-                console.warn('Failed to retrieve fingerprint:', e);
-                return null;
-            }
-        }
         return null;
     }
 
@@ -370,72 +325,66 @@ class DeviceFingerprint {
      * Clear stored token and fingerprint
      */
     clearStoredData() {
-        if (this.hasLocalStorage()) {
-            try {
-                localStorage.removeItem(this.storageKey);
-                localStorage.removeItem(this.storageKey + '_timestamp');
-                localStorage.removeItem(this.fingerprintKey);
-                return true;
-            } catch (e) {
-                console.warn('Failed to clear stored data:', e);
-                return false;
-            }
+        try {
+            localStorage.removeItem(this.tokenKey);
+            localStorage.removeItem(this.fingerprintKey);
+            this.cachedToken = null;
+            this.cachedFingerprint = null;
+        } catch (error) {
+            console.warn('Failed to clear stored data:', error);
         }
-        return false;
     }
 
     /**
-     * Check if stored token is still valid (not expired)
-     * @param {number} maxAge - Maximum age in milliseconds (default: 30 days)
-     * @returns {boolean}
+     * Validate token integrity
      */
-    isTokenValid(maxAge = 30 * 24 * 60 * 60 * 1000) {
-        if (!this.hasLocalStorage()) return false;
-        
+    async validateToken(token) {
+        if (!token) return false;
+
         try {
-            const timestamp = localStorage.getItem(this.storageKey + '_timestamp');
-            if (!timestamp) return false;
+            const currentFingerprint = await this.generateFingerprint();
+            const currentToken = await this.hashString(JSON.stringify(currentFingerprint));
             
-            const age = Date.now() - parseInt(timestamp);
-            return age < maxAge;
-        } catch (e) {
+            // Allow some variation in fingerprint due to dynamic properties
+            return token === currentToken || this.isTokenSimilar(token, currentToken);
+        } catch (error) {
+            console.warn('Token validation failed:', error);
             return false;
         }
     }
 
     /**
-     * Validate token format
-     * @param {string} token - Token to validate
-     * @returns {boolean}
+     * Check if tokens are similar (allowing for minor variations)
      */
-    validateTokenFormat(token) {
-        if (!token || typeof token !== 'string') return false;
-        
-        // Token should be a hex string of reasonable length
-        const hexPattern = /^[a-f0-9]{32,128}$/i;
-        return hexPattern.test(token);
+    isTokenSimilar(token1, token2) {
+        if (!token1 || !token2 || token1.length !== token2.length) {
+            return false;
+        }
+
+        let differences = 0;
+        for (let i = 0; i < token1.length; i++) {
+            if (token1[i] !== token2[i]) {
+                differences++;
+            }
+        }
+
+        // Allow up to 5% difference
+        return (differences / token1.length) < 0.05;
     }
 
     /**
-     * Get or generate device token
-     * @returns {Promise<string>} Device token
+     * Get device information for debugging
      */
-    async getOrGenerateToken() {
-        // Check if we have a valid stored token
-        const storedToken = this.getStoredToken();
-        if (storedToken && this.validateTokenFormat(storedToken) && this.isTokenValid()) {
-            return storedToken;
-        }
-
-        // Generate new fingerprint and token
+    async getDeviceInfo() {
         const fingerprint = await this.generateFingerprint();
-        const fingerprintHash = await this.hashFingerprint(fingerprint);
+        const token = await this.generateDeviceToken();
         
-        // Store fingerprint and token
-        this.storeFingerprint(fingerprint);
-        this.storeToken(fingerprintHash);
-        
-        return fingerprintHash;
+        return {
+            token: token,
+            fingerprint: fingerprint,
+            userAgent: navigator.userAgent,
+            timestamp: Date.now()
+        };
     }
 }
 

@@ -19,5 +19,10 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Seed bus tracker demo data
+        $this->call([
+            BusTrackerDemoSeeder::class,
+        ]);
     }
 }

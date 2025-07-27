@@ -16,12 +16,15 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
     
     <!-- Vite Assets -->
-    @vite(['resources/css/bus-tracker.css', 'resources/css/track-map.css', 'resources/js/bus-tracker.js'])
+    @vite(['resources/css/bus-tracker.css', 'resources/css/track-map.css', 'resources/js/bus-tracker.js', 'resources/js/connection-manager.js'])
     
     @stack('styles')
 </head>
 
 <body>
+    <!-- Connection Status Bar -->
+    @livewire('connection-status')
+    
     @yield('content')
 
     <!-- Bottom Navigation -->

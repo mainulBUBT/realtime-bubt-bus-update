@@ -59,6 +59,14 @@ class UserTrackingSession extends Model
     }
 
     /**
+     * Get the bus schedule for this session
+     */
+    public function busSchedule()
+    {
+        return $this->belongsTo(BusSchedule::class, 'bus_id', 'bus_id');
+    }
+
+    /**
      * Get all bus locations for this session
      */
     public function busLocations()

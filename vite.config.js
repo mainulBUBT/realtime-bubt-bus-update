@@ -8,10 +8,13 @@ export default defineConfig({
             input: [
                 'resources/css/app.css', 
                 'resources/js/app.js',
+                'resources/css/bus-app.css',
                 'resources/css/bus-tracker.css',
                 'resources/css/track-map.css',
                 'resources/js/bus-tracker.js',
-                'resources/js/device-fingerprint.js'
+                'resources/js/device-fingerprint.js',
+                'resources/js/connection-manager.js',
+                'resources/js/websocket-client.js'
             ],
             refresh: true,
         }),

@@ -13,7 +13,7 @@
     <link href="{{ asset('assets/css/bootstrap-icons.min.css') }}" rel="stylesheet">
     
     <!-- Vite Assets -->
-    @vite(['resources/css/bus-tracker.css', 'resources/js/device-fingerprint.js', 'resources/js/bus-tracker.js'])
+    @vite(['resources/css/app.css', 'resources/css/bus-app.css', 'resources/css/bus-tracker.css', 'resources/css/track-map.css', 'resources/js/app.js', 'resources/js/device-fingerprint.js', 'resources/js/bus-tracker.js', 'resources/js/connection-manager.js', 'resources/js/websocket-client.js'])
     
     @stack('styles')
 </head>
@@ -48,6 +48,9 @@
         </div>
     </div>
 
+    <!-- Connection Status Bar -->
+    @livewire('connection-status')
+    
     @yield('content')
 
     <!-- Side Drawer Menu -->

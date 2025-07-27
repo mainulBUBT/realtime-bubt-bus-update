@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\DeviceTokenController;
+use App\Http\Controllers\Api\PollingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,5 +22,15 @@ Route::middleware('api')->group(function () {
         Route::post('/register', [DeviceTokenController::class, 'register']);
         Route::post('/validate', [DeviceTokenController::class, 'validate']);
         Route::get('/stats', [DeviceTokenController::class, 'getStats']);
+    });
+
+    // Polling System Routes
+    Route::prefix('polling')->group(function () {
+        Route::get('/health', [PollingController::class, 'healthCheck']);
+        Route::get('/locations', [PollingController::class, 'getBusLocations']);
+        Route::get('/location/{busId}', [PollingController::class, 'getBusLocation']);
+        Route::post('/location', [PollingController::class, 'submitLocation']);
+        Route::get('/tracking-status', [PollingController::class, 'getTrackingStatus']);
+        Route::get('/statistics', [PollingController::class, 'getStatistics']);
     });
 });

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Manager Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .reconnecting { background-color: #fff3cd; color: #856404; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Connection Manager Test</h1>
+    
+    <div id="status" class="status">Initializing...</div>
+    
+    <div>
+        <button id="subscribe-btn" class="btn-primary">Subscribe to B1</button>
+        <button id="unsubscribe-btn" class="btn-danger">Unsubscribe from B1</button>
+        <button id="submit-location-btn" class="btn-success">Submit Test Location</button>
+        <button id="health-check-btn" class="btn-secondary">Health Check</button>
+        <button id="clear-log-btn" class="btn-secondary">Clear Log</button>
+    </div>
+    
+    <h3>Connection Info</h3>
+    <div id="connection-info"></div>
+    
+    <h3>Log</h3>
+    <div id="log" class="log"></div>
+
+    <script>
+        // Simple ConnectionManager implementation for testing
+        class ConnectionManager {
+            constructor(options = {}) {
+                this.options = {
+                    pollingInterval: options.pollingInterval || 10000,
+                    apiBaseUrl: options.apiBaseUrl || '/api/polling',
+                    debug: true,
+                    ...options
+                };
+                
+                this.isConnected = false;
+                this.connectionType = 'none';
+                this.subscribers = new Map();
+                this.connectionStatusCallbacks = [];
+                this.pollingTimer = null;
+                
+                this.log('Connection Manager initialized');
+                this.startPolling();
+            }
+            
+            startPolling() {
+                this.log('Starting polling system');
+                this.connectionType = 'polling';
+                this.isConnected = true;
+                this.notifyConnectionStatus('connected', 'polling');
+                
+                this.poll();
+                this.pollingTimer = setInterval(() => {
+                    this.poll();
+                }, this.options.pollingInterval);
+            }
+            
+            async poll() {
+                try {
+                    const busIds = Array.from(this.subscribers.keys());
+                    if (busIds.length === 0) return;
+                    
+                    const params = new URLSearchParams({
+                        bus_ids: busIds.join(',')
+                    });
+                    
+                    const response = await fetch(`${this.options.apiBaseUrl}/locations?${params}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.locations) {
+                        Object.entries(data.locations).forEach(([busId, locationData]) => {
+                            this.handleMessage({
+                                type: 'location_update',
+                                bus_id: busId,
+                                data: locationData
+                            });
+                        });
+                    }
+                    
+                    this.log(`Poll successful: ${Object.keys(data.locations || {}).length} bus updates`);
+                    
+                } catch (error) {
+                    this.log(`Poll error: ${error.message}`);
+                    this.handlePollingError(error);
+                }
+            }
+            
+            handlePollingError(error) {
+                this.isConnected = false;
+                this.connectionType = 'none';
+                this.notifyConnectionStatus('error', 'polling', error.message);
+            }
+            
+            subscribe(busId, callback) {
+                if (!this.subscribers.has(busId)) {
+                    this.subscribers.set(busId, new Set());
+                }
+                this.subscribers.get(busId).add(callback);
+                this.log(`Subscribed to bus ${busId}`);
+                
+                return () => this.unsubscribe(busId, callback);
+            }
+            
+            unsubscribe(busId, callback) {
+                const callbacks = this.subscribers.get(busId);
+                if (callbacks) {
+                    callbacks.delete(callback);
+                    if (callbacks.size === 0) {
+                        this.subscribers.delete(busId);
+                    }
+                }
+                this.log(`Unsubscribed from bus ${busId}`);
+            }
+            
+            async submitLocation(locationData) {
+                try {
+                    const response = await fetch(`${this.options.apiBaseUrl}/location`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(locationData)
+                    });
+                    
+                    const result = await response.json();
+                    this.log(`Location submitted: ${result.success ? 'Success' : 'Failed'} - ${result.message}`);
+                    return result;
+                } catch (error) {
+                    this.log(`Submit location error: ${error.message}`);
+                    throw error;
+                }
+            }
+            
+            async healthCheck() {
+                try {
+                    const response = await fetch(`${this.options.apiBaseUrl}/health`);
+                    const result = await response.json();
+                    this.log(`Health check: ${result.status} - ${result.timestamp}`);
+                    return response.ok;
+                } catch (error) {
+                    this.log(`Health check error: ${error.message}`);
+                    return false;
+                }
+            }
+            
+            handleMessage(message) {
+                if (message.type === 'location_update' && message.bus_id) {
+                    const callbacks = this.subscribers.get(message.bus_id);
+                    if (callbacks) {
+                        callbacks.forEach(callback => callback(message.data, message.bus_id));
+                    }
+                }
+            }
+            
+            onConnectionStatusChange(callback) {
+                this.connectionStatusCallbacks.push(callback);
+                callback({
+                    connected: this.isConnected,
+                    type: this.connectionType
+                });
+            }
+            
+            notifyConnectionStatus(status, type, message = null) {
+                const statusData = {
+                    status,
+                    type,
+                    connected: status === 'connected',
+                    message
+                };
+                
+                this.connectionStatusCallbacks.forEach(callback => callback(statusData));
+            }
+            
+            getConnectionInfo() {
+                return {
+                    connected: this.isConnected,
+                    type: this.connectionType,
+                    subscribedBuses: Array.from(this.subscribers.keys())
+                };
+            }
+            
+            log(message) {
+                if (this.options.debug) {
+                    console.log('[ConnectionManager]', message);
+                    
+                    // Also log to UI
+                    const logElement = document.getElementById('log');
+                    if (logElement) {
+                        const timestamp = new Date().toLocaleTimeString();
+                        logElement.innerHTML += `[${timestamp}] ${message}\n`;
+                        logElement.scrollTop = logElement.scrollHeight;
+                    }
+                }
+            }
+            
+            destroy() {
+                if (this.pollingTimer) {
+                    clearInterval(this.pollingTimer);
+                }
+                this.subscribers.clear();
+                this.connectionStatusCallbacks = [];
+            }
+        }
+        
+        // Initialize connection manager
+        let connectionManager;
+        let unsubscribeB1;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            connectionManager = new ConnectionManager({
+                pollingInterval: 5000, // 5 seconds for testing
+                debug: true
+            });
+            
+            // Listen for connection status changes
+            connectionManager.onConnectionStatusChange((status) => {
+                updateStatusDisplay(status);
+            });
+            
+            // Set up button handlers
+            document.getElementById('subscribe-btn').addEventListener('click', () => {
+                if (!unsubscribeB1) {
+                    unsubscribeB1 = connectionManager.subscribe('B1', (locationData, busId) => {
+                        connectionManager.log(`Received update for ${busId}: ${JSON.stringify(locationData)}`);
+                    });
+                }
+            });
+            
+            document.getElementById('unsubscribe-btn').addEventListener('click', () => {
+                if (unsubscribeB1) {
+                    unsubscribeB1();
+                    unsubscribeB1 = null;
+                }
+            });
+            
+            document.getElementById('submit-location-btn').addEventListener('click', async () => {
+                try {
+                    await connectionManager.submitLocation({
+                        bus_id: 'B1',
+                        device_token: 'test-token-' + Date.now(),
+                        latitude: 23.7937 + (Math.random() - 0.5) * 0.01,
+                        longitude: 90.3629 + (Math.random() - 0.5) * 0.01,
+                        accuracy: 10,
+                        speed: Math.random() * 30
+                    });
+                } catch (error) {
+                    connectionManager.log(`Submit failed: ${error.message}`);
+                }
+            });
+            
+            document.getElementById('health-check-btn').addEventListener('click', () => {
+                connectionManager.healthCheck();
+            });
+            
+            document.getElementById('clear-log-btn').addEventListener('click', () => {
+                document.getElementById('log').innerHTML = '';
+            });
+            
+            // Update connection info every second
+            setInterval(updateConnectionInfo, 1000);
+        });
+        
+        function updateStatusDisplay(status) {
+            const statusElement = document.getElementById('status');
+            statusElement.className = `status ${status.status}`;
+            statusElement.textContent = `Status: ${status.status} (${status.type})${status.message ? ' - ' + status.message : ''}`;
+        }
+        
+        function updateConnectionInfo() {
+            const info = connectionManager.getConnectionInfo();
+            document.getElementById('connection-info').innerHTML = `
+                <strong>Connected:</strong> ${info.connected}<br>
+                <strong>Type:</strong> ${info.type}<br>
+                <strong>Subscribed Buses:</strong> ${info.subscribedBuses.join(', ') || 'None'}
+            `;
+        }
+    </script>
+</body>
+</html>

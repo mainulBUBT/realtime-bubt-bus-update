@@ -19,7 +19,7 @@ Route::middleware('auth:admin')->group(function () {
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');
-    
+
     // Bus Management (Admin role required)
     Route::middleware('can:manage-buses')->group(function () {
         Route::resource('buses', BusController::class)->names([
@@ -33,7 +33,7 @@ Route::middleware('auth:admin')->group(function () {
         ]);
         Route::patch('buses/{bus}/toggle-status', [BusController::class, 'toggleStatus'])->name('admin.buses.toggle-status');
     });
-    
+
     // Schedule Management (Admin role required)
     Route::middleware('can:manage-schedules')->group(function () {
         Route::resource('schedules', ScheduleController::class)->names([
@@ -48,8 +48,14 @@ Route::middleware('auth:admin')->group(function () {
         Route::get('schedules/{schedule}/routes', [ScheduleController::class, 'manageRoutes'])->name('admin.schedules.routes');
         Route::post('schedules/{schedule}/routes', [ScheduleController::class, 'storeRoute'])->name('admin.schedules.routes.store');
         Route::delete('schedules/{schedule}/routes/{route}', [ScheduleController::class, 'destroyRoute'])->name('admin.schedules.routes.destroy');
+        Route::get('schedules/check-conflicts', [ScheduleController::class, 'checkConflicts'])->name('admin.schedules.check-conflicts');
+        Route::get('schedules/bulk-create', [ScheduleController::class, 'bulkCreate'])->name('admin.schedules.bulk-create');
+        Route::post('schedules/bulk-store', [ScheduleController::class, 'bulkStore'])->name('admin.schedules.bulk-store');
+        Route::get('schedules/templates', [ScheduleController::class, 'templates'])->name('admin.schedules.templates');
+        Route::post('schedules/templates', [ScheduleController::class, 'storeTemplate'])->name('admin.schedules.templates.store');
+        Route::get('schedules/{schedule}/history', [ScheduleController::class, 'history'])->name('admin.schedules.history');
     });
-    
+
     // Business Settings (Super Admin only)
     Route::middleware('can:manage-settings')->group(function () {
         Route::get('settings', [SettingsController::class, 'index'])->name('admin.settings.index');
@@ -57,8 +63,9 @@ Route::middleware('auth:admin')->group(function () {
         Route::post('settings/upload-logo', [SettingsController::class, 'uploadLogo'])->name('admin.settings.upload-logo');
         Route::post('settings/backup', [SettingsController::class, 'backup'])->name('admin.settings.backup');
         Route::post('settings/restore', [SettingsController::class, 'restore'])->name('admin.settings.restore');
+        Route::post('settings/reset-defaults', [SettingsController::class, 'resetToDefaults'])->name('admin.settings.reset-defaults');
     });
-    
+
     // Monitoring Dashboard (Monitor role and above)
     Route::middleware('can:view-monitoring')->group(function () {
         Route::get('monitoring', [MonitoringController::class, 'index'])->name('admin.monitoring.index');
@@ -66,5 +73,6 @@ Route::middleware('auth:admin')->group(function () {
         Route::get('monitoring/device-trust', [MonitoringController::class, 'deviceTrust'])->name('admin.monitoring.device-trust');
         Route::post('monitoring/device-trust/{token}/adjust', [MonitoringController::class, 'adjustTrustScore'])->name('admin.monitoring.adjust-trust');
         Route::get('monitoring/analytics', [MonitoringController::class, 'analytics'])->name('admin.monitoring.analytics');
+        Route::get('monitoring/real-time-data', [MonitoringController::class, 'getRealTimeData'])->name('admin.monitoring.real-time-data');
     });
 });

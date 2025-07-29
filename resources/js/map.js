@@ -1,58 +1,131 @@
 /**
- * Optimized Map initialization and bus tracking functionality
+ * Livewire-compatible Map initialization and bus tracking functionality
  */
 
 // Global variables
 let mapOptimizer = null;
 let clusterGroup = null;
+let livewireMapInstance = null;
 
-// Initialize the map with performance optimizations
+// Livewire-compatible map initialization
 function initMap() {
-    // Initialize performance optimizer
-    mapOptimizer = new MapPerformanceOptimizer();
+    // Check if we're in a Livewire environment
+    const isLivewire = window.Livewire && document.querySelector('[wire\\:id]');
     
-    // Get optimized map options
-    const mapOptions = mapOptimizer.getOptimizedMapOptions();
-    
-    // Create map with optimized settings
-    map = L.map('map', mapOptions).setView([23.7937, 90.3629], mapOptions.minZoom + 2);
-
-    // Add optimized tile layer with caching
-    const tileLayer = mapOptimizer.createOptimizedTileLayer();
-    tileLayer.addTo(map);
-    
-    // Create marker clustering for multiple buses
-    clusterGroup = mapOptimizer.createMarkerCluster();
-    map.addLayer(clusterGroup);
-    
-    // Enable lazy loading and progressive enhancement
-    mapOptimizer.enableLazyTileLoading(map);
-    mapOptimizer.enableProgressiveEnhancement(map);
-    
-    // Preload frequently accessed areas
-    mapOptimizer.preloadFrequentAreas();
-    
-    // Add connection quality indicator
-    addConnectionQualityIndicator();
-    
-    // Add loading indicator
-    addMapLoadingIndicator();
-
-    // Create optimized bus marker
-    const busMarker = mapOptimizer.createOptimizedBusMarker('B1', [busPosition.lat, busPosition.lng]);
-    
-    // Add bus marker to cluster group for better performance
-    clusterGroup.addLayer(busMarker);
-
-    // Add a popup to the bus marker
-    busMarker.bindPopup('<b>Bus B1: Buriganga</b><br>On route to Mirpur-1');
-
-    // Simulate bus movement for demo purposes
-    simulateBusMovement();
+    if (isLivewire) {
+        // Use Livewire-compatible initialization
+        initLivewireMap();
+    } else {
+        // Use original initialization for non-Livewire pages
+        initStandardMap();
+    }
 }
 
-// Center map on bus location with performance optimization
+// Initialize map for Livewire components
+function initLivewireMap() {
+    // Check if map container exists
+    const mapContainer = document.getElementById('map');
+    if (!mapContainer) {
+        console.warn('Map container not found for Livewire initialization');
+        return;
+    }
+    
+    // Remove existing map if it exists
+    if (window.map) {
+        window.map.remove();
+        window.map = null;
+    }
+    
+    try {
+        // Create map with Livewire-compatible settings
+        window.map = L.map('map', {
+            zoomControl: false,
+            attributionControl: true
+        }).setView([23.7937, 90.3629], 14);
+        
+        // Add tile layer with error handling
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
+            errorTileUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gVGlsZTwvdGV4dD48L3N2Zz4='
+        }).addTo(window.map);
+        
+        // Initialize performance optimizations if available
+        if (window.MapPerformanceOptimizer) {
+            mapOptimizer = new window.MapPerformanceOptimizer();
+            mapOptimizer.optimizeForLivewire(window.map);
+        }
+        
+        console.log('Livewire map initialized successfully');
+        
+    } catch (error) {
+        console.error('Error initializing Livewire map:', error);
+        showMapError();
+    }
+}
+
+// Initialize standard map for non-Livewire pages
+function initStandardMap() {
+    // Initialize performance optimizer
+    if (window.MapPerformanceOptimizer) {
+        mapOptimizer = new window.MapPerformanceOptimizer();
+        
+        // Get optimized map options
+        const mapOptions = mapOptimizer.getOptimizedMapOptions();
+        
+        // Create map with optimized settings
+        window.map = L.map('map', mapOptions).setView([23.7937, 90.3629], mapOptions.minZoom + 2);
+
+        // Add optimized tile layer with caching
+        const tileLayer = mapOptimizer.createOptimizedTileLayer();
+        tileLayer.addTo(window.map);
+        
+        // Create marker clustering for multiple buses
+        clusterGroup = mapOptimizer.createMarkerCluster();
+        window.map.addLayer(clusterGroup);
+        
+        // Enable lazy loading and progressive enhancement
+        mapOptimizer.enableLazyTileLoading(window.map);
+        mapOptimizer.enableProgressiveEnhancement(window.map);
+        
+        // Preload frequently accessed areas
+        mapOptimizer.preloadFrequentAreas();
+        
+        // Add connection quality indicator
+        addConnectionQualityIndicator();
+        
+        // Add loading indicator
+        addMapLoadingIndicator();
+
+        // Create optimized bus marker
+        const busMarker = mapOptimizer.createOptimizedBusMarker('B1', [window.busPosition.lat, window.busPosition.lng]);
+        
+        // Add bus marker to cluster group for better performance
+        clusterGroup.addLayer(busMarker);
+
+        // Add a popup to the bus marker
+        busMarker.bindPopup('<b>Bus B1: Buriganga</b><br>On route to Mirpur-1');
+
+        // Simulate bus movement for demo purposes
+        simulateBusMovement();
+    } else {
+        // Fallback to basic map initialization
+        window.map = L.map('map', {
+            zoomControl: false
+        }).setView([23.7937, 90.3629], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(window.map);
+    }
+}
+
+// Livewire-compatible center map function
 function centerMap() {
+    const map = window.map;
+    const busMarker = window.busMarker;
+    
     if (map && busMarker) {
         const deviceType = mapOptimizer ? mapOptimizer.getDeviceType() : 'desktop';
         let zoomLevel = 15;
@@ -66,6 +139,13 @@ function centerMap() {
         
         // Smooth pan to location
         map.setView(busMarker.getLatLng(), zoomLevel, {
+            animate: true,
+            duration: 0.5
+        });
+    } else if (map) {
+        // Fallback to default position if no marker
+        const defaultPosition = window.busPosition || { lat: 23.7937, lng: 90.3629 };
+        map.setView([defaultPosition.lat, defaultPosition.lng], 15, {
             animate: true,
             duration: 0.5
         });
@@ -291,6 +371,25 @@ function addMapLoadingIndicator() {
     }
 }
 
+// Show map error for Livewire compatibility
+function showMapError() {
+    const mapContainer = document.getElementById('map');
+    if (mapContainer) {
+        mapContainer.innerHTML = `
+            <div class="map-error">
+                <div class="error-content">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <h4>Map Loading Error</h4>
+                    <p>Unable to load the map. Please check your internet connection and try again.</p>
+                    <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+
+
 // Cleanup function to prevent memory leaks
 function cleanupMap() {
     // Clear movement interval
@@ -306,11 +405,28 @@ function cleanupMap() {
     }
     
     // Remove map
-    if (map) {
-        map.remove();
-        map = null;
+    if (window.map) {
+        window.map.remove();
+        window.map = null;
     }
 }
+
+// Initialize map on DOM ready and Livewire navigation
+document.addEventListener('DOMContentLoaded', function() {
+    // Only initialize if map container exists
+    if (document.getElementById('map')) {
+        initMap();
+    }
+});
+
+document.addEventListener('livewire:navigated', function() {
+    // Re-initialize map after Livewire navigation
+    setTimeout(() => {
+        if (document.getElementById('map')) {
+            initMap();
+        }
+    }, 100);
+});
 
 // Call cleanup when page unloads
 window.addEventListener('beforeunload', cleanupMap);

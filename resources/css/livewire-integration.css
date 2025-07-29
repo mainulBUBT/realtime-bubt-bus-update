@@ -1,0 +1,642 @@
+/**
+ * Livewire Integration CSS
+ * Preserves original Bootstrap styling and responsive design while ensuring compatibility with Livewire components
+ */
+
+/* Notification styles for Livewire compatibility */
+.app-notification,
+.track-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 9999;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    max-width: 300px;
+    word-wrap: break-word;
+}
+
+.app-notification.show,
+.track-notification.show {
+    transform: translateX(0);
+}
+
+.app-notification.success,
+.track-notification.success {
+    background-color: #28a745;
+}
+
+.app-notification.error,
+.track-notification.error {
+    background-color: #dc3545;
+}
+
+.app-notification.warning,
+.track-notification.warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.app-notification.info,
+.track-notification.info {
+    background-color: #17a2b8;
+}
+
+/* Map error styles */
+.map-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+.map-error .error-content {
+    text-align: center;
+    padding: 2rem;
+}
+
+.map-error .error-content i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #dc3545;
+}
+
+.map-error .error-content h4 {
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.map-error .error-content p {
+    margin-bottom: 1.5rem;
+    max-width: 300px;
+}
+
+/* Dropdown improvements for Livewire */
+.dropdown-item {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.dropdown-item.active {
+    background-color: var(--primary-color, #007bff);
+    color: white;
+}
+
+.dropdown-item.active .bus-badge-mini {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+}
+
+/* Loading states for Livewire */
+[wire\:loading] {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+[wire\:loading\.delay] {
+    opacity: 1;
+}
+
+[wire\:loading\.delay\.shortest] {
+    opacity: 1;
+}
+
+[wire\:loading\.delay\.shorter] {
+    opacity: 1;
+}
+
+[wire\:loading\.delay\.short] {
+    opacity: 1;
+}
+
+[wire\:loading\.delay\.long] {
+    opacity: 0.7;
+}
+
+[wire\:loading\.delay\.longer] {
+    opacity: 0.7;
+}
+
+[wire\:loading\.delay\.longest] {
+    opacity: 0.7;
+}
+
+/* Livewire loading spinner */
+.livewire-loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Bus card hover effects for Livewire */
+.home-bus-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.home-bus-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.home-bus-card[wire\:loading] {
+    transform: none;
+    opacity: 0.7;
+}
+
+/* Real-time status indicators */
+.home-bus-status.active {
+    background-color: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.home-bus-status.delayed {
+    background-color: #ffc107;
+}
+
+.home-bus-status.inactive {
+    background-color: #6c757d;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Bottom sheet improvements for Livewire */
+.bottom-sheet {
+    transition: transform 0.3s ease, height 0.3s ease;
+}
+
+.bottom-sheet.expanded {
+    transform: translateY(0) !important;
+}
+
+.bottom-sheet-handle {
+    cursor: grab;
+    user-select: none;
+}
+
+.bottom-sheet-handle:active {
+    cursor: grabbing;
+}
+
+/* Map controls responsive design */
+.map-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.map-control-btn {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.map-control-btn:hover {
+    background: #f8f9fa;
+    transform: scale(1.05);
+}
+
+.map-control-btn:active {
+    transform: scale(0.95);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 576px) {
+    .app-notification,
+    .track-notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        transform: translateY(-100%);
+    }
+    
+    .app-notification.show,
+    .track-notification.show {
+        transform: translateY(0);
+    }
+    
+    .map-controls {
+        top: 10px;
+        right: 10px;
+    }
+    
+    .map-control-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .dropdown-item {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Tablet responsive adjustments */
+@media (min-width: 577px) and (max-width: 991px) {
+    .map-controls {
+        top: 15px;
+        right: 15px;
+    }
+}
+
+/* Desktop responsive adjustments */
+@media (min-width: 992px) {
+    .map-controls {
+        top: 20px;
+        right: 20px;
+    }
+    
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* Connection quality indicator */
+.connection-quality-indicator {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    z-index: 1001;
+}
+
+.connection-quality-indicator.excellent {
+    background-color: #28a745;
+}
+
+.connection-quality-indicator.good {
+    background-color: #17a2b8;
+}
+
+.connection-quality-indicator.fair {
+    background-color: #ffc107;
+}
+
+.connection-quality-indicator.poor {
+    background-color: #fd7e14;
+}
+
+.connection-quality-indicator.offline {
+    background-color: #dc3545;
+}
+
+/* Map loading indicator */
+.map-loading-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.9);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 1002;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.map-loading-indicator.active {
+    display: flex;
+}
+
+.map-loading-indicator .loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Offline indicator */
+.map-offline-indicator {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: none;
+    z-index: 1001;
+}
+
+.map-offline-indicator.active {
+    display: block;
+}
+
+/* Preserve original mobile navigation */
+.mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+}
+
+.header-title h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: #212529;
+}
+
+.location-indicator {
+    font-size: 0.8rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Preserve drawer functionality */
+.side-drawer {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 300px;
+    height: 100vh;
+    background: white;
+    z-index: 9999;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+}
+
+.side-drawer.active {
+    left: 0;
+}
+
+.drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 9998;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.drawer-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Preserve bottom navigation */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5rem 0;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #6c757d;
+    transition: color 0.2s ease;
+    padding: 0.5rem;
+    min-width: 60px;
+}
+
+.nav-item.active {
+    color: #007bff;
+}
+
+.nav-icon {
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+/* Ensure Livewire components don't break layout */
+[wire\:id] {
+    display: contents;
+}
+
+/* Smooth transitions for Livewire updates */
+[x-transition\:enter] {
+    transition: all 0.3s ease;
+}
+
+[x-transition\:leave] {
+    transition: all 0.3s ease;
+}
+
+/* Fix for Livewire modal compatibility */
+.modal {
+    z-index: 10000;
+}
+
+.modal-backdrop {
+    z-index: 9999;
+}
+
+/* Preserve splash screen styling */
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.splash-content {
+    text-align: center;
+    color: white;
+}
+
+.splash-logo {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.app-name {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.app-tagline {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.splash-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Permission screen styling */
+.permission-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: white;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 2rem;
+    text-align: center;
+}
+
+.permission-illustration {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 2rem;
+}
+
+.permission-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #212529;
+}
+
+.permission-description {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+.permission-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 300px;
+}
+
+.btn-allow {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-allow:hover {
+    background: #0056b3;
+}
+
+.btn-deny {
+    background: transparent;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-deny:hover {
+    background: #f8f9fa;
+    color: #495057;
+}

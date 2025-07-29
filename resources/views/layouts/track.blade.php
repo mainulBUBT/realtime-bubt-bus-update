@@ -16,7 +16,7 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
     
     <!-- Vite Assets -->
-    @vite(['resources/css/bus-tracker.css', 'resources/css/track-map.css', 'resources/js/bus-tracker.js', 'resources/js/connection-manager.js'])
+    @vite(['resources/css/bus-tracker.css', 'resources/css/track-map.css', 'resources/css/livewire-integration.css', 'resources/js/bus-tracker.js', 'resources/js/connection-manager.js', 'resources/js/livewire-track.js', 'resources/js/map.js'])
     
     @stack('styles')
 </head>

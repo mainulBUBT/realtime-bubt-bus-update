@@ -33,6 +33,22 @@ class BusSchedule extends Model
     }
 
     /**
+     * Get the history records for this schedule
+     */
+    public function history()
+    {
+        return $this->hasMany(ScheduleHistory::class, 'schedule_id');
+    }
+
+    /**
+     * Get the current position for this bus
+     */
+    public function currentPosition()
+    {
+        return $this->hasOne(BusCurrentPosition::class, 'bus_id', 'bus_id');
+    }
+
+    /**
      * Check if the bus is currently active based on schedule
      */
     public function isCurrentlyActive(): bool

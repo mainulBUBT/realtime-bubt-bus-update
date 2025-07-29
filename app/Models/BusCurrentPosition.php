@@ -38,6 +38,14 @@ class BusCurrentPosition extends Model
     ];
     
     /**
+     * Get the bus associated with this position
+     */
+    public function bus()
+    {
+        return $this->belongsTo(Bus::class, 'bus_id', 'bus_id');
+    }
+    
+    /**
      * Get the bus schedule associated with this position
      */
     public function busSchedule()

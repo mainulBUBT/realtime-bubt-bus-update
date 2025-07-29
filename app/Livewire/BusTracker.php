@@ -38,11 +38,26 @@ class BusTracker extends Component
         'trackingStatusChanged' => 'updateTrackingStatus'
     ];
 
+    public function getIsActiveProperty()
+    {
+        return $this->tripStatus === 'active' && $this->busSchedule && $this->busSchedule->isCurrentlyActive();
+    }
+
+    public function getCurrentTripProperty()
+    {
+        if (!$this->busSchedule || !$this->busSchedule->isCurrentlyActive()) {
+            return 'inactive';
+        }
+
+        return $this->busSchedule->isOnDepartureTrip() ? 'departure' : 'return';
+    }
+
     public function mount($busId)
     {
         $this->busId = $busId;
         $this->loadBusData();
         $this->initializeDeviceToken();
+        $this->getCurrentBusPosition(); // Ensure we have initial position
     }
 
     public function loadBusData()
@@ -120,16 +135,30 @@ class BusTracker extends Component
             $this->tripStatus = 'active';
             
             // Use fallback service for comprehensive status
-            $fallbackService = app(\App\Services\BusTrackingFallbackService::class);
-            $trackingStatus = $fallbackService->getBusTrackingStatus($this->busId);
+            try {
+                $fallbackService = app(\App\Services\BusTrackingFallbackService::class);
+                $trackingStatus = $fallbackService->getBusTrackingStatus($this->busId);
+            } catch (\Exception $e) {
+                // Fallback to basic status if service fails
+                $trackingStatus = [
+                    'status' => 'inactive',
+                    'confidence_level' => 0.0,
+                    'active_trackers' => 0,
+                    'current_location' => null
+                ];
+                \Log::warning('BusTrackingFallbackService error: ' . $e->getMessage());
+            }
             
-            $this->trackingStatus = $trackingStatus['status'];
+            $this->trackingStatus = $trackingStatus['status'] ?? 'inactive';
             $this->confidenceLevel = $trackingStatus['confidence_level'] ?? 0.0;
             $this->activeTrackers = $trackingStatus['active_trackers'] ?? 0;
             
             // Update current location if available
             if (isset($trackingStatus['current_location'])) {
                 $this->currentLocation = $trackingStatus['current_location'];
+            } else {
+                // Fallback to database position
+                $this->getCurrentBusPosition();
             }
             
             // Update last seen information
@@ -169,6 +198,8 @@ class BusTracker extends Component
                 'is_active' => true
             ],
             [
+                'device_token_hash' => hash('sha256', $this->deviceToken),
+                'session_id' => uniqid('session_', true),
                 'started_at' => Carbon::now(),
                 'trust_score_at_start' => $this->getTrustScore()
             ]
@@ -241,6 +272,34 @@ class BusTracker extends Component
         $this->deviceToken = $deviceTokenService->getOrCreateToken();
     }
 
+    private function getCurrentBusPosition()
+    {
+        $currentPosition = \App\Models\BusCurrentPosition::where('bus_id', $this->busId)->first();
+        
+        if ($currentPosition) {
+            $this->currentLocation = [
+                'latitude' => $currentPosition->latitude,
+                'longitude' => $currentPosition->longitude,
+                'status' => $currentPosition->status,
+                'confidence_level' => $currentPosition->confidence_level,
+                'active_trackers' => $currentPosition->active_trackers,
+                'last_updated' => $currentPosition->last_updated,
+                'speed' => $currentPosition->speed ?? 0
+            ];
+            
+            $this->confidenceLevel = $currentPosition->confidence_level ?? 0;
+            $this->activeTrackers = $currentPosition->active_trackers ?? 0;
+            $this->speed = $currentPosition->speed ?? 0;
+        }
+    }
+
+    public function refreshData()
+    {
+        $this->loadBusData();
+        $this->getCurrentBusPosition();
+        $this->updateBusStatus();
+    }
+
     private function getTrackingStatus()
     {
         // Check if there are active tracking sessions for this bus
@@ -298,11 +357,7 @@ class BusTracker extends Component
         return rand(20, 50);
     }
 
-    public function refreshData()
-    {
-        $this->loadBusData();
-        $this->updateBusStatus();
-    }
+
 
     private function updateLastSeenInfo()
     {

@@ -32,16 +32,16 @@
     <div class="floating-info-bar">
         <div class="bus-badge">
             <span class="bus-id">{{ $busId }}</span>
-            <div class="bus-pulse {{ $isActive ? 'active' : '' }}"></div>
+            <div class="bus-pulse {{ $this->isActive ? 'active' : '' }}"></div>
         </div>
         <div class="info-content">
             <div class="bus-name">{{ $busName }}</div>
             <div class="eta-info">
-                @if($isActive && $eta && $nextStop)
+                @if($this->isActive && $eta && $nextStop)
                     <i class="bi bi-clock"></i>
                     <span class="eta-time">{{ $eta }}</span>
                     <span class="eta-to">to {{ $nextStop }}</span>
-                @elseif($isActive)
+                @elseif($this->isActive)
                     @switch($trackingStatus)
                         @case('no_tracking')
                             <i class="bi bi-exclamation-triangle"></i>
@@ -72,7 +72,7 @@
     </div>
 
     <!-- I'm on this Bus Button -->
-    @if($isActive)
+    @if($this->isActive)
         <div class="tracking-control">
             @if(!$isTracking)
                 <button class="btn btn-primary btn-lg tracking-btn" wire:click="startTracking">
@@ -158,8 +158,8 @@
             <div class="route-timeline">
                 <div class="timeline-header">
                     <div class="route-info">
-                        <div class="route-name">{{ $currentTrip === 'departure' ? 'Campus → City' : ($currentTrip === 'return' ? 'City → Campus' : 'Complete Route') }}</div>
-                        <div class="route-stats">{{ count($routes) }} stops • {{ $isActive ? 'Active' : 'Inactive' }}</div>
+                        <div class="route-name">{{ $this->currentTrip === 'departure' ? 'Campus → City' : ($this->currentTrip === 'return' ? 'City → Campus' : 'Complete Route') }}</div>
+                        <div class="route-stats">{{ count($routes) }} stops • {{ $this->isActive ? 'Active' : 'Inactive' }}</div>
                     </div>
                 </div>
 
@@ -209,7 +209,7 @@
             </div>
 
             <!-- Tracking Status Info -->
-            @if($isActive)
+            @if($this->isActive)
                 <div class="tracking-info">
                     <div class="tracking-icon">
                         @switch($trackingStatus)
@@ -367,7 +367,7 @@
 <script>
     let map = null;
     let busMarker = null;
-    let busPosition = { lat: 23.7937, lng: 90.3629 }; // Default position (Dhaka)
+    let busPosition = @if($currentLocation) { lat: {{ $currentLocation['latitude'] }}, lng: {{ $currentLocation['longitude'] }} } @else { lat: 23.7937, lng: 90.3629 } @endif;
     let connectionManager = null;
     let unsubscribeConnection = null;
 

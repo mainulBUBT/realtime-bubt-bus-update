@@ -13,7 +13,7 @@
     <link href="{{ asset('assets/css/bootstrap-icons.min.css') }}" rel="stylesheet">
     
     <!-- Vite Assets -->
-    @vite(['resources/css/app.css', 'resources/css/bus-app.css', 'resources/css/bus-tracker.css', 'resources/css/track-map.css', 'resources/js/app.js', 'resources/js/device-fingerprint.js', 'resources/js/bus-tracker.js', 'resources/js/connection-manager.js', 'resources/js/websocket-client.js'])
+    @vite(['resources/css/app.css', 'resources/css/bus-app.css', 'resources/css/bus-tracker.css', 'resources/css/track-map.css', 'resources/css/livewire-integration.css', 'resources/js/app.js', 'resources/js/device-fingerprint.js', 'resources/js/bus-tracker.js', 'resources/js/connection-manager.js', 'resources/js/websocket-client.js', 'resources/js/livewire-app.js', 'resources/js/map.js'])
     
     @stack('styles')
 </head>
@@ -66,11 +66,11 @@
             </button>
         </div>
         <div class="drawer-content">
-            <a href="{{ route('home') }}" class="drawer-item {{ request()->routeIs('home') ? 'active' : '' }}">
+            <a href="#" class="drawer-item {{ request()->routeIs('home') ? 'active' : '' }}" data-screen="home-screen">
                 <i class="bi bi-house-door"></i>
                 <span>Home</span>
             </a>
-            <a href="#" class="drawer-item">
+            <a href="#" class="drawer-item" data-screen="chuti-screen">
                 <i class="bi bi-calendar-event"></i>
                 <span>Chuti Kobe</span>
             </a>
@@ -83,11 +83,11 @@
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
-        <a href="{{ route('home') }}" class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
+        <a href="#" class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}" data-screen="home-screen">
             <i class="bi bi-house-door nav-icon"></i>
             <span class="nav-label">Home</span>
         </a>
-        <a href="#" class="nav-item">
+        <a href="#" class="nav-item" data-screen="chuti-screen">
             <i class="bi bi-calendar-event nav-icon"></i>
             <span class="nav-label">Chuti Kobe</span>
         </a>

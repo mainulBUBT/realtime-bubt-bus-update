@@ -51,7 +51,10 @@
     <!-- Connection Status Bar -->
     @livewire('connection-status')
     
-    @yield('content')
+    <!-- Main Content Container -->
+    <main class="main-content">
+        @yield('content')
+    </main>
 
     <!-- Side Drawer Menu -->
     <div class="drawer-overlay" id="drawer-overlay"></div>

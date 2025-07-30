@@ -271,10 +271,11 @@
     }
 
     .no-buses-message {
-        background: white;
+        background: white !important;
         border-radius: 12px;
         margin: 1rem 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        color: #333 !important;
     }
 
     .status-legend {
@@ -282,10 +283,13 @@
         justify-content: center;
         gap: 1rem;
         padding: 1rem;
-        background: rgba(255,255,255,0.9);
+        background: white !important;
         border-radius: 8px;
-        margin: 1rem;
+        margin: 1rem 1rem 2rem 1rem; /* Extra bottom margin */
         flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
+        color: #333 !important;
     }
 
     .legend-item {
@@ -303,20 +307,23 @@
     .dropdown-item {
         cursor: pointer;
         transition: background-color 0.2s;
+        background: white !important;
+        color: #333 !important;
     }
 
     .dropdown-item:hover {
-        background-color: rgba(0,0,0,0.05);
+        background-color: #f8f9fa !important;
+        color: #333 !important;
     }
 
     .dropdown-item.active {
-        background-color: var(--primary-color, #007bff);
-        color: white;
+        background-color: var(--primary-color, #007bff) !important;
+        color: white !important;
     }
 
     .dropdown-item.active .bus-badge-mini {
-        background-color: rgba(255,255,255,0.2);
-        color: white;
+        background-color: rgba(255,255,255,0.2) !important;
+        color: white !important;
     }
 
     /* Loading state */

@@ -5,7 +5,9 @@
 @section('content')
 <!-- Home Screen -->
 <div id="home-screen" class="screen active-screen">
-    @livewire('bus-list')
+    <div class="screen-content">
+        @livewire('bus-list')
+    </div>
 </div>
 
 <!-- Include Holiday Screen Component -->
@@ -241,10 +243,19 @@
 /* Screen switching styles */
 .screen {
     display: none;
+    background-color: #f5f5f5;
+    min-height: 100vh;
+    width: 100%;
 }
 
 .screen.active-screen {
     display: block;
+}
+
+.screen-content {
+    width: 100%;
+    min-height: 100vh;
+    background-color: #f5f5f5;
 }
 
 /* Responsive modal */

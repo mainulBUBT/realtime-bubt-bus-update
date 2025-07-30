@@ -2,8 +2,8 @@
 
 /* Root Variables */
 :root {
-    --primary-color: #4CAF50;
-    --secondary-color: #1a73e8;
+    --primary-color: #007bff;
+    --secondary-color: #4CAF50;
     --success-color: #28a745;
     --warning-color: #ffc107;
     --danger-color: #dc3545;
@@ -20,6 +20,13 @@
     box-sizing: border-box;
 }
 
+/* Main Content Container */
+.main-content {
+    background-color: #f5f5f5;
+    min-height: 100vh;
+    position: relative;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -27,6 +34,8 @@ body {
     background-color: #f5f5f5;
     color: #333;
     line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
 /* Splash Screen */
@@ -173,11 +182,12 @@ body {
 
 /* Mobile Header */
 .mobile-header {
-    background: white;
+    background: white !important;
     box-shadow: var(--box-shadow);
     position: sticky;
     top: 0;
     z-index: 100;
+    color: #333 !important;
 }
 
 .header-top {
@@ -246,7 +256,7 @@ body {
 }
 
 .dropdown-header {
-    background: #f8f9fa;
+    background: white !important;
     border: 1px solid #dee2e6;
     border-radius: var(--border-radius);
     padding: 0.75rem 1rem;
@@ -255,15 +265,16 @@ body {
     align-items: center;
     cursor: pointer;
     transition: var(--transition);
+    color: #333 !important;
 }
 
 .dropdown-header:hover {
-    background: #e9ecef;
+    background: #f8f9fa !important;
 }
 
 .dropdown-header.active {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .dropdown-menu {
@@ -271,7 +282,7 @@ body {
     top: 100%;
     left: 0;
     right: 0;
-    background: white;
+    background: white !important;
     border: 1px solid #dee2e6;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
@@ -279,6 +290,7 @@ body {
     max-height: 300px;
     overflow-y: auto;
     display: none;
+    color: #333 !important;
 }
 
 .dropdown-menu.show {
@@ -292,20 +304,23 @@ body {
     gap: 0.75rem;
     cursor: pointer;
     transition: var(--transition);
+    background: white !important;
+    color: #333 !important;
 }
 
 .dropdown-item:hover {
-    background: #f8f9fa;
+    background: #f8f9fa !important;
+    color: #333 !important;
 }
 
 .dropdown-item.active {
-    background: var(--primary-color);
-    color: white;
+    background: var(--primary-color) !important;
+    color: white !important;
 }
 
 .bus-badge-mini {
-    background: var(--primary-color);
-    color: white;
+    background: var(--primary-color) !important;
+    color: white !important;
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -319,6 +334,8 @@ body {
 /* Home Content */
 .home-content {
     padding: 1rem;
+    padding-bottom: 100px; /* Extra space for bottom navigation */
+    min-height: calc(100vh - 200px); /* Ensure content takes full height */
 }
 
 .home-section-title {
@@ -333,10 +350,11 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    margin-bottom: 2rem; /* Extra space at bottom */
 }
 
 .home-bus-card {
-    background: white;
+    background: white !important;
     border-radius: var(--border-radius);
     padding: 1rem;
     box-shadow: var(--box-shadow);
@@ -345,6 +363,7 @@ body {
     gap: 1rem;
     transition: var(--transition);
     cursor: pointer;
+    color: #333 !important;
 }
 
 .home-bus-card:hover {
@@ -357,8 +376,8 @@ body {
 }
 
 .home-bus-badge {
-    background: var(--primary-color);
-    color: white;
+    background: var(--primary-color) !important;
+    color: white !important;
     width: 50px;
     height: 50px;
     border-radius: 50%;
@@ -476,7 +495,8 @@ body {
     transition: var(--transition);
 }
 
-.drawer-overlay.show {
+.drawer-overlay.show,
+.drawer-overlay.active {
     opacity: 1;
     visibility: visible;
 }
@@ -494,7 +514,8 @@ body {
     flex-direction: column;
 }
 
-.side-drawer.show {
+.side-drawer.show,
+.side-drawer.active {
     left: 0;
 }
 
@@ -548,7 +569,7 @@ body {
 }
 
 .drawer-item.active {
-    background: rgba(76, 175, 80, 0.1);
+    background: rgba(0, 123, 255, 0.1);
     color: var(--primary-color);
     border-right: 3px solid var(--primary-color);
 }
@@ -611,7 +632,9 @@ body {
 @media (max-width: 768px) {
     .home-content {
         padding: 0.5rem;
-        margin-bottom: 80px; /* Account for bottom nav */
+        padding-bottom: 100px; /* Account for bottom nav */
+        margin-bottom: 0;
+        min-height: calc(100vh - 150px);
     }
     
     .permission-buttons {
@@ -644,7 +667,8 @@ body {
     }
 }
 
-/* Dark Mode Support */
+/* Dark Mode Support - Disabled for now to prevent black screen */
+/* 
 @media (prefers-color-scheme: dark) {
     body {
         background-color: #1a1a1a;
@@ -680,6 +704,17 @@ body {
     .side-drawer {
         background: #2a2a2a;
     }
+}
+*/
+
+/* Force light theme for now */
+body {
+    background-color: #f5f5f5 !important;
+    color: #333 !important;
+}
+
+.main-content {
+    background-color: #f5f5f5 !important;
 }
 
 /* High Contrast Mode */
@@ -733,4 +768,133 @@ body {
         box-shadow: none;
         border: 1px solid #ccc;
     }
+}
+/* Addi
+tional fixes for black screen and scrolling issues */
+html {
+    background-color: #f5f5f5 !important;
+    height: 100%;
+}
+
+body {
+    background-color: #f5f5f5 !important;
+    color: #333 !important;
+    height: 100%;
+}
+
+#home-screen {
+    background-color: #f5f5f5 !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+}
+
+.screen-content {
+    background-color: #f5f5f5 !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+}
+
+/* Ensure proper scrolling */
+.home-content {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for bottom content visibility */
+.home-bus-cards-container:last-child {
+    padding-bottom: 120px; /* Extra space for bottom navigation */
+}
+
+/* Status legend positioning fix */
+.status-legend {
+    margin-bottom: 120px !important; /* Ensure it's visible above bottom nav */
+}
+
+/* Bottom navigation z-index fix */
+.bottom-nav {
+    z-index: 1000 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+}
+
+/* Ensure content is above splash screen when hidden */
+.main-content {
+    position: relative;
+    z-index: 1;
+}
+
+.splash-screen.hidden {
+    z-index: -1;
+}/* Force c
+orrect colors for all components */
+.home-bus-name {
+    color: #333 !important;
+}
+
+.home-bus-schedule {
+    color: #666 !important;
+}
+
+.header-title h1 {
+    color: #333 !important;
+}
+
+.location-indicator {
+    color: #666 !important;
+}
+
+.home-section-title {
+    color: #333 !important;
+}
+
+/* Ensure all buttons use primary color */
+.btn-allow {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+.nav-item.active {
+    color: var(--primary-color) !important;
+}
+
+.nav-item:hover {
+    color: var(--primary-color) !important;
+    background: rgba(0, 123, 255, 0.1) !important;
+}
+
+/* Fix any remaining dark elements */
+* {
+    color: inherit;
+}
+
+.mobile-header * {
+    color: #333 !important;
+}
+
+.home-content * {
+    color: inherit;
+}
+
+.dropdown-header * {
+    color: #333 !important;
+}
+
+.dropdown-menu * {
+    color: #333 !important;
+}
+
+.home-bus-card * {
+    color: inherit;
+}
+
+/* Override any Bootstrap dark classes */
+.text-dark {
+    color: #333 !important;
+}
+
+.bg-dark {
+    background-color: white !important;
+    color: #333 !important;
 }

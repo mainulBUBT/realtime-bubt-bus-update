@@ -85,20 +85,23 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
+    background: white !important;
+    color: #333 !important;
 }
 
 .dropdown-item:hover {
-    background-color: rgba(0,0,0,0.05);
+    background-color: #f8f9fa !important;
+    color: #333 !important;
 }
 
 .dropdown-item.active {
-    background-color: var(--primary-color, #007bff);
-    color: white;
+    background-color: var(--primary-color, #007bff) !important;
+    color: white !important;
 }
 
 .dropdown-item.active .bus-badge-mini {
-    background-color: rgba(255,255,255,0.2);
-    color: white;
+    background-color: rgba(255,255,255,0.2) !important;
+    color: white !important;
 }
 
 /* Loading states for Livewire */
@@ -378,8 +381,9 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background: white;
+    background: white !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    color: #333 !important;
 }
 
 .header-top {
@@ -393,12 +397,12 @@
     font-size: 1.25rem;
     font-weight: 600;
     margin: 0;
-    color: #212529;
+    color: #212529 !important;
 }
 
 .location-indicator {
     font-size: 0.8rem;
-    color: #6c757d;
+    color: #6c757d !important;
     display: flex;
     align-items: center;
     gap: 0.25rem;
@@ -639,4 +643,93 @@
 .btn-deny:hover {
     background: #f8f9fa;
     color: #495057;
+}/* A
+dditional fixes for black screen issues */
+.home-bus-card {
+    background: white !important;
+    color: #333 !important;
+}
+
+.home-bus-card * {
+    color: inherit !important;
+}
+
+.home-bus-name {
+    color: #333 !important;
+}
+
+.home-bus-schedule {
+    color: #666 !important;
+}
+
+.home-section-title {
+    color: #333 !important;
+}
+
+.dropdown-header {
+    background: white !important;
+    color: #333 !important;
+}
+
+.dropdown-header * {
+    color: #333 !important;
+}
+
+.dropdown-menu {
+    background: white !important;
+    color: #333 !important;
+}
+
+.dropdown-menu * {
+    color: inherit !important;
+}
+
+/* Force light theme */
+body {
+    background-color: #f5f5f5 !important;
+    color: #333 !important;
+}
+
+html {
+    background-color: #f5f5f5 !important;
+}
+
+.screen {
+    background-color: #f5f5f5 !important;
+}
+
+.screen-content {
+    background-color: #f5f5f5 !important;
+}
+
+.home-content {
+    background-color: transparent !important;
+}
+
+/* Override any dark mode styles */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #f5f5f5 !important;
+        color: #333 !important;
+    }
+    
+    .mobile-header {
+        background: white !important;
+        color: #333 !important;
+    }
+    
+    .home-bus-card {
+        background: white !important;
+        color: #333 !important;
+    }
+    
+    .dropdown-header {
+        background: white !important;
+        color: #333 !important;
+    }
+    
+    .dropdown-menu {
+        background: white !important;
+        color: #333 !important;
+    }
 }

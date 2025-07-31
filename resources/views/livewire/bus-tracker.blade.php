@@ -43,6 +43,10 @@
                     <span class="eta-to">to {{ $nextStop }}</span>
                 @elseif($this->isActive)
                     @switch($trackingStatus)
+                        @case('default_location')
+                            <i class="bi bi-geo"></i>
+                            <span class="eta-time">Default Location</span>
+                            @break
                         @case('no_tracking')
                             <i class="bi bi-exclamation-triangle"></i>
                             <span class="eta-time">No Tracking</span>
@@ -56,8 +60,13 @@
                             <span class="eta-time">Calculating...</span>
                     @endswitch
                 @else
-                    <i class="bi bi-pause-circle"></i>
-                    <span class="eta-time">Not Active</span>
+                    @if($trackingStatus === 'default_location')
+                        <i class="bi bi-geo"></i>
+                        <span class="eta-time">Default Location</span>
+                    @else
+                        <i class="bi bi-pause-circle"></i>
+                        <span class="eta-time">Not Active</span>
+                    @endif
                 @endif
             </div>
         </div>
@@ -365,27 +374,61 @@
 
 @push('scripts')
 <script>
+    console.log('Bus tracker script loading...');
+
+    // Namespace for bus tracker to avoid conflicts
+    window.BusTracker = window.BusTracker || {};
+
     let map = null;
     let busMarker = null;
-    let busPosition = @if($currentLocation) { lat: {{ $currentLocation['latitude'] }}, lng: {{ $currentLocation['longitude'] }} } @else { lat: 23.7937, lng: 90.3629 } @endif;
+    let busPosition = @if($currentLocation && isset($currentLocation['latitude']) && isset($currentLocation['longitude'])) { lat: {{ $currentLocation['latitude'] }}, lng: {{ $currentLocation['longitude'] }} } @else { lat: 23.7937, lng: 90.3629 } @endif;
     let connectionManager = null;
     let unsubscribeConnection = null;
 
-    document.addEventListener('livewire:navigated', function() {
-        initBusTracker();
-    });
+    console.log('Initial bus position:', busPosition);
 
-    document.addEventListener('DOMContentLoaded', function() {
-        initBusTracker();
-    });
-
-    function initBusTracker() {
-        initMap();
-        initBottomSheet();
-        initMapControls();
-        setupLivewireListeners();
-        initConnectionManager();
+    // Ensure proper initialization order
+    function waitForDependencies() {
+        return new Promise((resolve) => {
+            const checkDependencies = () => {
+                if (typeof L !== 'undefined' && document.readyState === 'complete') {
+                    resolve();
+                } else {
+                    setTimeout(checkDependencies, 50);
+                }
+            };
+            checkDependencies();
+        });
     }
+
+    // Initialize when everything is ready
+    async function initBusTracker() {
+        console.log('Initializing bus tracker...');
+
+        try {
+            await waitForDependencies();
+
+            initMap();
+            initBottomSheet();
+            initMapControls();
+            setupLivewireListeners();
+            initConnectionManager();
+
+            console.log('Bus tracker initialized successfully');
+        } catch (error) {
+            console.error('Error initializing bus tracker:', error);
+            // Retry after delay
+            setTimeout(initBusTracker, 1000);
+        }
+    }
+
+    // Multiple initialization triggers
+    document.addEventListener('DOMContentLoaded', initBusTracker);
+    document.addEventListener('livewire:navigated', initBusTracker);
+    document.addEventListener('livewire:load', initBusTracker);
+
+    // Fallback initialization
+    window.addEventListener('load', initBusTracker);
 
     function initConnectionManager() {
         // Initialize connection manager with polling fallback
@@ -412,33 +455,134 @@
     }
 
     function initMap() {
-        if (map) {
-            map.remove();
+        console.log('Initializing map...');
+
+        // Wait for Leaflet to be available
+        if (typeof L === 'undefined') {
+            console.log('Waiting for Leaflet to load...');
+            setTimeout(initMap, 100);
+            return;
         }
 
-        // Create map centered on Dhaka, Bangladesh
-        map = L.map('map', {
-            zoomControl: false
-        }).setView([23.7937, 90.3629], 14);
+        // Check if map container exists
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) {
+            console.error('Map container not found');
+            return;
+        }
 
-        // Add OpenStreetMap tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19
-        }).addTo(map);
+        // Ensure container has dimensions
+        if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
+            console.log('Map container not ready, retrying...');
+            setTimeout(initMap, 100);
+            return;
+        }
 
-        // Create bus marker
-        const busIcon = L.divIcon({
-            className: 'bus-marker-icon',
-            html: '<div class="marker-icon">{{ $busId }}</div>',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
-        });
+        try {
+            // Remove existing map if it exists
+            if (map) {
+                map.remove();
+                map = null;
+            }
 
-        busMarker = L.marker([busPosition.lat, busPosition.lng], {
-            icon: busIcon,
-            opacity: 0 // Hidden as we use the overlay pin
-        }).addTo(map);
+            // Use current location from Livewire or default
+            const initialLat = busPosition.lat || 23.7937;
+            const initialLng = busPosition.lng || 90.3629;
+
+            // Create map
+            map = L.map('map', {
+                zoomControl: false,
+                attributionControl: true,
+                preferCanvas: true // Better performance
+            }).setView([initialLat, initialLng], 14);
+
+            // Add OpenStreetMap tile layer with better error handling
+            const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+                minZoom: 10,
+                crossOrigin: true,
+                errorTileUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0iI2Y0ZjRmNCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+TWFwIFRpbGU8L3RleHQ+PC9zdmc+'
+            });
+
+            // Handle tile loading events
+            tileLayer.on('loading', function() {
+                console.log('Map tiles loading...');
+            });
+
+            tileLayer.on('load', function() {
+                console.log('Map tiles loaded successfully');
+            });
+
+            tileLayer.on('tileerror', function(error) {
+                console.warn('Tile loading error:', error);
+            });
+
+            tileLayer.addTo(map);
+
+            // Create bus marker with current bus ID
+            const busIcon = L.divIcon({
+                className: 'bus-marker-icon',
+                html: '<div class="marker-icon">{{ $busId }}</div>',
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            });
+
+            busMarker = L.marker([initialLat, initialLng], {
+                icon: busIcon,
+                opacity: 1 // Make visible
+            }).addTo(map);
+
+            // Add a popup to the marker with status information
+            const trackingStatus = '{{ $trackingStatus ?? "default_location" }}';
+            const statusText = trackingStatus === 'default_location' ? 'Default Location' : 'Live Location';
+            const busId = '{{ $busId }}';
+            const busName = '{{ $busName ?? "Bus Location" }}';
+
+            busMarker.bindPopup(
+                '<div class="bus-popup">' +
+                    '<strong>Bus ' + busId + '</strong><br>' +
+                    '<small>' + busName + '</small><br>' +
+                    '<span class="status-badge ' + trackingStatus + '">' + statusText + '</span>' +
+                '</div>'
+            );
+
+            // If this is a default location, add a subtle animation
+            if (trackingStatus === 'default_location') {
+                const markerElement = busMarker.getElement();
+                if (markerElement) {
+                    markerElement.classList.add('default-location');
+                }
+            }
+
+            // Force map to resize and refresh
+            setTimeout(() => {
+                if (map) {
+                    map.invalidateSize();
+                    map.setView([initialLat, initialLng], 14);
+                }
+            }, 200);
+
+            console.log('Map initialized successfully at:', initialLat, initialLng);
+
+            // Debug: Log map state
+            console.log('Map container size:', mapContainer.offsetWidth, 'x', mapContainer.offsetHeight);
+            console.log('Leaflet version:', L.version);
+
+        } catch (error) {
+            console.error('Error initializing map:', error);
+            // Show error message to user
+            const mapContainer = document.getElementById('map');
+            if (mapContainer) {
+                mapContainer.innerHTML =
+                    '<div style="display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; color: #666;">' +
+                        '<i class="bi bi-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>' +
+                        '<p>Map failed to load. Retrying...</p>' +
+                    '</div>';
+            }
+            // Retry after a delay
+            setTimeout(initMap, 2000);
+        }
     }
 
     function initBottomSheet() {
@@ -508,6 +652,39 @@
         // Listen for notifications
         Livewire.on('show-notification', (data) => {
             showNotification(data[0]);
+        });
+
+        // Listen for location updates
+        Livewire.on('location-updated', (data) => {
+            if (data && data.latitude && data.longitude) {
+                busPosition = { lat: data.latitude, lng: data.longitude };
+
+                if (map && busMarker) {
+                    // Update marker position
+                    busMarker.setLatLng([data.latitude, data.longitude]);
+
+                    // Update marker style to indicate live tracking
+                    const markerElement = busMarker.getElement();
+                    if (markerElement) {
+                        markerElement.classList.remove('default-location');
+                        markerElement.classList.add('live-tracking');
+                    }
+
+                    // Update popup content
+                    const busId = '{{ $busId }}';
+                    const busName = '{{ $busName ?? "Bus Location" }}';
+                    busMarker.bindPopup(
+                        '<div class="bus-popup">' +
+                            '<strong>Bus ' + busId + '</strong><br>' +
+                            '<small>' + busName + '</small><br>' +
+                            '<span class="status-badge tracking">Live Location</span>' +
+                        '</div>'
+                    );
+
+                    // Center map on new location
+                    map.setView([data.latitude, data.longitude], map.getZoom());
+                }
+            }
         });
     }
 

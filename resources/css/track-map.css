@@ -3,8 +3,28 @@
 /* Map container */
 #map {
     width: 100%;
-    height: calc(100vh - 116px); /* Full height minus header and bottom nav */
+    height: calc(100vh - 60px); /* Full height minus header */
     z-index: 10;
+    position: relative;
+    background-color: #f0f0f0; /* Fallback background while loading */
+    overflow: hidden;
+}
+
+/* Ensure Leaflet map fills container */
+#map .leaflet-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Loading state for map */
+#map:empty::before {
+    content: "Loading map...";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #666;
+    font-size: 1rem;
 }
 
 /* Map controls */
@@ -49,6 +69,58 @@
     font-weight: bold;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     border: 2px solid white;
+    transition: all 0.3s ease;
+}
+
+/* Default location marker styling */
+.bus-marker-icon.default-location .marker-icon {
+    background: #ffa500;
+    animation: pulse-default 2s infinite;
+}
+
+/* Live tracking marker styling */
+.bus-marker-icon.live-tracking .marker-icon {
+    background: #28a745;
+    animation: pulse-live 1.5s infinite;
+}
+
+@keyframes pulse-default {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse-live {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Bus popup styling */
+.bus-popup {
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.status-badge.default_location {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-badge.tracking {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
 }
 
 /* Bus Pin Overlay */
@@ -467,6 +539,7 @@
     width: 100%;
     height: calc(100vh - 60px);
     position: relative;
+    min-height: 400px; /* Ensure minimum height for map */
 }
 
 /* Media Queries */

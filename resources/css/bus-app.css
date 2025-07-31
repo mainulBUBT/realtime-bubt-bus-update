@@ -342,7 +342,7 @@ body {
     font-size: 1.3rem;
     font-weight: bold;
     margin-bottom: 1rem;
-    color: #333;
+    color: var(--primary-color);
 }
 
 /* Bus Cards */
@@ -363,12 +363,14 @@ body {
     gap: 1rem;
     transition: var(--transition);
     cursor: pointer;
-    color: #333 !important;
+    color: var(--dark-color) !important;
+    border-left: 4px solid var(--primary-color);
 }
 
 .home-bus-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+    border-left-color: var(--secondary-color);
 }
 
 .home-bus-left {
@@ -396,12 +398,12 @@ body {
     font-size: 1.1rem;
     font-weight: bold;
     margin: 0 0 0.25rem 0;
-    color: #333;
+    color: var(--dark-color);
 }
 
 .home-bus-schedule {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--secondary-color);
     margin: 0;
 }
 
@@ -827,26 +829,6 @@ body {
 
 .splash-screen.hidden {
     z-index: -1;
-}/* Force c
-orrect colors for all components */
-.home-bus-name {
-    color: #333 !important;
-}
-
-.home-bus-schedule {
-    color: #666 !important;
-}
-
-.header-title h1 {
-    color: #333 !important;
-}
-
-.location-indicator {
-    color: #666 !important;
-}
-
-.home-section-title {
-    color: #333 !important;
 }
 
 /* Ensure all buttons use primary color */

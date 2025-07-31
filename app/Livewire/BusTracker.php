@@ -58,6 +58,55 @@ class BusTracker extends Component
         $this->loadBusData();
         $this->initializeDeviceToken();
         $this->getCurrentBusPosition(); // Ensure we have initial position
+        $this->setDefaultLocationIfNeeded(); // Set default location if no tracking data
+    }
+
+    private function setDefaultLocationIfNeeded()
+    {
+        if (!$this->currentLocation) {
+            // Define default locations for each bus (BUBT campus and nearby strategic locations)
+            $defaultLocations = [
+                'B1' => [
+                    'latitude' => 23.7937,
+                    'longitude' => 90.3629,
+                    'location_name' => 'Dhaka University Area',
+                    'description' => 'Default starting point for Bus B1'
+                ],
+                'B2' => [
+                    'latitude' => 23.8103,
+                    'longitude' => 90.4125,
+                    'location_name' => 'Gulshan Commercial Area',
+                    'description' => 'Default starting point for Bus B2'
+                ],
+                'B3' => [
+                    'latitude' => 23.7808,
+                    'longitude' => 90.2792,
+                    'location_name' => 'Dhanmondi Residential Area',
+                    'description' => 'Default starting point for Bus B3'
+                ],
+                'B4' => [
+                    'latitude' => 23.7461,
+                    'longitude' => 90.3742,
+                    'location_name' => 'Old Dhaka Heritage Area',
+                    'description' => 'Default starting point for Bus B4'
+                ],
+                'B5' => [
+                    'latitude' => 23.8223,
+                    'longitude' => 90.3654,
+                    'location_name' => 'Uttara Model Town',
+                    'description' => 'Default starting point for Bus B5'
+                ],
+            ];
+
+            $defaultData = $defaultLocations[$this->busId] ?? $defaultLocations['B1'];
+            $this->currentLocation = [
+                'latitude' => $defaultData['latitude'],
+                'longitude' => $defaultData['longitude']
+            ];
+
+            // Set tracking status to indicate this is a default location
+            $this->trackingStatus = 'default_location';
+        }
     }
 
     public function loadBusData()

@@ -80,7 +80,43 @@ npm run dev:student
 npm run dev:driver
 ```
 
-### 8. Configure Laravel Reverb (WebSocket)
+### 8. Native Android App Setup (Capacitor)
+
+To build and run the native Android apps for the frontend, follow these steps to initialize Capacitor for each app.
+
+#### For the Student App:
+```bash
+cd frontend/capacitor-student
+npm init -y
+npm install @capacitor/core @capacitor/cli @capacitor/android
+npx cap add android
+
+# Build the vue app and sync it with the native project
+cd ..
+npm run build:student
+
+# Open the project in Android Studio
+cd capacitor-student
+npx cap open android
+```
+
+#### For the Driver App:
+```bash
+cd frontend/capacitor-driver
+npm init -y
+npm install @capacitor/core @capacitor/cli @capacitor/android
+npx cap add android
+
+# Build the vue app and sync it with the native project
+cd ..
+npm run build:driver
+
+# Open the project in Android Studio
+cd capacitor-driver
+npx cap open android
+```
+
+### 9. Configure Laravel Reverb (WebSocket)
 
 Return to the `backend` directory:
 ```bash

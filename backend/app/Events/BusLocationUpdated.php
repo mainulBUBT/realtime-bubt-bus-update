@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Events;
+
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class BusLocationUpdated implements ShouldBroadcastNow
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public $busId;
+    public $location;
+
+    /**
+     * Create a new event instance.
+     */
+    public function __construct(int $busId, array $location)
+    {
+        $this->busId = $busId;
+        $this->location = $location;
+    }
+
+    /**
+     * Use a simple literal name so the frontend can listen with a dot-prefix (e.g. '.BusLocationUpdated').
+     */
+    public function broadcastAs(): string
+    {
+        return 'BusLocationUpdated';
+    }
+
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            new Channel('bus.' . $this->busId),
+        ];
+    }
+
+    /**
+     * Get the data to broadcast.
+     *
+     * @return array<string, mixed>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'bus_id'     => $this->busId,
+            'lat'        => $this->location['lat'],
+            'lng'        => $this->location['lng'],
+            'speed'      => $this->location['speed'] ?? null,
+            'updated_at' => $this->location['recorded_at'],
+        ];
+    }
+}

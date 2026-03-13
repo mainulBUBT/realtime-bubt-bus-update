@@ -1,0 +1,42 @@
+{
+  "name": "bus-tracker-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:driver": "VITE_APP_TYPE=driver vite",
+    "dev:student": "VITE_APP_TYPE=student vite",
+    "build:driver": "VITE_APP_TYPE=driver vite build && cd capacitor-driver && npx cap sync",
+    "build:student": "VITE_APP_TYPE=student vite build && cd capacitor-student && npx cap sync",
+    "cap:sync:driver": "cd capacitor-driver && npx cap sync",
+    "cap:sync:student": "cd capacitor-student && npx cap sync",
+    "cap:open:driver": "cd capacitor-driver && npx cap open android",
+    "cap:open:student": "cd capacitor-student && npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor-firebase/app": "^6.0.0",
+    "@capacitor-firebase/messaging": "^6.0.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/geolocation": "^6.0.0",
+    "@capacitor/local-notifications": "^6.0.0",
+    "axios": "^1.7.9",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
+    "laravel-echo": "^2.3.0",
+    "leaflet": "^1.9.4",
+    "pinia": "^2.2.8",
+    "pusher-js": "^8.4.0-rc2",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.2",
+    "vite": "^6.2.0"
+  }
+}

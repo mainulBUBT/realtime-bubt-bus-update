@@ -1,0 +1,150 @@
+import { defineStore } from 'pinia'
+import api from '@/api/client'
+
+export const useDriverTripStore = defineStore('driverTrip', {
+  state: () => ({
+    currentTrip: null,
+    selectedBus: null,
+    selectedDirection: null,
+    availableBuses: [],
+    availableRoutes: [],
+    loading: false,
+    error: null,
+    // Cache timestamps to prevent redundant API calls
+    _cache: {
+      currentTrip: null,
+      buses: null,
+      routes: null
+    }
+  }),
+
+  getters: {
+    hasActiveTrip: (state) => !!state.currentTrip,
+    canStartTrip: (state) => !state.currentTrip && state.selectedBus && state.selectedDirection,
+    availableBusesCount: (state) => state.availableBuses.length
+  },
+
+  actions: {
+    async fetchCurrentTrip() {
+      // Cache for 30 seconds to prevent redundant API calls
+      if (this._cache.currentTrip && (Date.now() - this._cache.currentTrip) < 30000) {
+        return this.currentTrip
+      }
+
+      this.loading = true
+      this.error = null
+      try {
+        const response = await api.get('/driver/trips/current')
+        this.currentTrip = response.data
+        this._cache.currentTrip = Date.now()  // Update cache timestamp
+        return response.data
+      } catch (error) {
+        // No active trip is not an error
+        this.currentTrip = null
+        this._cache.currentTrip = Date.now()  // Still cache the "null" result
+        return null
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchAvailableBuses() {
+      // Cache for 60 seconds to prevent redundant API calls
+      if (this._cache.buses && (Date.now() - this._cache.buses) < 60000) {
+        return this.availableBuses
+      }
+
+      this.loading = true
+      this.error = null
+      try {
+        const response = await api.get('/driver/buses')
+        this.availableBuses = response.data
+        this._cache.buses = Date.now()  // Update cache timestamp
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.message || 'Failed to fetch buses'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchRoutes(busId = null) {
+      // Cache for 60 seconds to prevent redundant API calls
+      if (this._cache.routes && (Date.now() - this._cache.routes) < 60000) {
+        return this.availableRoutes
+      }
+
+      this.loading = true
+      this.error = null
+      try {
+        const params = busId ? { bus_id: busId } : {}
+        const response = await api.get('/driver/routes', { params })
+        this.availableRoutes = response.data
+        this._cache.routes = Date.now()  // Update cache timestamp
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.message || 'Failed to fetch routes'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async startTrip() {
+      if (!this.selectedBus || !this.selectedDirection) {
+        throw new Error('Bus and direction must be selected')
+      }
+
+      this.loading = true
+      this.error = null
+      try {
+        const response = await api.post('/driver/trips/start', {
+          bus_id: this.selectedBus.id,
+          route_id: this.selectedDirection.routeId
+        })
+        this.currentTrip = response.data
+        this._cache.currentTrip = Date.now()  // Update cache after starting trip
+        this.clearSelection()
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.message || 'Failed to start trip'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async endTrip(tripId) {
+      this.loading = true
+      this.error = null
+      try {
+        const response = await api.post(`/driver/trips/${tripId}/end`)
+        this.currentTrip = null
+        this._cache.currentTrip = Date.now()  // Update cache after ending trip
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.message || 'Failed to end trip'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    setSelectedBus(bus) {
+      this.selectedBus = bus
+      this.selectedDirection = null
+      this._cache.buses = null  // Invalidate buses cache when selection changes
+      this._cache.routes = null  // Invalidate routes cache to force fetch with bus filter
+    },
+
+    setSelectedDirection(direction) {
+      this.selectedDirection = direction
+    },
+
+    clearSelection() {
+      this.selectedBus = null
+      this.selectedDirection = null
+    }
+  }
+})

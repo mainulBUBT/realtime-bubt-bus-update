@@ -14,13 +14,20 @@
 
 ```bash
 git clone <repository-url>
-cd bus-tracker
+cd realtime-bubt-bus-update
 ```
 
-### 2. Install Dependencies
+### 2. Install Backend Dependencies
 
 ```bash
+cd backend
 composer install
+```
+
+### 3. Install Frontend Dependencies
+
+```bash
+cd ../frontend
 npm install
 ```
 
@@ -64,15 +71,20 @@ php artisan migrate
 php artisan storage:link
 ```
 
-### 7. Build Frontend Assets
+### 7. Run Frontend Development Servers
 
 ```bash
-npm run build
+cd ../frontend
+npm run dev:student
+# or for driver app
+npm run dev:driver
 ```
 
 ### 8. Configure Laravel Reverb (WebSocket)
 
+Return to the `backend` directory:
 ```bash
+cd ../backend
 php artisan reverb:start
 ```
 

@@ -420,12 +420,17 @@ function initMap() {
 1. **Clone Repository**:
 ```bash
 git clone <repository-url>
-cd bus-tracker
+cd realtime-bubt-bus-update
 ```
 
 2. **Install Dependencies**:
 ```bash
+# Backend
+cd backend
 composer install
+
+# Frontend
+cd ../frontend
 npm install
 ```
 
@@ -496,7 +501,9 @@ npm install -g @capacitor/cli
 #### Setup Process
 1. **Install Dependencies**:
 ```bash
-cd bus-tracker
+cd backend
+composer install
+cd ../frontend
 npm install
 ```
 

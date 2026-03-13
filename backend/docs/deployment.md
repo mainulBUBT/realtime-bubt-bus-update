@@ -11,15 +11,15 @@
 
 ## Deployment Steps
 
-### 1. Deploy Code
+### 1. Deploy Backend Code
 
 ```bash
 # Pull latest code
 git pull origin main
 
-# Install dependencies
+# Navigate to backend and install dependencies
+cd backend
 composer install --no-dev --optimize-autoloader
-npm ci --production
 
 # Run migrations
 php artisan migrate --force
@@ -56,10 +56,13 @@ REVERB_APP_SECRET=your-app-secret
 QUEUE_CONNECTION=database
 ```
 
-### 3. Build Assets
+### 3. Build Frontend Assets
 
 ```bash
-npm run build
+cd ../frontend
+npm ci --production
+npm run build:student
+npm run build:driver
 ```
 
 ### 4. Setup Cron Job

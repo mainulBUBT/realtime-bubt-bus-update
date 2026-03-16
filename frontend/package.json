@@ -6,12 +6,16 @@
   "scripts": {
     "dev:driver": "VITE_APP_TYPE=driver vite",
     "dev:student": "VITE_APP_TYPE=student vite",
-    "build:driver": "VITE_APP_TYPE=driver vite build && cd capacitor-driver && npx cap sync",
-    "build:student": "VITE_APP_TYPE=student vite build && cd capacitor-student && npx cap sync",
-    "cap:sync:driver": "cd capacitor-driver && npx cap sync",
-    "cap:sync:student": "cd capacitor-student && npx cap sync",
-    "cap:open:driver": "cd capacitor-driver && npx cap open android",
-    "cap:open:student": "cd capacitor-student && npx cap open android"
+    "build:driver": "VITE_APP_TYPE=driver vite build",
+    "build:student": "VITE_APP_TYPE=student vite build",
+    "cap:add:driver": "npx cap add driver",
+    "cap:add:student": "npx cap add student",
+    "cap:sync:driver": "npm run build:driver && npx cap sync driver",
+    "cap:sync:student": "npm run build:student && npx cap sync student",
+    "cap:open:driver": "npx cap open android --dir capacitor-driver",
+    "cap:open:student": "npx cap open android --dir capacitor-student",
+    "cap:build:driver": "npm run cap:sync:driver && npm run cap:open:driver",
+    "cap:build:student": "npm run cap:sync:student && npm run cap:open:student"
   },
   "dependencies": {
     "@capacitor-firebase/app": "^6.0.0",

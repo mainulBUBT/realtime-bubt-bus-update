@@ -16,11 +16,9 @@ node_modules/
 dist-driver/
 dist-student/
 
-# Capacitor
-capacitor-driver/.android/
-capacitor-driver/.ios/
-capacitor-student/.android/
-capacitor-student/.ios/
+# Capacitor - Ignore entire native projects (regenerated via `npx cap sync`)
+capacitor-driver/
+capacitor-student/
 
 # Environment files
 .env.local

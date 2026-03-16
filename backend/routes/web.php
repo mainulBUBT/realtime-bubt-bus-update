@@ -60,5 +60,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/email', [SettingsController::class, 'updateEmail'])->name('settings.update.email');
         Route::get('/database/info', [SettingsController::class, 'getDatabaseInfo'])->name('settings.database.info');
         Route::post('/database/truncate', [SettingsController::class, 'truncateTable'])->name('settings.database.truncate');
+        Route::post('/mobile/{type}', [SettingsController::class, 'updateMobile'])->name('settings.update.mobile');
     });
 });

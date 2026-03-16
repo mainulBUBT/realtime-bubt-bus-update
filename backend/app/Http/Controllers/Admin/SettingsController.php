@@ -46,7 +46,11 @@ class SettingsController extends Controller
         $generalSettings = $this->settingsService->getGroup('general');
         $emailSettings = $this->settingsService->getGroup('email');
 
-        return view('admin.settings.index', compact('stats', 'dbInfo', 'generalSettings', 'emailSettings'));
+        // Get mobile app settings
+        $studentSettings = $this->settingsService->getGroup('student_app');
+        $driverSettings = $this->settingsService->getGroup('driver_app');
+
+        return view('admin.settings.index', compact('stats', 'dbInfo', 'generalSettings', 'emailSettings', 'studentSettings', 'driverSettings'));
     }
 
     /**
@@ -106,5 +110,35 @@ class SettingsController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Update mobile app settings.
+     */
+    public function updateMobile(Request $request, string $type)
+    {
+        if (!in_array($type, ['student', 'driver'])) {
+            return redirect()->back()->with('error', 'Invalid app type.');
+        }
+
+        $prefix = $type . '_';
+        $group = $type . '_app';
+
+        // Filter and update only the settings for this app type
+        $updatedCount = 0;
+        foreach ($request->except('_token') as $key => $value) {
+            if (str_starts_with($key, $prefix)) {
+                $this->settingsService->set($key, $value, 'text', $group);
+                $updatedCount++;
+            }
+        }
+
+        \Log::info("Updated {$updatedCount} settings for {$type} app", [
+            'type' => $type,
+            'data' => $request->except('_token')
+        ]);
+
+        return redirect()->back()
+            ->with('toastr', [['type' => 'success', 'message' => ucfirst($type) . ' app settings updated successfully.']]);
     }
 }

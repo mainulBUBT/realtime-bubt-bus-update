@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 import { RouterView } from 'vue-router'
 import LogoutConfirmModal from '@/components/LogoutConfirmModal.vue'
 import DriverMobileHeader from '@/components/driver/DriverMobileHeader.vue'
@@ -11,6 +12,7 @@ import DriverMenuDrawer from '@/components/driver/DriverMenuDrawer.vue'
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 const showLogoutModal = ref(false)
 const showMenuDrawer = ref(false)
 
@@ -21,7 +23,7 @@ const pageTitle = computed(() => {
     'trip-select-direction': 'Select Direction',
     'trip-active': 'Active Trip'
   }
-  return titles[route.name] || 'BUBT Driver'
+  return titles[route.name] || (settingsStore.appSettings.appName || 'BUBT Driver')
 })
 
 const showBackButton = computed(() => {

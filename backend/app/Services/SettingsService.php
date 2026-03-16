@@ -96,8 +96,10 @@ class SettingsService
             Cache::forget("settings.{$setting->key}");
         }
 
-        // Clear group caches
-        Cache::forget('settings.group.general');
-        Cache::forget('settings.group.email');
+        // Clear all group caches
+        $groups = Setting::distinct('group')->pluck('group');
+        foreach ($groups as $group) {
+            Cache::forget("settings.group.{$group}");
+        }
     }
 }

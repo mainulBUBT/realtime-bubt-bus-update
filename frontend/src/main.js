@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/useAuthStore'
+import { useSettingsStore } from './stores/useSettingsStore'
 import './assets/main.css'
 
 const appType = import.meta.env.VITE_APP_TYPE || 'driver'
@@ -44,33 +45,41 @@ app.use(router)
 const authStore = useAuthStore()
 authStore.loadUserFromStorage()
 
-if (isDev) {
-  console.log('👤 Auth State:', {
-    isAuthenticated: authStore.isAuthenticated,
-    user: authStore.user,
-    hasToken: !!authStore.token
-  })
-}
-
-// Mount app with error handling
-try {
-  app.mount('#app')
+// Fetch settings before mounting
+const settingsStore = useSettingsStore()
+settingsStore.fetchSettings(appType).then(() => {
   if (isDev) {
-    console.log('✅ Vue app mounted successfully!')
-    console.log('📍 Current Route:', window.location.pathname)
+    console.log('⚙️ Settings loaded:', settingsStore.appSettings)
+    console.log('👤 Auth State:', {
+      isAuthenticated: authStore.isAuthenticated,
+      user: authStore.user,
+      hasToken: !!authStore.token
+    })
   }
-} catch (err) {
-  console.error('❌ Failed to mount Vue app:', err)
-  document.getElementById('app').innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;">
-      <div>
-        <h2 style="color:#c33;">Failed to load application</h2>
-        <p style="color:#666;">Please check the console for details.</p>
-        <p style="font-size:12px;color:#999;">${err.message}</p>
+}).catch((err) => {
+  console.error('❌ Failed to load settings:', err)
+  // Continue mounting even if settings fail
+}).finally(() => {
+  // Mount app with error handling
+  try {
+    app.mount('#app')
+    if (isDev) {
+      console.log('✅ Vue app mounted successfully!')
+      console.log('📍 Current Route:', window.location.pathname)
+    }
+  } catch (err) {
+    console.error('❌ Failed to mount Vue app:', err)
+    document.getElementById('app').innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;">
+        <div>
+          <h2 style="color:#c33;">Failed to load application</h2>
+          <p style="color:#666;">Please check the console for details.</p>
+          <p style="font-size:12px;color:#999;">${err.message}</p>
+        </div>
       </div>
-    </div>
-  `
-}
+    `
+  }
+})
 
 // Log route changes in development
 if (isDev) {

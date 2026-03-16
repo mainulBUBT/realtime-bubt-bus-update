@@ -17,6 +17,10 @@
     --primary-light: #D1FAE5;
     --primary-50: rgba(16, 185, 129, 0.1);
 
+    /* Splash screen colors (set dynamically from settings) */
+    --splash-primary: #4F46E5;
+    --splash-secondary: #4338CA;
+
     --success: #22C55E;
     --warning: #F59E0B;
     --danger: #EF4444;
@@ -91,7 +95,7 @@ button {
 .splash-screen {
     position: fixed;
     inset: 0;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background: linear-gradient(135deg, var(--splash-primary) 0%, var(--splash-secondary) 100%);
     display: flex;
     justify-content: center;
     align-items: center;

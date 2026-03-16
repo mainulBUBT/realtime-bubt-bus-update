@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 
+const settingsStore = useSettingsStore()
 const show = ref(true)
 
 onMounted(() => {
@@ -18,8 +20,8 @@ onMounted(() => {
         <div class="splash-logo">
           <i class="bi bi-bus-front-fill"></i>
         </div>
-        <h1 class="app-name">BUBT Bus Tracker</h1>
-        <div class="splash-tagline">Your Campus Shuttle Companion</div>
+        <h1 class="app-name">{{ settingsStore.appSettings.appName || 'BUBT Bus Tracker' }}</h1>
+        <div class="splash-tagline">{{ settingsStore.appSettings.appTagline || 'Your Campus Shuttle Companion' }}</div>
         <div class="splash-spacer"></div>
         <div class="splash-loading">
           <div class="loading-spinner"></div>

@@ -24,6 +24,10 @@
                 <i class="bi bi-database"></i>
                 <span class="hidden sm:inline">Database Management</span>
             </button>
+            <button onclick="switchTab('mobile-apps')" id="tab-btn-mobile-apps" class="tab-btn px-4 sm:px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-2 transition-all" data-tab="mobile-apps">
+                <i class="bi bi-phone"></i>
+                <span class="hidden sm:inline">Mobile Apps</span>
+            </button>
         </nav>
     </div>
 
@@ -32,6 +36,7 @@
         @include('admin.settings.tabs.general')
         @include('admin.settings.tabs.email')
         @include('admin.settings.tabs.database')
+        @include('admin.settings.tabs.mobile-apps')
     </div>
 </div>
 

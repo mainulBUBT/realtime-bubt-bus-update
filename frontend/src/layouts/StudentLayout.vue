@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useMapStore } from '@/stores/useMapStore'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 import { storeToRefs } from 'pinia'
 import SplashScreen from '@/components/SplashScreen.vue'
 import BottomNav from '@/components/BottomNav.vue'
@@ -12,6 +13,7 @@ import LogoutConfirmModal from '@/components/LogoutConfirmModal.vue'
 
 const route = useRoute()
 const isMapView = computed(() => route.name === 'map')
+const settingsStore = useSettingsStore()
 
 const sidebarOpen = ref(false)
 const toggleSidebar = () => { sidebarOpen.value = !sidebarOpen.value }
@@ -79,7 +81,7 @@ function handleBusClick(bus) {
           <i class="bi bi-bus-front-fill"></i>
         </div>
         <div class="sidebar-brand">
-          <h1>BUBT Bus Tracker</h1>
+          <h1>{{ settingsStore.appSettings.appName || 'BUBT Bus Tracker' }}</h1>
           <span>University Shuttle Service</span>
         </div>
         <!-- Close button (mobile only) -->
@@ -170,7 +172,7 @@ function handleBusClick(bus) {
           <i class="bi bi-list"></i>
         </button>
         <div class="header-center">
-          <h1>BUBT Bus Tracker</h1>
+          <h1>{{ settingsStore.appSettings.appName || 'BUBT Bus Tracker' }}</h1>
         </div>
         <button class="header-btn">
           <i class="bi bi-bell-fill"></i>

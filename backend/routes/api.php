@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Student\TrackingController;
 use App\Http\Controllers\Api\Admin\BusController;
 use App\Http\Controllers\Api\Admin\RouteController;
 use App\Http\Controllers\Api\Admin\ScheduleController;
+use App\Http\Controllers\Api\SettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,7 @@ use App\Http\Controllers\Api\Admin\ScheduleController;
 
 // Public routes
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::get('/settings', [SettingsController::class, 'getAppSettings']);
 
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {

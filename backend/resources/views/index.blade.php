@@ -70,7 +70,7 @@
     <script>
         window.laravel = {
             csrfToken: '{{ csrf_token() }}',
-            user: @auth({{ auth()->user()->toJson() }}) @else null @endauth,
+            user: @js(auth()->user()),
             googleClientId: '{{ $google_client_id ?? '' }}',
             buses: @js($buses),
             period: @js($period)

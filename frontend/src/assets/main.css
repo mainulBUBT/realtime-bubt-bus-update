@@ -2369,3 +2369,989 @@ button {
     color: var(--gray-500);
     margin-bottom: 20px;
 }
+
+/* ==========================================
+   STUDENT APP PAGES
+   ========================================== */
+
+/* Base Page Pattern */
+.routes-page,
+.schedule-page,
+.more-page {
+    padding: 16px;
+    padding-bottom: calc(var(--mobile-nav-height, 56px) + 88px);
+    min-height: 100%;
+    background: var(--gray-50);
+}
+
+/* Generic Card Pattern */
+.route-card,
+.schedule-card {
+    background: var(--white);
+    border-radius: var(--radius-md, 12px);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-100);
+    overflow: hidden;
+    transition: all 200ms ease;
+}
+
+.route-card.expanded,
+.schedule-card.expanded {
+    box-shadow: var(--shadow-md);
+}
+
+/* Generic List Pattern */
+.routes-list,
+.schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+/* Last item gets bottom margin */
+.routes-list .route-card:last-child,
+.schedule-list .schedule-card:last-child {
+    margin-bottom: 100px !important;
+}
+
+/* ==========================================
+   ROUTES PAGE
+   ========================================== */
+
+.routes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.routes-title,
+.schedule-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.routes-title i,
+.schedule-title i {
+    color: var(--primary);
+}
+
+.routes-count {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    background: var(--gray-100);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+}
+
+/* Search Input */
+.routes-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--white);
+    border-radius: var(--radius-md, 12px);
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-100);
+}
+
+.routes-search i {
+    color: var(--gray-400);
+    font-size: 1rem;
+}
+
+.routes-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 0.9rem;
+    color: var(--gray-900);
+    background: transparent;
+}
+
+.routes-search input::placeholder {
+    color: var(--gray-400);
+}
+
+/* Route Card Main */
+.route-card-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+    cursor: pointer;
+}
+
+/* Route Code Badge */
+.route-code-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md, 12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.route-code-badge.inbound {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+
+.route-code-badge.outbound {
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+}
+
+/* Route Info */
+.route-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.route-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.route-endpoints {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.route-endpoints i {
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.route-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.direction-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.direction-badge.inbound {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--primary-dark);
+}
+
+.direction-badge.outbound {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563EB;
+}
+
+.stops-count {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.route-expand {
+    color: var(--gray-400);
+    font-size: 1rem;
+    flex-shrink: 0;
+    padding-top: 8px;
+}
+
+/* Stops Section */
+.route-stops,
+.schedule-stops {
+    border-top: 1px solid var(--gray-100);
+    padding: 16px;
+    padding-top: 12px;
+    background: var(--gray-50);
+    max-height: 50vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.stops-timeline {
+    padding-left: 8px;
+}
+
+.stop-item {
+    position: relative;
+    padding-left: 28px;
+    padding-bottom: 18px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.stop-item.is-last {
+    padding-bottom: 0;
+}
+
+.stop-dot {
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--gray-300);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.stop-item.is-first .stop-dot,
+.stop-item.is-last .stop-dot {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.dot-inner {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.stop-item.is-first .dot-inner,
+.stop-item.is-last .dot-inner {
+    background: var(--primary);
+}
+
+.stop-line {
+    position: absolute;
+    left: 7px;
+    top: 18px;
+    width: 2px;
+    bottom: 0;
+    background: var(--gray-200);
+}
+
+.stop-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.stop-name {
+    font-size: 0.825rem;
+    color: var(--gray-700);
+}
+
+.stop-item.is-first .stop-name,
+.stop-item.is-last .stop-name {
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.stop-seq {
+    font-size: 0.65rem;
+    color: var(--gray-400);
+}
+
+/* Empty State */
+.routes-empty,
+.schedule-empty {
+    text-align: center;
+    padding: 60px 24px;
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--gray-100);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.empty-icon i {
+    font-size: 2rem;
+    color: var(--gray-400);
+}
+
+.routes-empty h3,
+.schedule-empty h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+}
+
+.routes-empty p,
+.schedule-empty p {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin: 0;
+}
+
+/* Skeleton Loading */
+.skeleton-route-card {
+    background: var(--white);
+    border-radius: var(--radius-md, 12px);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.skeleton-line {
+    height: 14px;
+    background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+.w-50 { width: 50%; }
+.w-80 { width: 80%; }
+.w-30 { width: 30%; }
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ==========================================
+   SCHEDULE PAGE
+   ========================================== */
+
+.schedule-header {
+    margin-bottom: 20px;
+}
+
+.schedule-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.schedule-day-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+    background: var(--primary-light);
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Filter Tabs */
+.filter-tabs {
+    display: flex;
+    gap: 8px;
+    background: var(--white);
+    padding: 4px;
+    border-radius: var(--radius-md, 12px);
+    box-shadow: var(--shadow-sm);
+}
+
+.filter-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm, 8px);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-500);
+    cursor: pointer;
+    transition: all 200ms ease;
+}
+
+.filter-tab.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.filter-count {
+    font-size: 0.7rem;
+    background: rgba(255,255,255,0.25);
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+.filter-tab:not(.active) .filter-count {
+    background: var(--gray-100);
+}
+
+.schedule-card.is-today {
+    border-left: 3px solid var(--primary);
+}
+
+.schedule-card-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    cursor: pointer;
+}
+
+/* Time Column */
+.schedule-time-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 72px;
+    flex-shrink: 0;
+}
+
+.schedule-time {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+}
+
+.schedule-time-label {
+    font-size: 0.65rem;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Info Column */
+.schedule-info-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.schedule-bus-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    background: var(--gray-50);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm, 8px);
+    width: fit-content;
+}
+
+.schedule-bus-badge i {
+    color: var(--primary);
+}
+
+.bus-capacity {
+    font-size: 0.7rem;
+    color: var(--gray-400);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 4px;
+}
+
+.schedule-route {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.route-direction {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.route-direction i {
+    font-size: 0.65rem;
+    color: var(--primary);
+}
+
+/* Weekday Pills */
+.weekday-pills {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.weekday-pill {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    background: var(--gray-100);
+    color: var(--gray-400);
+}
+
+.weekday-pill.active {
+    background: var(--primary);
+    color: white;
+}
+
+.schedule-expand {
+    color: var(--gray-400);
+    font-size: 1rem;
+    flex-shrink: 0;
+    padding-top: 4px;
+    transition: transform 200ms ease;
+}
+
+.stops-header {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    cursor: pointer;
+    user-select: none;
+    position: sticky;
+    top: 0;
+    background: var(--gray-50);
+    z-index: 10;
+    border-radius: var(--radius-sm, 8px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.stops-header::before {
+    content: '';
+    width: 32px;
+    height: 3px;
+    background: var(--gray-300);
+    border-radius: 2px;
+}
+
+.stops-header:active {
+    background: var(--gray-100);
+}
+
+.stops-header i {
+    color: var(--primary);
+}
+
+.link-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    font-size: inherit;
+}
+
+.skeleton-schedule-card {
+    background: var(--white);
+    border-radius: var(--radius-md, 12px);
+    padding: 16px;
+    display: flex;
+    gap: 16px;
+}
+
+.skeleton-time {
+    width: 72px;
+    height: 40px;
+    background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.skeleton-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.w-60 { width: 60%; }
+.w-40 { width: 40%; }
+
+/* ==========================================
+   MORE MENU PAGE
+   ========================================== */
+
+/* Profile Card */
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: var(--radius-lg, 16px);
+    padding: 24px 20px;
+    margin-bottom: 24px;
+    color: white;
+}
+
+.profile-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-name {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.profile-role {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Menu Sections */
+.menu-section {
+    margin-bottom: 24px;
+}
+
+.menu-section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-400);
+    margin-bottom: 8px;
+    padding-left: 4px;
+}
+
+.menu-group {
+    background: var(--white);
+    border-radius: var(--radius-md, 12px);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    border: 1px solid var(--gray-100);
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: background 150ms ease;
+    text-align: left;
+    font-size: 0.9rem;
+    color: var(--gray-800);
+}
+
+.menu-item:not(:last-child) {
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.menu-item:active {
+    background: var(--gray-50);
+}
+
+.menu-item.disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.menu-item.danger {
+    color: #EF4444;
+}
+
+.menu-item-icon {
+    font-size: 1.15rem;
+    width: 24px;
+    text-align: center;
+    color: var(--gray-500);
+}
+
+.menu-item.danger .menu-item-icon {
+    color: #EF4444;
+}
+
+.menu-item-label {
+    flex: 1;
+    font-weight: 500;
+}
+
+.menu-item-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    background: var(--gray-100);
+    color: var(--gray-400);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+}
+
+.menu-item-arrow {
+    color: var(--gray-300);
+    font-size: 0.8rem;
+}
+
+/* Footer */
+.more-footer {
+    text-align: center;
+    padding: 24px 0 8px;
+}
+
+.more-footer p {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-400);
+    margin-bottom: 2px;
+}
+
+.more-footer span {
+    font-size: 0.7rem;
+    color: var(--gray-300);
+}
+
+/* ==========================================
+   SHARED TRANSITIONS
+   ========================================== */
+
+.slide-enter-active,
+.slide-leave-active {
+    transition: all 250ms ease;
+    max-height: 60vh;
+    overflow: hidden;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+    max-height: 0;
+    opacity: 0;
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+
+@media (min-width: 768px) {
+    .routes-page,
+    .schedule-page,
+    .more-page {
+        padding: 24px;
+        padding-bottom: 24px;
+    }
+}
+
+/* Mobile-specific improvements for timeline */
+@media (max-width: 767px) {
+    .route-stops,
+    .schedule-stops {
+        max-height: 45vh;
+        border-radius: 0 0 var(--radius-md) var(--radius-md);
+    }
+
+    .stop-item {
+        padding-bottom: 14px;
+    }
+}
+
+/* ==========================================
+   MODAL COMPONENTS (Shared)
+   ========================================== */
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xl);
+    max-width: 400px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.modal-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-100);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+
+.modal-close:hover {
+    background: var(--gray-200);
+    color: var(--gray-900);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--gray-100);
+}
+
+/* Modal animations */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-content {
+    animation: modalSlideIn 0.3s ease;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.modal-enter-active .modal-content,
+.modal-leave-active .modal-content {
+    transition: all 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+}
+
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+    transform: scale(0.9) translateY(-20px);
+}
+
+/* ==========================================
+   BUTTON STYLES (Shared)
+   ========================================== */
+
+.btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 150ms ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-700);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-200);
+}
+
+.btn-danger {
+    background: #EF4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #DC2626;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}

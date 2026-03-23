@@ -1,0 +1,12 @@
+{
+  "name": "realtime-bubt-bus-update",
+  "private": true,
+  "scripts": {
+    "dev:student": "npm --prefix frontend run dev:student",
+    "dev:driver": "npm --prefix frontend run dev:driver",
+    "build:student": "npm --prefix frontend run build:student",
+    "build:driver": "npm --prefix frontend run build:driver",
+    "dev:backend": "npm --prefix backend run dev",
+    "build:backend": "npm --prefix backend run build"
+  }
+}

@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Buses')
+@section('breadcrumb-title', 'Buses')
 
 @section('content')
 <div class="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -45,9 +46,9 @@
     </div>
 </div>
 
-<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
+<div class="max-w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="max-w-full overflow-x-auto">
+        <table class="w-full min-w-[980px] divide-y divide-gray-100 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-900/50 sticky top-0">
                 <tr>
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Code</th>
@@ -149,4 +150,10 @@
         </table>
     </div>
 </div>
+
+@if($buses->hasPages())
+<div class="mt-6 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm p-4 md:p-5">
+    {{ $buses->onEachSide(1)->links() }}
+</div>
+@endif
 @endsection

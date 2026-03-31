@@ -33,7 +33,7 @@ class PageController extends Controller
             ->with([
                 'latestLocation',
                 'schedules' => function($query) {
-                    $query->where('is_active', true)
+                    $query->activeToday()
                         ->orderBy('departure_time');
                 },
                 'schedules.route',

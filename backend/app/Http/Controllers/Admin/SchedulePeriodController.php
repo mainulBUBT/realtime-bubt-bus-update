@@ -34,7 +34,11 @@ class SchedulePeriodController extends Controller
             }
         }
 
-        $periods = $query->orderBy('start_date', 'desc')->get();
+        $periods = $query
+            ->orderBy('start_date', 'desc')
+            ->paginate(12)
+            ->withQueryString();
+
         return view('admin.schedule-periods.index', compact('periods'));
     }
 

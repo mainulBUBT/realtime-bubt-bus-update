@@ -36,13 +36,13 @@ class ResourceController extends Controller
         // Filter by bus if bus_id is provided
         if ($request->has('bus_id')) {
             $busId = $request->input('bus_id');
-            // Get route IDs that have schedules for this bus
-            $routeIds = Schedule::where('bus_id', $busId)
+            $routeIds = Schedule::query()
+                ->activeToday()
+                ->where('bus_id', $busId)
                 ->pluck('route_id')
                 ->unique()
                 ->toArray();
 
-            // Filter routes to only include those with schedules for this bus
             $query->whereIn('id', $routeIds);
         }
 

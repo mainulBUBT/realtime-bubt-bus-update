@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class SchedulePeriod extends Model
 {
@@ -44,29 +46,38 @@ class SchedulePeriod extends Model
         return $this->hasMany(Route::class);
     }
 
-    // Note: schedules relationship removed as schedules table doesn't have schedule_period_id column
-    // If you need this relationship, add schedule_period_id to the schedules table
-    // public function schedules(): HasMany
-    // {
-    //     return $this->hasMany(Schedule::class);
-    // }
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class);
+    }
 
     /**
      * Scope for active periods
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): void
     {
-        return $query->where('is_active', true);
+        $query->where('is_active', true);
+    }
+
+    /**
+     * Scope for periods current on a given date.
+     */
+    public function scopeCurrentOn(Builder $query, Carbon|string|null $date = null): void
+    {
+        $date = $date ? Carbon::parse($date)->toDateString() : today()->toDateString();
+
+        $query->active()
+            ->whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date);
     }
 
     /**
      * Get the current schedule period
      */
-    public static function getCurrentPeriod()
+    public static function getCurrentPeriod(): ?self
     {
-        return self::active()
-            ->where('start_date', '<=', today())
-            ->where('end_date', '>=', today())
+        return self::query()
+            ->currentOn(today())
             ->first();
     }
 }

@@ -30,7 +30,11 @@ class BusController extends Controller
             $query->where('status', $request->input('status'));
         }
 
-        $buses = $query->orderBy('display_name')->get();
+        $buses = $query
+            ->orderBy('display_name')
+            ->paginate(12)
+            ->withQueryString();
+
         return view('admin.buses.index', compact('buses'));
     }
 

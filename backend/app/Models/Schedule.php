@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -19,6 +20,7 @@ class Schedule extends Model
     protected $fillable = [
         'bus_id',
         'route_id',
+        'schedule_period_id',
         'departure_time',
         'weekdays',
         'effective_date',
@@ -52,6 +54,11 @@ class Schedule extends Model
         return $this->belongsTo(Route::class);
     }
 
+    public function schedulePeriod(): BelongsTo
+    {
+        return $this->belongsTo(SchedulePeriod::class);
+    }
+
     public function trips(): HasMany
     {
         return $this->hasMany(Trip::class);
@@ -60,24 +67,47 @@ class Schedule extends Model
     /**
      * Scope for active schedules
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): void
     {
-        return $query->where('is_active', true);
+        $query->where('is_active', true);
     }
 
     /**
-     * Scope for schedules active today
+     * Scope for schedules active today.
      */
-    public function scopeActiveToday($query)
+    public function scopeActiveToday(Builder $query): void
     {
         $today = now()->toDateString();
+        $day = strtolower(now()->englishDayOfWeek);
 
-        return $query->where('is_active', true)
+        $query->active()
+            ->whereNotNull('schedule_period_id')
             ->where(function ($q) use ($today) {
                 $q->whereNull('effective_date')
-                  ->orWhere('effective_date', '<=', $today);
+                    ->orWhereDate('effective_date', '<=', $today);
             })
-            ->whereJsonContains('weekdays', [strtolower(now()->englishDayOfWeek)]);
+            ->whereJsonContains('weekdays', $day)
+            ->whereHas('schedulePeriod', function ($q) use ($today) {
+                $q->currentOn($today);
+            });
+    }
+
+    /**
+     * Scope for same-bus same-time schedules that overlap on at least one weekday.
+     */
+    public function scopeConflicting(Builder $query, int $busId, int $schedulePeriodId, string $departureTime, array $weekdays, ?int $ignoreId = null): void
+    {
+        $weekdays = array_values(array_unique($weekdays));
+
+        $query->where('bus_id', $busId)
+            ->where('schedule_period_id', $schedulePeriodId)
+            ->where('departure_time', $departureTime)
+            ->when($ignoreId !== null, fn (Builder $query) => $query->whereKeyNot($ignoreId))
+            ->where(function ($q) use ($weekdays) {
+                foreach ($weekdays as $weekday) {
+                    $q->orWhereJsonContains('weekdays', $weekday);
+                }
+            });
     }
 
     /**
@@ -89,11 +119,10 @@ class Schedule extends Model
             return 'All Days';
         }
 
-        // If all 7 days are selected, show "All Days"
         if (count($this->weekdays) === 7) {
             return 'All Days';
         }
 
-        return implode(', ', array_map(fn($day) => ucfirst(substr($day, 0, 3)), $this->weekdays));
+        return implode(', ', array_map(fn ($day) => ucfirst(substr($day, 0, 3)), $this->weekdays));
     }
 }

@@ -101,7 +101,7 @@
 
     <div class="flex pt-14 sm:pt-16">
         <!-- Sidebar -->
-        <aside id="sidebar" class="fixed top-14 sm:top-16 bottom-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform -translate-x-full lg:static lg:translate-x-0 transition-transform duration-300 ease-in-out sidebar-gradient" style="z-index: 9996;">
+        <aside id="sidebar" class="fixed top-14 sm:top-16 bottom-0 left-0 w-64 shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform -translate-x-full lg:static lg:translate-x-0 transition-transform duration-300 ease-in-out sidebar-gradient" style="z-index: 9996;">
             <div class="h-full overflow-y-auto py-6">
                 <!-- Navigation Links -->
                 <nav class="space-y-1 px-3">
@@ -195,8 +195,8 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 min-h-screen">
-            <div class="p-4 sm:p-6 lg:p-8 page-transition">
+        <main class="flex-1 min-w-0 min-h-screen">
+            <div class="min-w-0 p-4 sm:p-6 lg:p-8 page-transition">
                 <!-- Breadcrumb -->
                 @if(request()->route()->getName() !== 'admin.dashboard')
                 <nav class="flex mb-6" aria-label="Breadcrumb">

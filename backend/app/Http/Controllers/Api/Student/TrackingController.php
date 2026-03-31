@@ -87,7 +87,7 @@ class TrackingController extends Controller
     public function schedules(Request $request)
     {
         $schedules = \App\Models\Schedule::with(['bus', 'route.stops'])
-            ->active()
+            ->activeToday()
             ->orderBy('departure_time')
             ->get()
             ->map(function ($schedule) {
@@ -96,7 +96,7 @@ class TrackingController extends Controller
                     'departure_time' => $schedule->departure_time,
                     'weekdays' => $schedule->weekdays,
                     'formatted_weekdays' => $schedule->formatted_weekdays,
-                    'is_today' => in_array(strtolower(now()->englishDayOfWeek), $schedule->weekdays ?? []),
+                    'is_today' => true,
                     'bus' => $schedule->bus ? [
                         'id' => $schedule->bus->id,
                         'plate_number' => $schedule->bus->plate_number,

@@ -53,6 +53,25 @@
             </div>
 
             <div>
+                <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2 flex items-center gap-2" for="schedule_period_id">
+                    <i class="bi bi-calendar-range text-purple-500"></i>
+                    Schedule Period <span class="text-red-500">*</span>
+                </label>
+                <select class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all dark:bg-gray-700 dark:text-white appearance-none cursor-pointer @error('schedule_period_id') border-red-500 @enderror"
+                        id="schedule_period_id" name="schedule_period_id" required>
+                    <option value="">Select a schedule period</option>
+                    @foreach($periods as $period)
+                        <option value="{{ $period->id }}" {{ old('schedule_period_id', $schedule->schedule_period_id) == $period->id ? 'selected' : '' }}>
+                            {{ $period->name }} ({{ $period->start_date->format('M d, Y') }} - {{ $period->end_date->format('M d, Y') }})
+                        </option>
+                    @endforeach
+                </select>
+                @error('schedule_period_id')
+                    <p class="text-red-500 text-xs mt-2 flex items-center gap-1"><i class="bi bi-exclamation-circle"></i>{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
                 <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2 flex items-center gap-2" for="departure_time">
                     <i class="bi bi-clock text-purple-500"></i>
                     Departure Time <span class="text-red-500">*</span>
@@ -77,7 +96,7 @@
                 @enderror
                 <p class="text-gray-500 dark:text-gray-400 text-xs mt-2 flex items-center gap-1">
                     <i class="bi bi-info-circle"></i>
-                    Leave empty for schedules effective immediately
+                    Leave empty to use the schedule from the start of its period
                 </p>
             </div>
         </div>

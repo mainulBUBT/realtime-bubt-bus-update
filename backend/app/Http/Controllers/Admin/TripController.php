@@ -51,7 +51,8 @@ class TripController extends Controller
 
         $trips = $query->orderBy('trip_date', 'desc')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(12)
+            ->withQueryString();
 
         return view('admin.trips.index', compact('trips'));
     }

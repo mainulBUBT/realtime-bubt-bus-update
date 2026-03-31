@@ -32,7 +32,10 @@ class UserController extends Controller
             $query->where('role', $request->input('role'));
         }
 
-        $users = $query->orderBy('created_at', 'desc')->get();
+        $users = $query
+            ->orderBy('created_at', 'desc')
+            ->paginate(12)
+            ->withQueryString();
 
         return view('admin.users.index', compact('users'));
     }

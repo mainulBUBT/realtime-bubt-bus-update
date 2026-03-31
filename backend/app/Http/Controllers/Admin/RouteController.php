@@ -38,7 +38,11 @@ class RouteController extends Controller
             $query->where('direction', $request->input('direction'));
         }
 
-        $routes = $query->orderBy('name')->get();
+        $routes = $query
+            ->orderBy('name')
+            ->paginate(12)
+            ->withQueryString();
+
         return view('admin.routes.index', compact('routes'));
     }
 

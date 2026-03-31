@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Trip;
 use App\Models\Schedule;
-use App\Models\Location;
 use App\Events\BusTripEnded;
 use Carbon\Carbon;
 
@@ -25,7 +24,7 @@ class TripController extends Controller
 
         // Check if driver has an ongoing trip
         $driverTrip = Trip::where('driver_id', $request->user()->id)
-            ->where('status', 'ongoing')
+            ->activeToday()
             ->first();
 
         if ($driverTrip) {
@@ -37,7 +36,7 @@ class TripController extends Controller
 
         // Check if bus already has ongoing trip
         $busTrip = Trip::where('bus_id', $request->bus_id)
-            ->where('status', 'ongoing')
+            ->activeToday()
             ->first();
 
         if ($busTrip) {
@@ -88,11 +87,6 @@ class TripController extends Controller
             'ended_at' => now(),
         ]);
 
-        // Remove the location row — bus is no longer active
-        Location::where('trip_id', $trip->id)
-                ->where('bus_id', $trip->bus_id)
-                ->delete();
-
         // Notify student apps in real-time so the bus disappears immediately
         broadcast(new BusTripEnded($trip->bus_id, $trip->id));
 
@@ -108,7 +102,7 @@ class TripController extends Controller
     public function current(Request $request)
     {
         $trip = Trip::where('driver_id', $request->user()->id)
-            ->where('status', 'ongoing')
+            ->activeToday()
             ->with(['bus', 'route', 'route.stops', 'schedule'])
             ->first();
 
@@ -126,7 +120,9 @@ class TripController extends Controller
     {
         $trips = Trip::where('driver_id', $request->user()->id)
             ->with(['bus', 'route'])
-            ->orderBy('created_at', 'desc')
+            ->whereIn('status', ['completed', 'cancelled'])
+            ->orderByDesc('trip_date')
+            ->orderByDesc('started_at')
             ->paginate(15);
 
         return response()->json($trips);

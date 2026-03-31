@@ -39,7 +39,7 @@ class TrackingController extends Controller
      */
     public function activeTrips(Request $request)
     {
-        $trips = Trip::where('status', 'ongoing')
+        $trips = Trip::activeToday()
             ->with(['bus', 'route', 'route.stops', 'driver', 'latestLocation'])
             ->get();
 

@@ -7,7 +7,6 @@ use App\Models\Bus;
 use App\Models\Route;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ResourceController extends Controller
 {
@@ -18,7 +17,7 @@ class ResourceController extends Controller
     {
         $buses = Bus::where('status', 'active')
             ->whereDoesntHave('trips', function ($query) {
-                $query->where('status', 'ongoing');
+                $query->activeToday();
             })
             ->select('id', 'plate_number', 'code', 'display_name', 'capacity')
             ->get();

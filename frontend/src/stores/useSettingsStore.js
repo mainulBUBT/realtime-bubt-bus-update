@@ -97,17 +97,22 @@ export const useSettingsStore = defineStore('settings', () => {
   function applyAppColors() {
     if (typeof document !== 'undefined') {
       const variants = generateColorVariants(appSettings.value.splashPrimaryColor)
+      const rgb = hexToRgb(appSettings.value.splashPrimaryColor)
 
       // Splash screen colors - uses primary and auto-generated dark variant
       document.documentElement.style.setProperty('--splash-primary', appSettings.value.splashPrimaryColor)
       document.documentElement.style.setProperty('--splash-secondary', variants.primaryDark)
 
       // Main app colors - applies to ALL components
-      // These variables are used throughout the entire app for headers, buttons, timeline, badges, map markers, etc.
       document.documentElement.style.setProperty('--primary', variants.primary)
       document.documentElement.style.setProperty('--primary-dark', variants.primaryDark)
       document.documentElement.style.setProperty('--primary-light', variants.primaryLight)
       document.documentElement.style.setProperty('--primary-50', variants.primary50)
+
+      // RGB components for opacity variants in CSS: rgba(var(--primary-rgb), 0.2)
+      if (rgb) {
+        document.documentElement.style.setProperty('--primary-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`)
+      }
     }
   }
 

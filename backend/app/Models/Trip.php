@@ -84,6 +84,24 @@ class Trip extends Model
     }
 
     /**
+     * Scope for trips that are active today.
+     */
+    public function scopeActiveToday($query)
+    {
+        return $query->ongoing()
+            ->whereDate('trip_date', today());
+    }
+
+    /**
+     * Scope for ongoing trips left over from previous days.
+     */
+    public function scopeStaleOngoing($query)
+    {
+        return $query->ongoing()
+            ->whereDate('trip_date', '<', today());
+    }
+
+    /**
      * Get the latest location for this trip
      */
     public function latestLocation()

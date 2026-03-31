@@ -96,6 +96,14 @@ const startLocationTracking = async () => {
   }
 }
 
+const stopLocationTracking = async () => {
+  try {
+    await stopTracking()
+  } catch (error) {
+    console.error('Failed to stop tracking:', error)
+  }
+}
+
 const startDurationCounter = () => {
   durationInterval = setInterval(() => {
     // Trigger computed update

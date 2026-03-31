@@ -89,7 +89,7 @@ const authStore = useAuthStore()
 .menu-drawer-avatar {
   width: 52px;
   height: 52px;
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;

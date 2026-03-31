@@ -82,7 +82,7 @@ function handleBusClick(bus) {
         </div>
         <div class="sidebar-brand">
           <h1>{{ settingsStore.appSettings.appName || 'BUBT Bus Tracker' }}</h1>
-          <span>University Shuttle Service</span>
+          <span>{{ settingsStore.appSettings.appTagline || 'University Shuttle Service' }}</span>
         </div>
         <!-- Close button (mobile only) -->
         <button class="sidebar-close-btn" @click="closeSidebar">
@@ -131,7 +131,7 @@ function handleBusClick(bus) {
       <div class="sidebar-buses">
         <h3 class="section-title">
           <span class="title-bar"></span>
-          Available Buses
+          Active Buses
         </h3>
         <div class="bus-list">
           <BusCard

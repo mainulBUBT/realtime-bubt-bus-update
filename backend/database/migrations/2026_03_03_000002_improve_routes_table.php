@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -34,8 +35,10 @@ return new class extends Migration
             $table->renameColumn('direction_temp', 'direction');
         });
 
-        // Step 5: Now set the proper enum type
-        DB::statement("ALTER TABLE routes MODIFY COLUMN direction ENUM('outbound', 'inbound') NOT NULL");
+        // Step 5: Now set the proper enum type on databases that support it.
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE routes MODIFY COLUMN direction ENUM('outbound', 'inbound') NOT NULL");
+        }
 
         // Step 6: Add code field and indexes
         Schema::table('routes', function (Blueprint $table) {
@@ -72,7 +75,9 @@ return new class extends Migration
             $table->renameColumn('direction_temp', 'direction');
         });
 
-        DB::statement("ALTER TABLE routes MODIFY COLUMN direction ENUM('up', 'down') NOT NULL");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE routes MODIFY COLUMN direction ENUM('up', 'down') NOT NULL");
+        }
 
         Schema::table('routes', function (Blueprint $table) {
             $table->dropIndex('idx_direction');

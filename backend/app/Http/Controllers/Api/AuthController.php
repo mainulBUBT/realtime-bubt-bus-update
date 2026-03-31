@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Models\Location;
+use App\Models\Trip;
 use App\Events\BusTripEnded;
 
 class AuthController extends Controller
@@ -69,17 +68,12 @@ class AuthController extends Controller
 
         // If the driver is logging out with an ongoing trip, end it cleanly
         if ($user->role === 'driver') {
-            $activeTrip = \App\Models\Trip::where('driver_id', $user->id)
-                ->where('status', 'ongoing')
+            $activeTrip = Trip::where('driver_id', $user->id)
+                ->activeToday()
                 ->first();
 
             if ($activeTrip) {
                 $activeTrip->update(['status' => 'completed', 'ended_at' => now()]);
-
-                // Remove location — bus vanishes from student app
-                Location::where('trip_id', $activeTrip->id)
-                        ->where('bus_id', $activeTrip->bus_id)
-                        ->delete();
 
                 broadcast(new BusTripEnded($activeTrip->bus_id, $activeTrip->id));
             }

@@ -29,7 +29,7 @@ export const useMapStore = defineStore('map', () => {
         tripId: trip.id,
         code: plateOrCode,
         shortCode: shortCode(plateOrCode),
-        name: trip.bus?.name || trip.route?.name || 'Unknown',
+        name: trip.bus?.display_name || trip.bus?.name || trip.route?.name || 'Unknown',
         route: trip.route?.name || 'Unknown Route',
         status,
         eta: trip.latestLocation?.recorded_at

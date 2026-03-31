@@ -15,7 +15,7 @@
     --primary: #10B981;
     --primary-dark: #059669;
     --primary-light: #D1FAE5;
-    --primary-50: rgba(16, 185, 129, 0.1);
+    --primary-50: rgba(var(--primary-rgb), 0.1);
 
     /* Splash screen colors (set dynamically from settings) */
     --splash-primary: #4F46E5;
@@ -204,8 +204,8 @@ button {
     right: 0;
     bottom: 0;
     background:
-        radial-gradient(ellipse at 20% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+        radial-gradient(ellipse at 20% 20%, rgba(var(--primary-rgb), 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(var(--primary-rgb), 0.1) 0%, transparent 50%);
     pointer-events: none;
 }
 
@@ -236,7 +236,7 @@ button {
     justify-content: center;
     align-items: center;
     margin: 0 auto 24px;
-    box-shadow: 0 10px 40px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 10px 40px rgba(var(--primary-rgb), 0.4);
     animation: logoPulse 3s ease-in-out infinite;
 }
 
@@ -247,11 +247,11 @@ button {
 
 @keyframes logoPulse {
     0%, 100% {
-        box-shadow: 0 10px 40px rgba(16, 185, 129, 0.4);
+        box-shadow: 0 10px 40px rgba(var(--primary-rgb), 0.4);
         transform: translateY(0);
     }
     50% {
-        box-shadow: 0 15px 50px rgba(16, 185, 129, 0.5);
+        box-shadow: 0 15px 50px rgba(var(--primary-rgb), 0.5);
         transform: translateY(-5px);
     }
 }
@@ -289,7 +289,7 @@ button {
 .login-feature i {
     width: 44px;
     height: 44px;
-    background: rgba(16, 185, 129, 0.15);
+    background: rgba(var(--primary-rgb), 0.15);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
@@ -319,7 +319,7 @@ button {
 .form-control:focus {
     background: rgba(255, 255, 255, 0.15) !important;
     border-color: var(--primary) !important;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2) !important;
 }
 
 .btn-login {
@@ -337,7 +337,7 @@ button {
 
 .btn-login:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 8px 30px rgba(var(--primary-rgb), 0.4);
 }
 
 .btn-login:disabled {
@@ -368,20 +368,20 @@ button {
 }
 
 /* ==========================================
-   DRIVER LOGIN VARIANT - ORANGE/AMBER ACCENT
+   DRIVER LOGIN VARIANT - DYNAMIC THEME
    ========================================== */
 .login-screen--driver .login-logo {
-    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-    box-shadow: 0 10px 40px rgba(245, 158, 11, 0.4);
+    background: linear-gradient(135deg, var(--splash-primary) 0%, var(--splash-secondary) 100%);
+    box-shadow: 0 10px 40px rgba(var(--primary-rgb), 0.4);
 }
 
 @keyframes logoPulseDriver {
     0%, 100% {
-        box-shadow: 0 10px 40px rgba(245, 158, 11, 0.4);
+        box-shadow: 0 10px 40px rgba(var(--primary-rgb), 0.4);
         transform: translateY(0);
     }
     50% {
-        box-shadow: 0 15px 50px rgba(245, 158, 11, 0.5);
+        box-shadow: 0 15px 50px rgba(var(--primary-rgb), 0.5);
         transform: translateY(-5px);
     }
 }
@@ -391,24 +391,24 @@ button {
 }
 
 .login-screen--driver .login-feature i {
-    background: rgba(245, 158, 11, 0.15);
-    color: #F59E0B;
+    background: rgba(var(--primary-rgb), 0.15);
+    color: var(--splash-primary);
 }
 
 .login-screen--driver .btn-login {
-    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    background: linear-gradient(135deg, var(--splash-primary) 0%, var(--splash-secondary) 100%);
 }
 
 .login-screen--driver .btn-login:hover {
-    box-shadow: 0 8px 30px rgba(245, 158, 11, 0.4);
+    box-shadow: 0 8px 30px rgba(var(--primary-rgb), 0.4);
 }
 
 .login-screen--driver .login-privacy i {
-    color: #F59E0B;
+    color: var(--splash-primary);
 }
 
 .login-screen--driver .login-privacy a {
-    color: #F59E0B;
+    color: var(--splash-primary);
 }
 
 /* ==========================================
@@ -1385,7 +1385,7 @@ button {
 
 /* Selected bus marker — pulse ring */
 .bus-marker-icon.selected .bus-icon-wrapper {
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.5), 0 0 0 6px rgba(16, 185, 129, 0.25);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.5), 0 0 0 6px rgba(16, 185, 129, 0.25);
     transform: scale(1.1);
 }
 
@@ -1725,7 +1725,7 @@ button {
 .current-pulse {
     position: absolute;
     inset: -4px;
-    background: rgba(16, 185, 129, 0.15);
+    background: rgba(var(--primary-rgb), 0.15);
     border-radius: 50%;
     animation: currentPulse 2s ease-in-out infinite;
 }
@@ -1780,7 +1780,7 @@ button {
 }
 .schedule-item.passed { opacity: 0.5; }
 .schedule-item.active {
-    background: rgba(16, 185, 129, 0.08);
+    background: rgba(var(--primary-rgb), 0.08);
     border-left: 3px solid var(--primary, #10B981);
 }
 .schedule-time {
@@ -1829,10 +1829,10 @@ button {
 .btn-action.primary {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
 }
 .btn-action.primary:hover {
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.4);
     transform: translateY(-1px);
 }
 .btn-action.secondary {
@@ -2560,7 +2560,7 @@ button {
 }
 
 .direction-badge.inbound {
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(var(--primary-rgb), 0.1);
     color: var(--primary-dark);
 }
 
@@ -2796,7 +2796,7 @@ button {
 .filter-tab.active {
     background: var(--primary);
     color: white;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.3);
 }
 
 .filter-count {

@@ -8,6 +8,7 @@ import TripStart from '@/views/driver/TripStart.vue'
 import SelectBus from '@/views/driver/SelectBus.vue'
 import SelectDirection from '@/views/driver/SelectDirection.vue'
 import ActiveTrip from '@/views/driver/ActiveTrip.vue'
+import DriverHistory from '@/views/driver/History.vue'
 
 // Student routes
 import StudentMap from '@/views/student/MapView.vue'
@@ -62,6 +63,11 @@ const routes = appType === 'driver' ? [
         path: 'trip/active',
         name: 'trip-active',
         component: ActiveTrip
+      },
+      {
+        path: 'history',
+        name: 'trip-history',
+        component: DriverHistory
       }
     ]
   }

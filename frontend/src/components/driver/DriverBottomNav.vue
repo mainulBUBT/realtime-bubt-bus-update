@@ -17,6 +17,12 @@ const navItems = computed(() => [
     disabled: false
   },
   {
+    name: 'trip-history',
+    icon: 'bi-clock-history',
+    label: 'History',
+    disabled: false
+  },
+  {
     name: 'trip-active',
     icon: 'bi-bus-front-fill',
     label: 'Active Trip',
@@ -47,7 +53,7 @@ const navigate = (item) => {
       v-for="item in navItems"
       :key="item.name"
       class="driver-nav-item"
-      :class="{ active: route.name === item.name || (item.name === 'trip-active' && route.name === 'trip-active'), disabled: item.disabled }"
+      :class="{ active: route.name === item.name, disabled: item.disabled }"
       @click="navigate(item)"
     >
       <i :class="item.icon"></i>

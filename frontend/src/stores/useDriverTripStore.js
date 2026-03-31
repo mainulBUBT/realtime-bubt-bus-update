@@ -8,6 +8,17 @@ export const useDriverTripStore = defineStore('driverTrip', {
     selectedDirection: null,
     availableBuses: [],
     availableRoutes: [],
+    historyTrips: [],
+    historyPagination: {
+      currentPage: 1,
+      lastPage: 1,
+      total: 0,
+      perPage: 15,
+      from: null,
+      to: null
+    },
+    historyLoading: false,
+    historyError: null,
     loading: false,
     error: null,
     // Cache timestamps to prevent redundant API calls
@@ -21,7 +32,8 @@ export const useDriverTripStore = defineStore('driverTrip', {
   getters: {
     hasActiveTrip: (state) => !!state.currentTrip,
     canStartTrip: (state) => !state.currentTrip && state.selectedBus && state.selectedDirection,
-    availableBusesCount: (state) => state.availableBuses.length
+    availableBusesCount: (state) => state.availableBuses.length,
+    hasMoreHistory: (state) => state.historyPagination.currentPage < state.historyPagination.lastPage
   },
 
   actions: {
@@ -129,6 +141,67 @@ export const useDriverTripStore = defineStore('driverTrip', {
       } finally {
         this.loading = false
       }
+    },
+
+    async fetchHistory(page = 1, { append = false } = {}) {
+      const shouldAppend = append || page > 1
+
+      this.historyLoading = true
+      this.historyError = null
+
+      try {
+        const response = await api.get('/driver/trips/history', {
+          params: { page }
+        })
+
+        const payload = response.data || {}
+        const items = payload.data || []
+
+        this.historyTrips = shouldAppend
+          ? [...this.historyTrips, ...items]
+          : items
+
+        this.historyPagination = {
+          currentPage: payload.current_page ?? page,
+          lastPage: payload.last_page ?? 1,
+          total: payload.total ?? items.length,
+          perPage: payload.per_page ?? items.length,
+          from: payload.from ?? null,
+          to: payload.to ?? null
+        }
+
+        return payload
+      } catch (error) {
+        if (!shouldAppend) {
+          this.historyTrips = []
+          this.historyPagination = {
+            currentPage: 1,
+            lastPage: 1,
+            total: 0,
+            perPage: 15,
+            from: null,
+            to: null
+          }
+        }
+
+        this.historyError = error.response?.data?.message || 'Failed to fetch trip history'
+        throw error
+      } finally {
+        this.historyLoading = false
+      }
+    },
+
+    resetHistory() {
+      this.historyTrips = []
+      this.historyPagination = {
+        currentPage: 1,
+        lastPage: 1,
+        total: 0,
+        perPage: 15,
+        from: null,
+        to: null
+      }
+      this.historyError = null
     },
 
     setSelectedBus(bus) {

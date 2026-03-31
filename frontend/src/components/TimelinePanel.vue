@@ -7,13 +7,107 @@ const mapStore = useMapStore()
 const { selectedTrip, selectedTripId, showTimeline } = storeToRefs(mapStore)
 
 // ── helpers ────────────────────────────────────────────────
-function haversineKm(lat1, lng1, lat2, lng2) {
-  const R = 6371
+const STOP_PROXIMITY_METERS = 160
+const TERMINAL_PROXIMITY_METERS = 260
+const SEGMENT_END_SNAP_RATIO = 0.92
+
+function haversineMeters(lat1, lng1, lat2, lng2) {
+  const R = 6371000
   const dLat = (lat2 - lat1) * Math.PI / 180
   const dLng = (lng2 - lng1) * Math.PI / 180
   const a = Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function projectToMeters(lat, lng, originLat) {
+  const latMeters = 110540
+  const lngMeters = 111320 * Math.cos(originLat * Math.PI / 180)
+
+  return {
+    x: lng * lngMeters,
+    y: lat * latMeters,
+  }
+}
+
+function distanceToSegmentMeters(lat, lng, startLat, startLng, endLat, endLng) {
+  const originLat = (startLat + endLat + lat) / 3
+  const point = projectToMeters(lat, lng, originLat)
+  const start = projectToMeters(startLat, startLng, originLat)
+  const end = projectToMeters(endLat, endLng, originLat)
+
+  const segX = end.x - start.x
+  const segY = end.y - start.y
+  const segLenSq = segX ** 2 + segY ** 2
+
+  if (segLenSq === 0) {
+    return {
+      distance: Math.hypot(point.x - start.x, point.y - start.y),
+      t: 0,
+    }
+  }
+
+  const rawT = ((point.x - start.x) * segX + (point.y - start.y) * segY) / segLenSq
+  const t = Math.max(0, Math.min(1, rawT))
+  const projectionX = start.x + segX * t
+  const projectionY = start.y + segY * t
+
+  return {
+    distance: Math.hypot(point.x - projectionX, point.y - projectionY),
+    t,
+  }
+}
+
+function resolveCurrentStopIndex(stops, busLat, busLng) {
+  if (busLat === null || busLng === null) return 0
+  if (stops.length <= 1) return 0
+
+  const distances = stops.map(stop =>
+    haversineMeters(busLat, busLng, parseFloat(stop.lat), parseFloat(stop.lng))
+  )
+
+  const lastIdx = stops.length - 1
+  const firstTerminalDistance = distances[0]
+  const lastTerminalDistance = distances[lastIdx]
+
+  if (firstTerminalDistance <= TERMINAL_PROXIMITY_METERS || lastTerminalDistance <= TERMINAL_PROXIMITY_METERS) {
+    return firstTerminalDistance <= lastTerminalDistance ? 0 : lastIdx
+  }
+
+  const nearbyStopIndexes = distances
+    .map((distance, index) => distance <= STOP_PROXIMITY_METERS ? index : -1)
+    .filter(index => index >= 0)
+
+  if (nearbyStopIndexes.length > 0) {
+    return Math.max(...nearbyStopIndexes)
+  }
+
+  let bestSegment = { distance: Infinity, startIdx: 0, t: 0 }
+
+  for (let i = 0; i < lastIdx; i++) {
+    const segment = distanceToSegmentMeters(
+      busLat,
+      busLng,
+      parseFloat(stops[i].lat),
+      parseFloat(stops[i].lng),
+      parseFloat(stops[i + 1].lat),
+      parseFloat(stops[i + 1].lng),
+    )
+
+    if (segment.distance < bestSegment.distance) {
+      bestSegment = {
+        distance: segment.distance,
+        startIdx: i,
+        t: segment.t,
+      }
+    }
+  }
+
+  if (bestSegment.t >= SEGMENT_END_SNAP_RATIO) {
+    return Math.min(bestSegment.startIdx + 1, lastIdx)
+  }
+
+  return bestSegment.startIdx
 }
 
 function timeAgo(dateString) {
@@ -47,7 +141,7 @@ const badgeCode = computed(() => {
 })
 
 const busName = computed(() =>
-  trip.value?.bus?.name || trip.value?.route?.name || 'Unknown Bus'
+  trip.value?.bus?.display_name || trip.value?.bus?.name || trip.value?.route?.name || 'Unknown Bus'
 )
 
 const routeName = computed(() =>
@@ -83,23 +177,13 @@ const stopsWithState = computed(() => {
   const busLat = loc?.lat ? parseFloat(loc.lat) : null
   const busLng = loc?.lng ? parseFloat(loc.lng) : null
 
-  let currentIdx = 0 // default: first stop is "current" if no GPS
-
-  if (busLat !== null && busLng !== null) {
-    // Find the stop closest to the bus
-    let minDist = Infinity
-    stops.forEach((stop, i) => {
-      const d = haversineKm(busLat, busLng, parseFloat(stop.lat), parseFloat(stop.lng))
-      if (d < minDist) { minDist = d; currentIdx = i }
-    })
-  }
-
   const lastIdx = stops.length - 1
+  const currentIdx = resolveCurrentStopIndex(stops, busLat, busLng)
 
   return stops.map((stop, i) => {
     let state
     if (i < currentIdx) state = 'passed'
-    else if (i === currentIdx) state = i === lastIdx ? 'destination' : 'current'
+    else if (i === currentIdx) state = 'current'
     else if (i === lastIdx) state = 'destination'
     else state = 'upcoming'
     return { ...stop, state }

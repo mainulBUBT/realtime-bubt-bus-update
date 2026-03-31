@@ -19,6 +19,7 @@ const showMenuDrawer = ref(false)
 const pageTitle = computed(() => {
   const titles = {
     'dashboard': 'Dashboard',
+    'trip-history': 'History',
     'trip-select-bus': 'Select Bus',
     'trip-select-direction': 'Select Direction',
     'trip-active': 'Active Trip'
@@ -27,7 +28,7 @@ const pageTitle = computed(() => {
 })
 
 const showBackButton = computed(() => {
-  return route.name !== 'dashboard' && route.name !== 'trip-active'
+  return route.name !== 'dashboard' && route.name !== 'trip-active' && route.name !== 'trip-history'
 })
 
 const handleLogoutClick = () => {

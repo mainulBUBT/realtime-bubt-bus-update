@@ -131,14 +131,14 @@ const getBusDisplay = (bus) => {
     </div>
 
     <!-- Cancel Button -->
-    <div class="flex justify-center mt-6">
+    <div class="cancel-action-wrap">
       <button
         v-if="!loading && !starting"
         @click="handleCancel"
-        class="px-8 py-3 text-white bg-red-500 hover:bg-red-600 rounded-lg transition font-medium flex items-center gap-2"
+        class="cancel-selection-button"
       >
-        <i class="bi bi-x-circle"></i>
-        Cancel
+        <i class="bi bi-arrow-left-circle"></i>
+        <span>Choose Another Bus</span>
       </button>
     </div>
 
@@ -154,3 +154,40 @@ const getBusDisplay = (bus) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.cancel-action-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+  padding-bottom: 10px;
+}
+
+.cancel-selection-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  background: var(--white);
+  color: var(--gray-700);
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.cancel-selection-button:active {
+  transform: translateY(1px);
+  background: var(--gray-50);
+  border-color: var(--gray-300);
+}
+
+.cancel-selection-button i {
+  font-size: 1.1rem;
+  color: var(--gray-500);
+}
+</style>

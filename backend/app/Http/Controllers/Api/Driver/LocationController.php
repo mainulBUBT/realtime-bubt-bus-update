@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Location;
 use App\Models\Trip;
 use App\Events\BusLocationUpdated;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class LocationController extends Controller
 {
@@ -20,46 +22,28 @@ class LocationController extends Controller
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
             'speed' => 'nullable|numeric',
+            'recorded_at' => 'nullable|date',
         ]);
 
-        // Get the trip
         $trip = Trip::find($request->trip_id);
 
-        // Validate trip belongs to driver
         if ($trip->driver_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Validate trip is ongoing
         if ($trip->status !== 'ongoing') {
             return response()->json(['message' => 'Trip is not active'], 400);
         }
 
-        // Upsert location — 1 row per bus (keeps table lean, always current position)
-        $location = Location::updateOrCreate(
-            ['trip_id' => $trip->id, 'bus_id' => $trip->bus_id],
-            [
-                'lat'         => $request->lat,
-                'lng'         => $request->lng,
-                'speed'       => $request->speed,
-                'recorded_at' => now(),
-            ]
-        );
-
-        // Update trip's current location cache for instant map load
-        $trip->update([
-            'current_lat' => $request->lat,
-            'current_lng' => $request->lng,
-            'last_location_at' => now(),
+        $location = $this->createLocationRecord($trip, [
+            'lat' => $request->lat,
+            'lng' => $request->lng,
+            'speed' => $request->speed,
+            'recorded_at' => $request->recorded_at,
         ]);
 
-        // Broadcast real-time location update via Reverb
-        broadcast(new BusLocationUpdated($trip->bus_id, [
-            'lat'         => $location->lat,
-            'lng'         => $location->lng,
-            'speed'       => $location->speed,
-            'recorded_at' => $location->recorded_at,
-        ]))->toOthers();
+        $this->updateTripCache($trip, $location);
+        $this->broadcastLatestLocation($trip, $location);
 
         return response()->json([
             'message' => 'Location updated successfully',
@@ -74,10 +58,11 @@ class LocationController extends Controller
     {
         $request->validate([
             'trip_id' => 'required|exists:trips,id',
-            'locations' => 'required|array',
+            'locations' => 'required|array|min:1',
             'locations.*.lat' => 'required|numeric',
             'locations.*.lng' => 'required|numeric',
             'locations.*.speed' => 'nullable|numeric',
+            'locations.*.recorded_at' => 'nullable|date',
         ]);
 
         $trip = Trip::find($request->trip_id);
@@ -86,47 +71,67 @@ class LocationController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $location = null;
-        $latestLat = null;
-        $latestLng = null;
-
-        foreach ($request->locations as $loc) {
-            $latestLat = $loc['lat'];
-            $latestLng = $loc['lng'];
-
-            // Each iteration replaces the previous — only the latest survives (1 row per bus)
-            $location = Location::updateOrCreate(
-                ['trip_id' => $trip->id, 'bus_id' => $trip->bus_id],
-                [
-                    'lat'         => $latestLat,
-                    'lng'         => $latestLng,
-                    'speed'       => $loc['speed'] ?? null,
-                    'recorded_at' => now(),
-                ]
-            );
+        if ($trip->status !== 'ongoing') {
+            return response()->json(['message' => 'Trip is not active'], 400);
         }
 
-        // Update trip's current location cache with the latest location
-        if ($latestLat && $latestLng) {
-            $trip->update([
-                'current_lat' => $latestLat,
-                'current_lng' => $latestLng,
-                'last_location_at' => now(),
-            ]);
-        }
+        $latestLocation = DB::transaction(function () use ($request, $trip) {
+            $latest = null;
 
-        // Broadcast the final (latest) location for this trip
-        if ($location) {
-            broadcast(new BusLocationUpdated($trip->bus_id, [
-                'lat'         => $location->lat,
-                'lng'         => $location->lng,
-                'speed'       => $location->speed,
-                'recorded_at' => $location->recorded_at,
-            ]))->toOthers();
+            foreach ($request->locations as $payload) {
+                $location = $this->createLocationRecord($trip, $payload);
+
+                if (!$latest || $location->recorded_at->greaterThan($latest->recorded_at)) {
+                    $latest = $location;
+                }
+            }
+
+            if ($latest) {
+                $this->updateTripCache($trip, $latest);
+            }
+
+            return $latest;
+        });
+
+        if ($latestLocation) {
+            $this->broadcastLatestLocation($trip, $latestLocation);
         }
 
         return response()->json([
             'message' => 'Locations batch updated successfully',
         ]);
+    }
+
+    private function createLocationRecord(Trip $trip, array $payload): Location
+    {
+        return Location::create([
+            'trip_id' => $trip->id,
+            'bus_id' => $trip->bus_id,
+            'lat' => $payload['lat'],
+            'lng' => $payload['lng'],
+            'speed' => $payload['speed'] ?? null,
+            'recorded_at' => $payload['recorded_at']
+                ? Carbon::parse($payload['recorded_at'])->utc()
+                : now(),
+        ]);
+    }
+
+    private function updateTripCache(Trip $trip, Location $location): void
+    {
+        $trip->update([
+            'current_lat' => $location->lat,
+            'current_lng' => $location->lng,
+            'last_location_at' => $location->recorded_at,
+        ]);
+    }
+
+    private function broadcastLatestLocation(Trip $trip, Location $location): void
+    {
+        broadcast(new BusLocationUpdated($trip->bus_id, [
+            'lat' => $location->lat,
+            'lng' => $location->lng,
+            'speed' => $location->speed,
+            'recorded_at' => $location->recorded_at,
+        ]))->toOthers();
     }
 }

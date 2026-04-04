@@ -37,9 +37,9 @@ export const useDriverTripStore = defineStore('driverTrip', {
   },
 
   actions: {
-    async fetchCurrentTrip() {
+    async fetchCurrentTrip({ force = false } = {}) {
       // Cache for 30 seconds to prevent redundant API calls
-      if (this._cache.currentTrip && (Date.now() - this._cache.currentTrip) < 30000) {
+      if (!force && this._cache.currentTrip && (Date.now() - this._cache.currentTrip) < 30000) {
         return this.currentTrip
       }
 
@@ -115,10 +115,10 @@ export const useDriverTripStore = defineStore('driverTrip', {
           bus_id: this.selectedBus.id,
           route_id: this.selectedDirection.routeId
         })
-        this.currentTrip = response.data
+        this.currentTrip = response.data.trip ?? response.data
         this._cache.currentTrip = Date.now()  // Update cache after starting trip
         this.clearSelection()
-        return response.data
+        return this.currentTrip
       } catch (error) {
         this.error = error.response?.data?.message || 'Failed to start trip'
         throw error
@@ -134,7 +134,7 @@ export const useDriverTripStore = defineStore('driverTrip', {
         const response = await api.post(`/driver/trips/${tripId}/end`)
         this.currentTrip = null
         this._cache.currentTrip = Date.now()  // Update cache after ending trip
-        return response.data
+        return response.data.trip ?? response.data
       } catch (error) {
         this.error = error.response?.data?.message || 'Failed to end trip'
         throw error

@@ -154,27 +154,34 @@ router.beforeEach(async (to, from, next) => {
 
       // Only check trip status if navigating to trip-related routes
       if (tripRoutes.includes(to.name)) {
+        let hasActiveTrip = false
+
         try {
           const response = await api.get('/driver/trips/current')
-          const hasActiveTrip = !!(response.data && response.data.id)
-
-          if (isDev) console.log('🚌 Trip status check:', hasActiveTrip ? 'Active' : 'None')
-
-          // If has active trip and trying to access start flow pages
-          if (hasActiveTrip && (to.name === 'trip-select-bus' || to.name === 'trip-select-direction' || to.name === 'trip-start')) {
-            return next({ name: 'trip-active' })
-          }
-
-          // If no active trip and trying to access active trip page
-          if (!hasActiveTrip && to.name === 'trip-active') {
-            return next({ name: 'trip-select-bus' })
-          }
+          hasActiveTrip = !!(response.data && response.data.id)
         } catch (error) {
-          if (isDev) console.error('❌ Error checking trip status:', error)
-          // If error checking trip status and trying to access active trip, redirect to select bus
-          if (to.name === 'trip-active') {
-            return next({ name: 'trip-select-bus' })
+          if (error?.response?.status === 404) {
+            hasActiveTrip = false
+          } else {
+            if (isDev) console.error('❌ Error checking trip status:', error)
+
+            // If error checking trip status and trying to access active trip, redirect to select bus
+            if (to.name === 'trip-active') {
+              return next({ name: 'trip-select-bus' })
+            }
           }
+        }
+
+        if (isDev) console.log('🚌 Trip status check:', hasActiveTrip ? 'Active' : 'None')
+
+        // If has active trip and trying to access start flow pages
+        if (hasActiveTrip && (to.name === 'trip-select-bus' || to.name === 'trip-select-direction' || to.name === 'trip-start')) {
+          return next({ name: 'trip-active' })
+        }
+
+        // If no active trip and trying to access active trip page
+        if (!hasActiveTrip && to.name === 'trip-active') {
+          return next({ name: 'trip-select-bus' })
         }
       }
     }

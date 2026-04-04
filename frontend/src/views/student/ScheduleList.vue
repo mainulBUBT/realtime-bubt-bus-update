@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import api from '@/api/client'
 
 const schedules = ref([])
@@ -14,7 +14,9 @@ onMounted(async () => {
 const fetchSchedules = async () => {
   loading.value = true
   try {
-    const response = await api.get('/student/schedules')
+    const response = await api.get('/student/schedules', {
+      params: { filter: filter.value }
+    })
     schedules.value = response.data
   } catch (e) {
     console.error('Failed to fetch schedules:', e)
@@ -22,6 +24,8 @@ const fetchSchedules = async () => {
     loading.value = false
   }
 }
+
+watch(filter, fetchSchedules)
 
 const filteredSchedules = computed(() => {
   if (filter.value === 'today') {

@@ -15,6 +15,7 @@ node_modules/
 # Build outputs
 dist-driver/
 dist-student/
+resources/generated/
 
 # Capacitor - Ignore entire native projects (regenerated via `npx cap sync`)
 capacitor-driver/

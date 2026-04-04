@@ -93,6 +93,24 @@ class Schedule extends Model
     }
 
     /**
+     * Scope for schedules active in the current period (any weekday).
+     */
+    public function scopeActiveInCurrentPeriod(Builder $query): void
+    {
+        $today = now()->toDateString();
+
+        $query->active()
+            ->whereNotNull('schedule_period_id')
+            ->where(function ($q) use ($today) {
+                $q->whereNull('effective_date')
+                    ->orWhereDate('effective_date', '<=', $today);
+            })
+            ->whereHas('schedulePeriod', function ($q) use ($today) {
+                $q->currentOn($today);
+            });
+    }
+
+    /**
      * Scope for same-bus same-time schedules that overlap on at least one weekday.
      */
     public function scopeConflicting(Builder $query, int $busId, int $schedulePeriodId, string $departureTime, array $weekdays, ?int $ignoreId = null): void

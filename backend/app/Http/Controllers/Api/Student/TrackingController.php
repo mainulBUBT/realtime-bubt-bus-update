@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api\Student;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Route;
-use App\Models\Trip;
 use App\Models\Location;
+use App\Models\Route;
+use App\Models\Schedule;
+use App\Models\Trip;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TrackingController extends Controller
 {
@@ -84,19 +86,23 @@ class TrackingController extends Controller
     /**
      * Get today's schedules with route and bus details
      */
-    public function schedules(Request $request)
+    public function schedules(Request $request): JsonResponse
     {
-        $schedules = \App\Models\Schedule::with(['bus', 'route.stops'])
-            ->activeToday()
+        $showAll = $request->string('filter')->toString() === 'all';
+        $todayName = strtolower(now()->englishDayOfWeek);
+
+        $schedules = Schedule::query()
+            ->with(['bus', 'route.stops'])
+            ->when($showAll, fn ($query) => $query->activeInCurrentPeriod(), fn ($query) => $query->activeToday())
             ->orderBy('departure_time')
             ->get()
-            ->map(function ($schedule) {
+            ->map(function ($schedule) use ($todayName) {
                 return [
                     'id' => $schedule->id,
                     'departure_time' => $schedule->departure_time,
                     'weekdays' => $schedule->weekdays,
                     'formatted_weekdays' => $schedule->formatted_weekdays,
-                    'is_today' => true,
+                    'is_today' => \in_array($todayName, $schedule->weekdays ?? []),
                     'bus' => $schedule->bus ? [
                         'id' => $schedule->bus->id,
                         'plate_number' => $schedule->bus->plate_number,

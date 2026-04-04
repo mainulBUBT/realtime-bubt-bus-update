@@ -28,8 +28,8 @@ The Capacitor native projects are gitignored to save repository space (~50MB per
 
 4. **Add native platforms**
    ```bash
-   npx cap add driver   # Creates capacitor-driver/
-   npx cap add student  # Creates capacitor-student/
+   npx cap add android --dir capacitor-driver   # Creates capacitor-driver/
+   npx cap add android --dir capacitor-student  # Creates capacitor-student/
    ```
 
    Or for Android specifically:
@@ -48,6 +48,20 @@ The Capacitor native projects are gitignored to save repository space (~50MB per
    ```bash
    npm run cap:sync:driver   # or cap:sync:student
    ```
+
+### Driver background tracking extras
+
+The driver app now uses `@capacitor-community/background-geolocation` for Android-style tracking while the app is backgrounded.
+
+- `frontend/scripts/capacitor-driver.config.js` already enables:
+  - `android.useLegacyBridge = true`
+  - `plugins.CapacitorHttp.enabled = true`
+- After creating `capacitor-driver/`, make sure the Android project has the permissions required by the background geolocation plugin, including background location and foreground-service notification support.
+- On Android 13+, allow notifications so the persistent foreground-service notification can be shown while an ongoing trip is being tracked.
+- After any plugin/config change, run:
+  ```bash
+  npm run cap:sync:driver
+  ```
 
 ## Daily Development
 
@@ -104,10 +118,10 @@ frontend/
 | `npm run dev:student` | Start dev server for student app |
 | `npm run build:driver` | Build driver web app to `dist-driver/` |
 | `npm run build:student` | Build student web app to `dist-student/` |
-| `npm run cap:add:driver` | Add Capacitor platform for driver app |
-| `npm run cap:add:student` | Add Capacitor platform for student app |
-| `npm run cap:sync:driver` | Build + sync driver app to native |
-| `npm run cap:sync:student` | Build + sync student app to native |
+| `npm run cap:add:driver` | Add Android Capacitor project for driver app |
+| `npm run cap:add:student` | Add Android Capacitor project for student app |
+| `npm run cap:sync:driver` | Build + sync driver app to native Android |
+| `npm run cap:sync:student` | Build + sync student app to native Android |
 | `npm run cap:open:driver` | Open driver app in Android Studio |
 | `npm run cap:open:student` | Open student app in Android Studio |
 | `npm run cap:build:driver` | Sync + open driver app |
@@ -129,6 +143,12 @@ Check that `capacitor.config.js` has the correct `webDir` path:
 - Driver: `webDir: '../dist-driver'`
 - Student: `webDir: '../dist-student'`
 
+### Driver app stops sending after going to background
+- Confirm you copied the latest `scripts/capacitor-driver.config.js`
+- Re-run `npm run cap:sync:driver`
+- Verify Android location permission is granted as `Allow all the time`
+- Verify notifications are allowed so Android can show the tracking notification
+
 ## Environment Variables
 
 For release builds with signing, set these in your shell or `.env.local`:
@@ -136,6 +156,34 @@ For release builds with signing, set these in your shell or `.env.local`:
 export ANDROID_KEYSTORE_PATH=/path/to/keystore.jks
 export ANDROID_KEYSTORE_ALIAS=your-alias
 ```
+
+## App Icons
+
+The frontend now keeps the app icon source artwork in:
+
+- `public/icons/app-driver.svg`
+- `public/icons/app-student.svg`
+
+The web favicon automatically switches based on `VITE_APP_TYPE`, so:
+
+- `npm run dev:driver` and `npm run build:driver` use the driver icon
+- `npm run dev:student` and `npm run build:student` use the student icon
+
+To export PNGs for Android or store assets on macOS:
+
+```bash
+npm run icons:export:driver
+npm run icons:export:student
+```
+
+This creates PNGs in `resources/generated/<app>/`, including:
+
+- `icon-1024.png`
+- `icon-512.png`
+- `icon-192.png`
+- Android launcher sizes (`android-mdpi.png` through `android-xxxhdpi.png`)
+
+Because `capacitor-driver/` and `capacitor-student/` are gitignored and regenerated locally, launcher icons are not committed in this repo. After you generate the native project, use the exported `icon-1024.png` in Android Studio's `Image Asset` tool, or copy the generated Android PNG sizes into the appropriate `mipmap-*` folders in the local native project.
 
 ## Resources
 

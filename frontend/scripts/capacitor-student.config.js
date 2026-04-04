@@ -6,9 +6,9 @@
  *
  * To regenerate the Capacitor project:
  * 1. npm run build:student
- * 2. npx cap add student (or npx cap add android --dir capacitor-student)
+ * 2. npx cap add android --dir capacitor-student
  * 3. Copy this config to capacitor-student/capacitor.config.js
- * 4. npx cap sync student
+ * 4. npx cap sync android --dir capacitor-student
  */
 
 module.exports = {

@@ -1,0 +1,444 @@
+import { computed, ref } from 'vue'
+import { defineStore } from 'pinia'
+import { App } from '@capacitor/app'
+import { Capacitor, CapacitorHttp } from '@capacitor/core'
+import api, { buildApiHeaders, dispatchUnauthorized, resolveApiUrl } from '@/api/client'
+import { useBackgroundLocation } from '@/composables/useBackgroundLocation'
+import { useAuthStore } from '@/stores/useAuthStore'
+import { useDriverTripStore } from '@/stores/useDriverTripStore'
+
+const STORAGE_KEY = 'driver_tracking_state'
+const SEND_INTERVAL_MS = 5000
+const MAX_BATCH_SIZE = 25
+const MAX_QUEUE_SIZE = 200
+
+function createEmptyLocation() {
+  return {
+    lat: 0,
+    lng: 0,
+    speed: null,
+    accuracy: null,
+    timestamp: null
+  }
+}
+
+function normalizeQueuedLocation(location) {
+  if (!location) return null
+
+  const lat = Number(location.lat)
+  const lng = Number(location.lng)
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return null
+  }
+
+  return {
+    lat,
+    lng,
+    speed: location.speed == null ? null : Number(location.speed),
+    accuracy: location.accuracy == null ? null : Number(location.accuracy),
+    recorded_at: location.recorded_at || new Date(location.timestamp || Date.now()).toISOString()
+  }
+}
+
+function toDedupeKey(tripId, location) {
+  return [
+    tripId,
+    Number(location.lat).toFixed(6),
+    Number(location.lng).toFixed(6),
+    location.recorded_at
+  ].join(':')
+}
+
+function createHttpError(status, data) {
+  const error = new Error(data?.message || `HTTP ${status}`)
+  error.response = { status, data }
+  return error
+}
+
+export const useDriverTrackingStore = defineStore('driverTracking', () => {
+  const {
+    isTracking,
+    currentLocation,
+    error: providerError,
+    permissionState,
+    provider,
+    startTracking,
+    stopTracking
+  } = useBackgroundLocation()
+
+  const initialized = ref(false)
+  const bootstrapping = ref(false)
+  const activeTripId = ref(null)
+  const queue = ref([])
+  const lastSentAt = ref(null)
+  const lastError = ref(null)
+  const syncInProgress = ref(false)
+  const status = ref('idle')
+  const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
+  const appState = ref(document.visibilityState === 'visible' ? 'active' : 'background')
+  const lastFlushAttemptAt = ref(0)
+
+  let flushTimerId = null
+  let appStateListener = null
+  let onlineHandler = null
+  let offlineHandler = null
+  let visibilityHandler = null
+
+  const queueSize = computed(() => queue.value.length)
+  const hasQueuedLocations = computed(() => queueSize.value > 0)
+  const lastKnownLocation = computed(() => {
+    if (currentLocation.value && (
+      currentLocation.value.timestamp ||
+      currentLocation.value.lat !== 0 ||
+      currentLocation.value.lng !== 0
+    )) {
+      return currentLocation.value
+    }
+
+    const latestQueued = queue.value[queue.value.length - 1]
+    if (!latestQueued) return createEmptyLocation()
+
+    return {
+      lat: latestQueued.lat,
+      lng: latestQueued.lng,
+      speed: latestQueued.speed,
+      accuracy: latestQueued.accuracy,
+      timestamp: latestQueued.recorded_at
+    }
+  })
+  const isAndroidNative = computed(() => Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android')
+
+  function persistState() {
+    if (!activeTripId.value && queue.value.length === 0 && !lastSentAt.value) {
+      localStorage.removeItem(STORAGE_KEY)
+      return
+    }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      activeTripId: activeTripId.value,
+      queue: queue.value,
+      lastSentAt: lastSentAt.value
+    }))
+  }
+
+  function hydrateState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+      if (!saved || typeof saved !== 'object') return
+
+      activeTripId.value = typeof saved.activeTripId === 'number' ? saved.activeTripId : null
+      queue.value = Array.isArray(saved.queue)
+        ? saved.queue.map(normalizeQueuedLocation).filter(Boolean)
+        : []
+      lastSentAt.value = saved.lastSentAt || null
+    } catch (err) {
+      console.warn('Failed to restore driver tracking state:', err)
+      localStorage.removeItem(STORAGE_KEY)
+    }
+  }
+
+  function clearPersistedState() {
+    activeTripId.value = null
+    queue.value = []
+    lastSentAt.value = null
+    lastError.value = null
+    status.value = 'idle'
+    persistState()
+  }
+
+  function setStatus(nextStatus) {
+    status.value = nextStatus
+  }
+
+  function startFlushLoop() {
+    if (flushTimerId !== null) return
+
+    flushTimerId = window.setInterval(() => {
+      flushQueue()
+    }, SEND_INTERVAL_MS)
+  }
+
+  function stopFlushLoop() {
+    if (flushTimerId === null) return
+    window.clearInterval(flushTimerId)
+    flushTimerId = null
+  }
+
+  function handleLocationUpdate(location) {
+    if (!activeTripId.value) return
+
+    const normalized = normalizeQueuedLocation(location)
+    if (!normalized) return
+
+    const previous = queue.value[queue.value.length - 1]
+    if (previous && toDedupeKey(activeTripId.value, previous) === toDedupeKey(activeTripId.value, normalized)) {
+      return
+    }
+
+    queue.value.push(normalized)
+
+    if (queue.value.length > MAX_QUEUE_SIZE) {
+      queue.value = queue.value.slice(queue.value.length - MAX_QUEUE_SIZE)
+    }
+
+    lastError.value = null
+    setStatus('tracking')
+    persistState()
+
+    const now = Date.now()
+    if ((now - lastFlushAttemptAt.value) >= SEND_INTERVAL_MS) {
+      void flushQueue()
+    }
+  }
+
+  async function sendRequest(path, payload) {
+    if (Capacitor.isNativePlatform()) {
+      const response = await CapacitorHttp.post({
+        url: resolveApiUrl(path),
+        headers: buildApiHeaders(),
+        data: payload,
+        connectTimeout: 15000,
+        readTimeout: 15000
+      })
+
+      if (response.status >= 400) {
+        if (response.status === 401) {
+          dispatchUnauthorized()
+        }
+
+        throw createHttpError(response.status, response.data)
+      }
+
+      return response.data
+    }
+
+    const response = await api.post(path, payload)
+    return response.data
+  }
+
+  async function flushQueue() {
+    if (!activeTripId.value || queue.value.length === 0 || syncInProgress.value) {
+      return
+    }
+
+    if (!isOnline.value) {
+      setStatus(isTracking.value ? 'offline' : status.value)
+      return
+    }
+
+    syncInProgress.value = true
+    lastFlushAttemptAt.value = Date.now()
+    setStatus('syncing')
+
+    try {
+      while (queue.value.length > 0) {
+        const batch = queue.value.slice(0, MAX_BATCH_SIZE)
+
+        if (batch.length === 1) {
+          await sendRequest('/driver/location', {
+            trip_id: activeTripId.value,
+            ...batch[0]
+          })
+        } else {
+          await sendRequest('/driver/location/batch', {
+            trip_id: activeTripId.value,
+            locations: batch
+          })
+        }
+
+        queue.value = queue.value.slice(batch.length)
+        lastSentAt.value = new Date().toISOString()
+        persistState()
+      }
+
+      setStatus(isTracking.value ? 'tracking' : 'idle')
+    } catch (err) {
+      lastError.value = err?.response?.data?.message || err.message || 'Failed to sync locations'
+
+      if (err?.response?.status === 401) {
+        await stop({ clearQueue: true, resetTrip: true })
+        dispatchUnauthorized()
+      } else if (err?.response?.status === 400 || err?.response?.status === 403) {
+        await stop({ clearQueue: true, resetTrip: true })
+      } else {
+        setStatus(isTracking.value ? 'offline' : 'error')
+      }
+    } finally {
+      syncInProgress.value = false
+      persistState()
+    }
+  }
+
+  async function initialize() {
+    if (initialized.value) return
+
+    hydrateState()
+
+    onlineHandler = () => {
+      isOnline.value = true
+      void flushQueue()
+    }
+
+    offlineHandler = () => {
+      isOnline.value = false
+      if (isTracking.value) {
+        setStatus('offline')
+      }
+    }
+
+    visibilityHandler = () => {
+      appState.value = document.visibilityState === 'visible' ? 'active' : 'background'
+      if (document.visibilityState === 'visible') {
+        void flushQueue()
+      }
+    }
+
+    window.addEventListener('online', onlineHandler)
+    window.addEventListener('offline', offlineHandler)
+    document.addEventListener('visibilitychange', visibilityHandler)
+
+    if (Capacitor.isNativePlatform()) {
+      appStateListener = await App.addListener('appStateChange', ({ isActive }) => {
+        appState.value = isActive ? 'active' : 'background'
+        if (isActive) {
+          void flushQueue()
+        }
+      })
+    }
+
+    startFlushLoop()
+    initialized.value = true
+  }
+
+  async function startForTrip(trip) {
+    await initialize()
+
+    const tripId = typeof trip === 'number' ? trip : trip?.id
+    if (!tripId) return
+
+    if (activeTripId.value === tripId) {
+      if (isTracking.value) {
+        await flushQueue()
+      }
+
+      if (status.value === 'starting') {
+        return
+      }
+
+      if (isTracking.value) {
+        return
+      }
+
+      lastError.value = null
+    }
+
+    if (activeTripId.value && activeTripId.value !== tripId) {
+      queue.value = []
+      lastSentAt.value = null
+    }
+
+    activeTripId.value = tripId
+
+    if (status.value !== 'starting') {
+      lastError.value = null
+      setStatus('starting')
+    }
+
+    try {
+      await startTracking(handleLocationUpdate)
+      persistState()
+      if (queue.value.length > 0) {
+        await flushQueue()
+      }
+      return
+    } catch (err) {
+      lastError.value = err.message || 'Failed to start driver tracking'
+      setStatus('error')
+      persistState()
+      throw err
+    }
+  }
+
+  async function resumeIfTripActive() {
+    await initialize()
+
+    if (bootstrapping.value) return
+    bootstrapping.value = true
+
+    const authStore = useAuthStore()
+    const driverTripStore = useDriverTripStore()
+
+    try {
+      if (!authStore.isAuthenticated || !authStore.isDriver) {
+        await stop({ clearQueue: true, resetTrip: true })
+        return
+      }
+
+      const trip = driverTripStore.currentTrip || await driverTripStore.fetchCurrentTrip({ force: true })
+
+      if (!trip?.id) {
+        await stop({ clearQueue: true, resetTrip: true })
+        return
+      }
+
+      await startForTrip(trip)
+    } finally {
+      bootstrapping.value = false
+    }
+  }
+
+  async function stop({ clearQueue = true, resetTrip = true } = {}) {
+    await stopTracking()
+
+    if (clearQueue) {
+      queue.value = []
+      lastSentAt.value = null
+    }
+
+    if (resetTrip) {
+      activeTripId.value = null
+    }
+
+    lastError.value = null
+    setStatus(clearQueue ? 'idle' : 'paused')
+    persistState()
+  }
+
+  return {
+    initialized,
+    bootstrapping,
+    activeTripId,
+    queue,
+    queueSize,
+    hasQueuedLocations,
+    lastKnownLocation,
+    lastSentAt,
+    lastError,
+    syncInProgress,
+    status,
+    isOnline,
+    appState,
+    isAndroidNative,
+    isTracking,
+    currentLocation,
+    providerError,
+    permissionState,
+    provider,
+    initialize,
+    resumeIfTripActive,
+    startForTrip,
+    stop,
+    flushQueue,
+    getStatus: () => ({
+      activeTripId: activeTripId.value,
+      tracking: isTracking.value,
+      provider: provider.value,
+      permissionState: permissionState.value,
+      queueSize: queue.value.length,
+      lastSentAt: lastSentAt.value,
+      status: status.value
+    }),
+    clearPersistedState
+  }
+})

@@ -39,8 +39,8 @@ onMounted(async () => {
 
 const checkActiveTrip = async () => {
   // Skip loading state if we have recent cached data
-  const hasCache = driverTripStore._cache.currentTrip &&
-    (Date.now() - driverTripStore._cache.currentTrip) < 30000
+  const hasCache = driverTripStore.apiCache?.currentTrip &&
+    (Date.now() - driverTripStore.apiCache.currentTrip) < 30000
 
   loading.value = !hasCache
   try {

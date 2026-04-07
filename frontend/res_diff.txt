@@ -1,0 +1,57 @@
+Binary files capacitor-student/app/src/main/res/drawable/splash.png and capacitor-driver/app/src/main/res/drawable/splash.png differ
+Only in capacitor-student/app/src/main/res: drawable-hdpi
+Binary files capacitor-student/app/src/main/res/drawable-land-hdpi/splash.png and capacitor-driver/app/src/main/res/drawable-land-hdpi/splash.png differ
+Binary files capacitor-student/app/src/main/res/drawable-land-mdpi/splash.png and capacitor-driver/app/src/main/res/drawable-land-mdpi/splash.png differ
+Binary files capacitor-student/app/src/main/res/drawable-land-xhdpi/splash.png and capacitor-driver/app/src/main/res/drawable-land-xhdpi/splash.png differ
+Binary files capacitor-student/app/src/main/res/drawable-land-xxhdpi/splash.png and capacitor-driver/app/src/main/res/drawable-land-xxhdpi/splash.png differ
+Binary files capacitor-student/app/src/main/res/drawable-land-xxxhdpi/splash.png and capacitor-driver/app/src/main/res/drawable-land-xxxhdpi/splash.png differ
+Only in capacitor-student/app/src/main/res: drawable-mdpi
+Binary files capacitor-student/app/src/main/res/drawable-port-hdpi/splash.png and capacitor-driver/app/src/main/res/drawable-port-hdpi/splash.png differ
+Binary files capacitor-student/app/src/main/res/drawable-port-mdpi/splash.png and capacitor-driver/app/src/main/res/drawable-port-mdpi/splash.png differ
+Binary files capacitor-student/app/src/main/res/drawable-port-xhdpi/splash.png and capacitor-driver/app/src/main/res/drawable-port-xhdpi/splash.png differ
+Binary files capacitor-student/app/src/main/res/drawable-port-xxhdpi/splash.png and capacitor-driver/app/src/main/res/drawable-port-xxhdpi/splash.png differ
+Binary files capacitor-student/app/src/main/res/drawable-port-xxxhdpi/splash.png and capacitor-driver/app/src/main/res/drawable-port-xxxhdpi/splash.png differ
+Only in capacitor-student/app/src/main/res: drawable-xhdpi
+Only in capacitor-student/app/src/main/res: drawable-xxhdpi
+Only in capacitor-student/app/src/main/res: drawable-xxxhdpi
+diff -r capacitor-student/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml capacitor-driver/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+4c4
+<     <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+---
+>     <foreground android:drawable="@mipmap/ic_launcher"/>
+diff -r capacitor-student/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml capacitor-driver/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+4c4
+<     <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+---
+>     <foreground android:drawable="@mipmap/ic_launcher"/>
+Binary files capacitor-student/app/src/main/res/mipmap-hdpi/ic_launcher.png and capacitor-driver/app/src/main/res/mipmap-hdpi/ic_launcher.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png and capacitor-driver/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-hdpi/ic_launcher_round.png and capacitor-driver/app/src/main/res/mipmap-hdpi/ic_launcher_round.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-mdpi/ic_launcher.png and capacitor-driver/app/src/main/res/mipmap-mdpi/ic_launcher.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png and capacitor-driver/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-mdpi/ic_launcher_round.png and capacitor-driver/app/src/main/res/mipmap-mdpi/ic_launcher_round.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-xhdpi/ic_launcher.png and capacitor-driver/app/src/main/res/mipmap-xhdpi/ic_launcher.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png and capacitor-driver/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png and capacitor-driver/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-xxhdpi/ic_launcher.png and capacitor-driver/app/src/main/res/mipmap-xxhdpi/ic_launcher.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png and capacitor-driver/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png and capacitor-driver/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png and capacitor-driver/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png and capacitor-driver/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png differ
+Binary files capacitor-student/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png and capacitor-driver/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png differ
+diff -r capacitor-student/app/src/main/res/values/ic_launcher_background.xml capacitor-driver/app/src/main/res/values/ic_launcher_background.xml
+3c3
+<     <color name="ic_launcher_background">#10B981</color>
+---
+>     <color name="ic_launcher_background">#3B82F6</color>
+diff -r capacitor-student/app/src/main/res/values/strings.xml capacitor-driver/app/src/main/res/values/strings.xml
+3,6c3,6
+<     <string name="app_name">BUBT Bus Tracker - Student</string>
+<     <string name="title_activity_main">BUBT Bus Tracker - Student</string>
+<     <string name="package_name">com.bustracker.student</string>
+<     <string name="custom_url_scheme">com.bustracker.student</string>
+---
+>     <string name="app_name">BUBT Bus Tracker - Driver</string>
+>     <string name="title_activity_main">BUBT Bus Tracker - Driver</string>
+>     <string name="package_name">com.bustracker.driver</string>
+>     <string name="custom_url_scheme">com.bustracker.driver</string>

@@ -4,11 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useDriverTripStore } from '@/stores/useDriverTripStore'
 import { useDriverTrackingStore } from '@/stores/useDriverTrackingStore'
+import { useFirebaseMessaging } from '@/composables/useFirebaseMessaging'
+import api from '@/api/client'
 import { resetTokenVerified } from '@/router'
 import StudentLayout from '@/layouts/StudentLayout.vue'
 import SplashScreen from '@/components/SplashScreen.vue'
-import { useFirebaseMessaging } from '@/composables/useFirebaseMessaging'
-import api from '@/api/client'
 
 const route = useRoute()
 const router = useRouter()
@@ -17,7 +17,6 @@ const appType = import.meta.env.VITE_APP_TYPE || 'driver'
 const driverTripStore = appType === 'driver' ? useDriverTripStore() : null
 const driverTrackingStore = appType === 'driver' ? useDriverTrackingStore() : null
 const hasStartupSplash = appType === 'student' || appType === 'driver'
-const fcm = appType === 'student' ? useFirebaseMessaging() : null
 const MIN_SPLASH_DURATION_MS = 2500
 const showStartupSplash = ref(hasStartupSplash)
 let isFirstAuthCheck = true
@@ -94,17 +93,6 @@ const syncDriverTracking = async () => {
 }
 
 watch(
-  () => [authStore.isAuthenticated, authStore.user?.role],
-  () => {
-    if (appType === 'driver') {
-      void syncDriverTracking()
-    } else if (appType === 'student' && authStore.isAuthenticated && authStore.isStudent) {
-      void initStudentNotifications()
-    }
-  }
-)
-
-watch(
   () => driverTripStore?.currentTrip?.id ?? null,
   (tripId, previousTripId) => {
     if (!driverTrackingStore || appType !== 'driver') return
@@ -120,28 +108,41 @@ watch(
   }
 )
 
-const initStudentNotifications = async () => {
-  if (!fcm || !authStore.isAuthenticated || !authStore.isStudent) return
+const { initialize: initFirebaseMessaging, deleteToken: deleteFcmToken } = useFirebaseMessaging()
 
-  try {
-    const result = await fcm.initialize({
-      topic: 'all_students',
-      onMessage: (notification) => {
-        console.log('Push notification received:', notification)
-      },
-      onNotificationClick: (notification) => {
-        console.log('Notification clicked:', notification)
-      }
-    })
+const syncStudentNotifications = async () => {
+  if (appType !== 'student') return
 
-    if (result.success && result.token) {
-      await api.post('/student/fcm-token', { fcm_token: result.token })
-      console.log('FCM token registered')
+  if (!authStore.isAuthenticated) {
+    try {
+      await deleteFcmToken()
+    } catch (e) {
+      console.warn('Failed to delete FCM token on logout', e)
     }
-  } catch (err) {
-    console.warn('FCM initialization failed:', err?.message || err)
+    return
+  }
+
+  // Capacitor FCM init
+  const result = await initFirebaseMessaging({ topic: 'all_students' })
+  if (result.success && result.token) {
+    try {
+      await api.post('/student/fcm-token', { fcm_token: result.token })
+    } catch (e) {
+      console.error('Failed to send FCM token to backend', e)
+    }
   }
 }
+
+watch(
+  () => [authStore.isAuthenticated, authStore.user?.role],
+  () => {
+    if (appType === 'driver') {
+      void syncDriverTracking()
+    } else if (appType === 'student') {
+      void syncStudentNotifications()
+    }
+  }
+)
 
 onMounted(async () => {
   window.addEventListener('auth:unauthorized', handleUnauthorized)
@@ -158,16 +159,12 @@ onMounted(async () => {
   if (appType === 'driver' && driverTrackingStore) {
     await driverTrackingStore.initialize()
     await syncDriverTracking()
-  }
-
-  if (appType === 'student') {
-    await initStudentNotifications()
+  } else if (appType === 'student' && authStore.isAuthenticated) {
+    await syncStudentNotifications()
   }
 })
 
-onUnmounted(() => {
-  window.removeEventListener('auth:unauthorized', handleUnauthorized)
-})
+onUnmounted(() => window.removeEventListener('auth:unauthorized', handleUnauthorized))
 </script>
 
 <template>

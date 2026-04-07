@@ -1,10 +1,9 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useMapStore } from '@/stores/useMapStore'
 import { useSettingsStore } from '@/stores/useSettingsStore'
-import { useNotificationStore } from '@/stores/useNotificationStore'
 import { storeToRefs } from 'pinia'
 import BottomNav from '@/components/BottomNav.vue'
 import BusCard from '@/components/BusCard.vue'
@@ -14,8 +13,6 @@ import LogoutConfirmModal from '@/components/LogoutConfirmModal.vue'
 const route = useRoute()
 const isMapView = computed(() => route.name === 'map')
 const settingsStore = useSettingsStore()
-const notificationStore = useNotificationStore()
-const { unreadCount } = storeToRefs(notificationStore)
 
 const sidebarOpen = ref(false)
 const toggleSidebar = () => { sidebarOpen.value = !sidebarOpen.value }
@@ -26,15 +23,6 @@ const authStore = useAuthStore()
 const mapStore  = useMapStore()
 
 const { buses, activeCount, delayedCount, inactiveCount, selectedTripId } = storeToRefs(mapStore)
-
-// Fetch unread count on mount and on every route change
-onMounted(() => {
-  notificationStore.fetchUnreadCount()
-})
-
-watch(() => route.name, () => {
-  notificationStore.fetchUnreadCount()
-})
 const searchQuery = ref('')
 const showLogoutModal = ref(false)
 
@@ -183,11 +171,11 @@ function clearSearch() {
 
       <!-- Footer -->
       <div class="sidebar-footer">
-        <a href="#" class="sidebar-link" @click.prevent="router.push({ name: 'settings' })">
+        <a href="#" class="sidebar-link" @click.prevent>
           <i class="bi bi-gear-fill"></i>
           <span>Settings</span>
         </a>
-        <a href="#" class="sidebar-link" @click.prevent="router.push({ name: 'help-support' })">
+        <a href="#" class="sidebar-link" @click.prevent>
           <i class="bi bi-question-circle-fill"></i>
           <span>Help</span>
         </a>
@@ -208,9 +196,9 @@ function clearSearch() {
         <div class="header-center">
           <h1>{{ settingsStore.appSettings.appName || 'BUBT Bus Tracker' }}</h1>
         </div>
-        <button class="header-btn" @click="router.push({ name: 'notifications' })">
+        <button class="header-btn">
           <i class="bi bi-bell-fill"></i>
-          <span v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
+          <span class="notification-badge">0</span>
         </button>
       </header>
 

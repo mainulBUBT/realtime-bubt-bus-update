@@ -22,7 +22,7 @@ export const useDriverTripStore = defineStore('driverTrip', {
     loading: false,
     error: null,
     // Cache timestamps to prevent redundant API calls
-    _cache: {
+    apiCache: {
       currentTrip: null,
       buses: null,
       routes: null
@@ -39,7 +39,7 @@ export const useDriverTripStore = defineStore('driverTrip', {
   actions: {
     async fetchCurrentTrip({ force = false } = {}) {
       // Cache for 30 seconds to prevent redundant API calls
-      if (!force && this._cache.currentTrip && (Date.now() - this._cache.currentTrip) < 30000) {
+      if (!force && this.apiCache.currentTrip && (Date.now() - this.apiCache.currentTrip) < 30000) {
         return this.currentTrip
       }
 
@@ -48,12 +48,12 @@ export const useDriverTripStore = defineStore('driverTrip', {
       try {
         const response = await api.get('/driver/trips/current')
         this.currentTrip = response.data
-        this._cache.currentTrip = Date.now()  // Update cache timestamp
+        this.apiCache.currentTrip = Date.now()  // Update cache timestamp
         return response.data
       } catch (error) {
         // No active trip is not an error
         this.currentTrip = null
-        this._cache.currentTrip = Date.now()  // Still cache the "null" result
+        this.apiCache.currentTrip = Date.now()  // Still cache the "null" result
         return null
       } finally {
         this.loading = false
@@ -62,7 +62,7 @@ export const useDriverTripStore = defineStore('driverTrip', {
 
     async fetchAvailableBuses() {
       // Cache for 60 seconds to prevent redundant API calls
-      if (this._cache.buses && (Date.now() - this._cache.buses) < 60000) {
+      if (this.apiCache.buses && (Date.now() - this.apiCache.buses) < 60000) {
         return this.availableBuses
       }
 
@@ -71,7 +71,7 @@ export const useDriverTripStore = defineStore('driverTrip', {
       try {
         const response = await api.get('/driver/buses')
         this.availableBuses = response.data
-        this._cache.buses = Date.now()  // Update cache timestamp
+        this.apiCache.buses = Date.now()  // Update cache timestamp
         return response.data
       } catch (error) {
         this.error = error.response?.data?.message || 'Failed to fetch buses'
@@ -83,7 +83,7 @@ export const useDriverTripStore = defineStore('driverTrip', {
 
     async fetchRoutes(busId = null) {
       // Cache for 60 seconds to prevent redundant API calls
-      if (this._cache.routes && (Date.now() - this._cache.routes) < 60000) {
+      if (this.apiCache.routes && (Date.now() - this.apiCache.routes) < 60000) {
         return this.availableRoutes
       }
 
@@ -93,7 +93,7 @@ export const useDriverTripStore = defineStore('driverTrip', {
         const params = busId ? { bus_id: busId } : {}
         const response = await api.get('/driver/routes', { params })
         this.availableRoutes = response.data
-        this._cache.routes = Date.now()  // Update cache timestamp
+        this.apiCache.routes = Date.now()  // Update cache timestamp
         return response.data
       } catch (error) {
         this.error = error.response?.data?.message || 'Failed to fetch routes'
@@ -116,7 +116,7 @@ export const useDriverTripStore = defineStore('driverTrip', {
           route_id: this.selectedDirection.routeId
         })
         this.currentTrip = response.data.trip ?? response.data
-        this._cache.currentTrip = Date.now()  // Update cache after starting trip
+        this.apiCache.currentTrip = Date.now()  // Update cache after starting trip
         this.clearSelection()
         return this.currentTrip
       } catch (error) {
@@ -133,7 +133,7 @@ export const useDriverTripStore = defineStore('driverTrip', {
       try {
         const response = await api.post(`/driver/trips/${tripId}/end`)
         this.currentTrip = null
-        this._cache.currentTrip = Date.now()  // Update cache after ending trip
+        this.apiCache.currentTrip = Date.now()  // Update cache after ending trip
         return response.data.trip ?? response.data
       } catch (error) {
         this.error = error.response?.data?.message || 'Failed to end trip'
@@ -207,8 +207,8 @@ export const useDriverTripStore = defineStore('driverTrip', {
     setSelectedBus(bus) {
       this.selectedBus = bus
       this.selectedDirection = null
-      this._cache.buses = null  // Invalidate buses cache when selection changes
-      this._cache.routes = null  // Invalidate routes cache to force fetch with bus filter
+      this.apiCache.buses = null  // Invalidate buses cache when selection changes
+      this.apiCache.routes = null  // Invalidate routes cache to force fetch with bus filter
     },
 
     setSelectedDirection(direction) {

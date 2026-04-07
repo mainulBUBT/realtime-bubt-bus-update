@@ -91,6 +91,29 @@ function createBrowserLocationError(err) {
   return createLocationError('Unable to get your browser location. Please try again.', 'LOCATION_ERROR', err)
 }
 
+function createNativePluginLocationError(err) {
+  const code = String(err?.code || '').toUpperCase()
+
+  if (code === 'NOT_AUTHORIZED' || code === 'NOT_AUTHORIZED_ALWAYS') {
+    permissionState.value = 'denied'
+    return createLocationError(
+      'Location permission is not granted. Enable Location (Allow all the time) and allow Notifications so the tracking notification can run in background.',
+      'PERMISSION_DENIED',
+      err
+    )
+  }
+
+  if (code === 'NOT_ENABLED') {
+    return createLocationError(
+      'Location is turned off. Please enable GPS/Location services and try again.',
+      'POSITION_UNAVAILABLE',
+      err
+    )
+  }
+
+  return createLocationError(err?.message || 'Location tracking error. Please try again.', 'LOCATION_ERROR', err)
+}
+
 async function readWebPermissionState() {
   if (typeof navigator === 'undefined' || !navigator.geolocation) {
     return 'unsupported'
@@ -274,12 +297,26 @@ async function startNativeBackgroundTracking(onLocation = null) {
       backgroundMessage: 'Location tracking continues during your ongoing trip.',
       requestPermissions: false,
       stale: false,
-      distanceFilter: 0
+      distanceFilter: 15
     },
     (location, err) => {
       if (err) {
-        error.value = err
+        const normalizedError = createNativePluginLocationError(err)
+        error.value = normalizedError
         console.error('Background geolocation error:', err)
+
+        if (normalizedError.code === 'PERMISSION_DENIED') {
+          const watcherId = backgroundWatcherId
+          backgroundWatcherId = null
+          isTracking.value = false
+          provider.value = 'inactive'
+
+          if (watcherId !== null) {
+            void BackgroundGeolocation.removeWatcher({ id: watcherId }).catch((removeErr) => {
+              console.warn('Failed to remove background watcher after permission error:', removeErr)
+            })
+          }
+        }
         return
       }
 

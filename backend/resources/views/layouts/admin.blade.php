@@ -6,32 +6,16 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Panel') - {{ $appName }}</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS (built via Vite; avoids CDN slowness/failures) -->
+    @vite(['resources/css/admin.css'])
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Bootstrap Icons (local) -->
+    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.min.css') }}">
 
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css">
 
-    <!-- Custom Admin CSS -->
-    <link rel="stylesheet" href="{{ asset('assets/css/admin.css') }}">
-
-    <!-- Custom Tailwind Config -->
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#10B981',
-                        'primary-dark': '#059669',
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Legacy admin CSS link removed (now bundled in Vite) -->
 
     <style>
         /* Additional inline styles for quick customization */
@@ -168,6 +152,15 @@
                         @endif
                     </a>
 
+                    <!-- Notifications -->
+                    <a href="{{ route('admin.notifications.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.notifications.*') ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                        <i class="bi bi-bell text-lg"></i>
+                        <span class="font-medium">Notifications</span>
+                        @if(request()->routeIs('admin.notifications.*'))
+                            <i class="bi bi-chevron-right ml-auto"></i>
+                        @endif
+                    </a>
+
                     <!-- Settings -->
                     <a href="{{ route('admin.settings.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.settings.*') ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         <i class="bi bi-gear text-lg"></i>
@@ -266,7 +259,7 @@
     </div>
 
     <!-- jQuery (required for toastr.js) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="{{ asset('assets/js/jquery.min.js') }}"></script>
 
     <!-- Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
@@ -274,40 +267,44 @@
     <!-- Admin JavaScript -->
     <script src="{{ asset('assets/js/admin.js') }}"></script>
 
-    <script>
-        // Configure Toastr
-        toastr.options = {
-            closeButton: true,
-            progressBar: true,
-            positionClass: 'toast-top-right',
-            timeOut: 5000,
-            extendedTimeOut: 1000,
-            preventDuplicates: true,
-            newestOnTop: true,
-            tapToDismiss: true
-        };
+	    <script>
+	        if (typeof toastr !== 'undefined') {
+	            // Configure Toastr
+	            toastr.options = {
+	                closeButton: true,
+	                progressBar: true,
+	                positionClass: 'toast-top-right',
+	                timeOut: 5000,
+	                extendedTimeOut: 1000,
+	                preventDuplicates: true,
+	                newestOnTop: true,
+	                tapToDismiss: true
+	            };
 
-        // Display toastr notifications from session
-        @if(session('toastr'))
-            @foreach(session('toastr') as $toast)
-                toastr.{{ $toast['type'] }}('{{ $toast['message'] }}');
-            @endforeach
-            @php(session()->forget('toastr'))
-        @endif
+	            // Display toastr notifications from session
+	            @if(session('toastr'))
+	                @foreach(session('toastr') as $toast)
+	                    toastr.{{ $toast['type'] }}('{{ $toast['message'] }}');
+	                @endforeach
+	                @php(session()->forget('toastr'))
+	            @endif
 
-        // Legacy success/error messages - convert to toastr
-        @if(session('success'))
-            toastr.success('{{ session('success') }}');
-            @php(session()->forget('success'))
-        @endif
+	            // Legacy success/error messages - convert to toastr
+	            @if(session('success'))
+	                toastr.success('{{ session('success') }}');
+	                @php(session()->forget('success'))
+	            @endif
 
-        @if(session('error'))
-            toastr.error('{{ session('error') }}');
-            @php(session()->forget('error'))
-        @endif
+	            @if(session('error'))
+	                toastr.error('{{ session('error') }}');
+	                @php(session()->forget('error'))
+	            @endif
+	        } else {
+	            console.warn('Toastr is not available (CDN failed to load).')
+	        }
 
-        // Common Confirmation Modal
-        let confirmModalCallback = null;
+	        // Common Confirmation Modal
+	        let confirmModalCallback = null;
 
         function showConfirmModal(options) {
             const modal = document.getElementById('confirm-modal');

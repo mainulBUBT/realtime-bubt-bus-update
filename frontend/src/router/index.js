@@ -15,6 +15,10 @@ import StudentMap from '@/views/student/MapView.vue'
 import ScheduleList from '@/views/student/ScheduleList.vue'
 import RoutesView from '@/views/student/RoutesView.vue'
 import MoreMenu from '@/views/student/MoreMenu.vue'
+import StudentSettings from '@/views/student/StudentSettings.vue'
+import StudentAbout from '@/views/student/StudentAbout.vue'
+import StudentHelpSupport from '@/views/student/StudentHelpSupport.vue'
+import Notifications from '@/views/student/Notifications.vue'
 
 // Auth routes
 import DriverLogin from '@/views/auth/DriverLogin.vue'
@@ -104,6 +108,30 @@ const routes = appType === 'driver' ? [
     name: 'menu',
     component: MoreMenu,
     meta: { transition: 'tab', tabIndex: 3 }
+  },
+  {
+    path: '/notifications',
+    name: 'notifications',
+    component: Notifications,
+    meta: { transition: 'push', depth: 1 }
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: StudentSettings,
+    meta: { transition: 'push', depth: 1 }
+  },
+  {
+    path: '/about',
+    name: 'about',
+    component: StudentAbout,
+    meta: { transition: 'push', depth: 1 }
+  },
+  {
+    path: '/help',
+    name: 'help-support',
+    component: StudentHelpSupport,
+    meta: { transition: 'push', depth: 1 }
   }
 ]
 

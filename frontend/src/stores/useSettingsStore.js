@@ -6,7 +6,11 @@ export const useSettingsStore = defineStore('settings', () => {
   const appSettings = ref({
     appName: '',
     appTagline: '',
-    splashPrimaryColor: ''
+    splashPrimaryColor: '',
+    supportEmail: '',
+    supportPhone: '',
+    supportUrl: '',
+    aboutText: ''
   })
 
   // Color generation utilities
@@ -70,7 +74,11 @@ export const useSettingsStore = defineStore('settings', () => {
       appSettings.value = {
         appName: data[`${prefix}_app_name`] || (appType === 'student' ? 'BUBT Bus Tracker' : 'BUBT Bus Tracker - Driver'),
         appTagline: data[`${prefix}_app_tagline`] || '',
-        splashPrimaryColor: data[`${prefix}_splash_primary_color`] || (appType === 'student' ? '#4F46E5' : '#059669')
+        splashPrimaryColor: data[`${prefix}_splash_primary_color`] || (appType === 'student' ? '#4F46E5' : '#059669'),
+        supportEmail: appType === 'student' ? (data.student_support_email || '') : '',
+        supportPhone: appType === 'student' ? (data.student_support_phone || '') : '',
+        supportUrl: appType === 'student' ? (data.student_support_url || '') : '',
+        aboutText: appType === 'student' ? (data.student_about_text || '') : ''
       }
 
       // Apply CSS variables for splash colors
@@ -84,7 +92,11 @@ export const useSettingsStore = defineStore('settings', () => {
       appSettings.value = {
         appName: appType === 'student' ? 'BUBT Bus Tracker' : 'BUBT Bus Tracker - Driver',
         appTagline: appType === 'student' ? 'Your Campus Shuttle Companion' : 'Campus Shuttle Driver App',
-        splashPrimaryColor: appType === 'student' ? '#4F46E5' : '#059669'
+        splashPrimaryColor: appType === 'student' ? '#4F46E5' : '#059669',
+        supportEmail: '',
+        supportPhone: '',
+        supportUrl: '',
+        aboutText: ''
       }
       // Apply default colors
       applySplashColors()

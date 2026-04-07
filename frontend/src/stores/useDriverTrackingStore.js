@@ -12,6 +12,42 @@ const SEND_INTERVAL_MS = 5000
 const MAX_BATCH_SIZE = 25
 const MAX_QUEUE_SIZE = 200
 
+// Location filtering (reduce GPS drift while stopped)
+const MAX_ACCEPTABLE_ACCURACY_M = 50
+const MIN_DISTANCE_M = 15
+const MIN_TIME_BETWEEN_POINTS_MS = 5000
+const MAX_JUMP_M = 250
+const MAX_IMPLIED_SPEED_MPS = 40 // ~144 km/h
+const GOOD_ACCURACY_FOR_JUMP_M = 20
+
+function toRadians(deg) {
+  return (deg * Math.PI) / 180
+}
+
+function haversineDistanceMeters(a, b) {
+  if (!a || !b) return 0
+  const R = 6371000
+  const dLat = toRadians(b.lat - a.lat)
+  const dLng = toRadians(b.lng - a.lng)
+  const lat1 = toRadians(a.lat)
+  const lat2 = toRadians(b.lat)
+
+  const sinDLat = Math.sin(dLat / 2)
+  const sinDLng = Math.sin(dLng / 2)
+  const h = (sinDLat * sinDLat) + (Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng)
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
+}
+
+function parseTimestampMs(value) {
+  if (value == null) return null
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const ms = Date.parse(value)
+    return Number.isFinite(ms) ? ms : null
+  }
+  return null
+}
+
 function createEmptyLocation() {
   return {
     lat: 0,
@@ -78,6 +114,12 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
   const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
   const appState = ref(document.visibilityState === 'visible' ? 'active' : 'background')
   const lastFlushAttemptAt = ref(0)
+  const ignoredCounts = ref({
+    total: 0,
+    accuracy: 0,
+    distance: 0,
+    jump: 0
+  })
 
   let flushTimerId = null
   let appStateListener = null
@@ -170,6 +212,39 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
 
     const normalized = normalizeQueuedLocation(location)
     if (!normalized) return
+
+    const candidateTimeMs = parseTimestampMs(location?.timestamp) ?? Date.now()
+    const candidateAccuracy = normalized.accuracy == null ? null : Number(normalized.accuracy)
+
+    if (candidateAccuracy != null && Number.isFinite(candidateAccuracy) && candidateAccuracy > MAX_ACCEPTABLE_ACCURACY_M) {
+      ignoredCounts.value.total += 1
+      ignoredCounts.value.accuracy += 1
+      return
+    }
+
+    const previousQueued = queue.value[queue.value.length - 1]
+    if (previousQueued) {
+      const prevTimeMs = parseTimestampMs(previousQueued.recorded_at)
+      const timeDeltaMs = prevTimeMs == null ? null : Math.max(0, candidateTimeMs - prevTimeMs)
+      const distanceM = haversineDistanceMeters(previousQueued, normalized)
+
+      if (timeDeltaMs != null && distanceM < MIN_DISTANCE_M && timeDeltaMs < MIN_TIME_BETWEEN_POINTS_MS) {
+        ignoredCounts.value.total += 1
+        ignoredCounts.value.distance += 1
+        return
+      }
+
+      if (timeDeltaMs != null && timeDeltaMs > 0 && timeDeltaMs < 30000 && distanceM > MAX_JUMP_M) {
+        const impliedSpeed = distanceM / (timeDeltaMs / 1000)
+        const isVeryAccurate = candidateAccuracy != null && Number.isFinite(candidateAccuracy) && candidateAccuracy <= GOOD_ACCURACY_FOR_JUMP_M
+
+        if (!isVeryAccurate && impliedSpeed > MAX_IMPLIED_SPEED_MPS) {
+          ignoredCounts.value.total += 1
+          ignoredCounts.value.jump += 1
+          return
+        }
+      }
+    }
 
     const previous = queue.value[queue.value.length - 1]
     if (previous && toDedupeKey(activeTripId.value, previous) === toDedupeKey(activeTripId.value, normalized)) {
@@ -420,6 +495,7 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     isOnline,
     appState,
     isAndroidNative,
+    ignoredCounts,
     isTracking,
     currentLocation,
     providerError,
@@ -437,7 +513,8 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
       permissionState: permissionState.value,
       queueSize: queue.value.length,
       lastSentAt: lastSentAt.value,
-      status: status.value
+      status: status.value,
+      ignoredCounts: ignoredCounts.value
     }),
     clearPersistedState
   }

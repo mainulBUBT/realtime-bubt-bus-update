@@ -62,4 +62,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::post('/database/truncate', [SettingsController::class, 'truncateTable'])->name('settings.database.truncate');
         Route::post('/mobile/{type}', [SettingsController::class, 'updateMobile'])->name('settings.update.mobile');
     });
+
+    // Notifications
+    Route::get('/notifications', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/students', [\App\Http\Controllers\Admin\NotificationController::class, 'students'])->name('notifications.students');
+    Route::post('/notifications', [\App\Http\Controllers\Admin\NotificationController::class, 'store'])->name('notifications.send');
+    Route::get('/notifications/{campaign}/edit', [\App\Http\Controllers\Admin\NotificationController::class, 'edit'])->name('notifications.edit');
+    Route::put('/notifications/{campaign}', [\App\Http\Controllers\Admin\NotificationController::class, 'update'])->name('notifications.update');
+    Route::post('/notifications/{campaign}/resend', [\App\Http\Controllers\Admin\NotificationController::class, 'resend'])->name('notifications.resend');
 });

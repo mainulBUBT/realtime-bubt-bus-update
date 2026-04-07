@@ -132,7 +132,9 @@ onMounted(async () => {
   }
 })
 
-onUnmounted(() => window.removeEventListener('auth:unauthorized', handleUnauthorized))
+onUnmounted(() => {
+  window.removeEventListener('auth:unauthorized', handleUnauthorized)
+})
 </script>
 
 <template>

@@ -1,28 +1,33 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useNotificationStore } from '@/stores/useNotificationStore'
 import LogoutConfirmModal from '@/components/LogoutConfirmModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 const showLogoutModal = ref(false)
 
 const userInitial = authStore.user?.name?.charAt(0)?.toUpperCase() || 'S'
+const isVerified = computed(() => !!authStore.user?.email_verified_at)
+
+const unreadCount = computed(() => notificationStore.unreadCount)
 
 const menuSections = [
   {
     title: 'General',
     items: [
-      { icon: 'bi-bell', label: 'Notifications', action: null, badge: 'Soon' },
-      { icon: 'bi-gear', label: 'Settings', action: null, badge: 'Soon' },
+      { icon: 'bi-bell', label: 'Notifications', action: 'notifications', badge: unreadCount.value > 0 ? String(unreadCount.value) : null },
+      { icon: 'bi-gear', label: 'Settings', action: 'settings' },
     ]
   },
   {
     title: 'Information',
     items: [
-      { icon: 'bi-info-circle', label: 'About', action: null },
-      { icon: 'bi-question-circle', label: 'Help & Support', action: null, badge: 'Soon' },
+      { icon: 'bi-info-circle', label: 'About', action: 'about' },
+      { icon: 'bi-question-circle', label: 'Help & Support', action: 'help' },
     ]
   },
   {
@@ -36,6 +41,14 @@ const menuSections = [
 function handleAction(action) {
   if (action === 'logout') {
     showLogoutModal.value = true
+  } else if (action === 'notifications') {
+    router.push({ name: 'notifications' })
+  } else if (action === 'settings') {
+    router.push({ name: 'settings' })
+  } else if (action === 'about') {
+    router.push({ name: 'about' })
+  } else if (action === 'help') {
+    router.push({ name: 'help-support' })
   }
 }
 
@@ -62,6 +75,10 @@ const cancelLogout = () => {
         <span class="profile-role">
           <i class="bi bi-mortarboard-fill"></i>
           Student
+        </span>
+        <span v-if="isVerified" class="profile-role" style="color: #16a34a;">
+          <i class="bi bi-patch-check-fill"></i>
+          Verified
         </span>
       </div>
     </div>

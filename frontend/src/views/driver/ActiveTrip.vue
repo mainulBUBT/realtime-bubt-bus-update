@@ -23,15 +23,41 @@ const location = computed(() => {
     return {
       lat: Number(lastKnownLocation.lat || 0),
       lng: Number(lastKnownLocation.lng || 0),
-      speed: lastKnownLocation.speed
+      speed: lastKnownLocation.speed,
+      accuracy: lastKnownLocation.accuracy ?? null,
+      timestamp: lastKnownLocation.timestamp ?? null
     }
   }
 
   return {
     lat: Number(trip.value?.current_lat || 0),
     lng: Number(trip.value?.current_lng || 0),
-    speed: null
+    speed: null,
+    accuracy: null,
+    timestamp: null
   }
+})
+
+const formattedLastFixAt = computed(() => {
+  if (!location.value.timestamp) return '—'
+  const ts = location.value.timestamp
+  const ms = typeof ts === 'number' ? ts : Date.parse(ts)
+  if (!Number.isFinite(ms)) return '—'
+  return new Date(ms).toLocaleTimeString()
+})
+
+const formattedAccuracy = computed(() => {
+  const acc = location.value.accuracy
+  if (acc == null || !Number.isFinite(Number(acc))) return '—'
+  return `${Number(acc).toFixed(0)} m`
+})
+
+const formattedSpeed = computed(() => {
+  const spd = location.value.speed
+  if (spd == null || !Number.isFinite(Number(spd))) return '—'
+  const mps = Number(spd)
+  const kmh = mps * 3.6
+  return `${kmh.toFixed(1)} km/h`
 })
 
 const tripDuration = computed(() => {
@@ -74,7 +100,11 @@ const trackingMessage = computed(() => {
   }
 
   if (driverTrackingStore.providerError?.message) {
-    return driverTrackingStore.providerError.message
+    const base = driverTrackingStore.providerError.message
+    if (driverTrackingStore.isAndroidNative) {
+      return `${base} Tip: allow Notifications, set Location “Allow all the time”, and disable battery optimization for this app.`
+    }
+    return base
   }
 
   if (driverTrackingStore.status === 'starting') {
@@ -153,7 +183,7 @@ const cancelEndTrip = () => {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-6 space-y-4">
+  <div class="container mx-auto px-4 py-6 pb-40 space-y-4">
     <div v-if="trip" class="trip-status-card">
       <div class="trip-status-header">
         <div class="trip-status-icon">
@@ -212,23 +242,35 @@ const cancelEndTrip = () => {
           <span class="trip-status-label">Queued Points</span>
           <span class="trip-status-value">{{ driverTrackingStore.queueSize }}</span>
         </div>
-        <div class="trip-status-row">
-          <span class="trip-status-label">Last Sync</span>
-          <span class="trip-status-value">{{ formattedLastSentAt }}</span>
-        </div>
-        <div class="trip-status-row">
-          <span class="trip-status-label">Latitude</span>
-          <span class="trip-status-value">{{ location.lat.toFixed(7) }}</span>
-        </div>
-        <div class="trip-status-row">
-          <span class="trip-status-label">Longitude</span>
-          <span class="trip-status-value">{{ location.lng.toFixed(7) }}</span>
-        </div>
-        <div v-if="trackingMessage" :class="trackingMessageClass">
-          {{ trackingMessage }}
-        </div>
+      <div class="trip-status-row">
+        <span class="trip-status-label">Last Sync</span>
+        <span class="trip-status-value">{{ formattedLastSentAt }}</span>
+      </div>
+      <div class="trip-status-row">
+        <span class="trip-status-label">Last Fix</span>
+        <span class="trip-status-value">{{ formattedLastFixAt }}</span>
+      </div>
+      <div class="trip-status-row">
+        <span class="trip-status-label">Latitude</span>
+        <span class="trip-status-value">{{ location.lat.toFixed(7) }}</span>
+      </div>
+      <div class="trip-status-row">
+        <span class="trip-status-label">Longitude</span>
+        <span class="trip-status-value">{{ location.lng.toFixed(7) }}</span>
+      </div>
+      <div class="trip-status-row">
+        <span class="trip-status-label">Accuracy</span>
+        <span class="trip-status-value">{{ formattedAccuracy }}</span>
+      </div>
+      <div class="trip-status-row">
+        <span class="trip-status-label">Speed</span>
+        <span class="trip-status-value">{{ formattedSpeed }}</span>
+      </div>
+      <div v-if="trackingMessage" :class="trackingMessageClass">
+        {{ trackingMessage }}
       </div>
     </div>
+  </div>
 
     <StartStopButton
       type="stop"

@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\Admin\BusController;
 use App\Http\Controllers\Api\Admin\RouteController;
 use App\Http\Controllers\Api\Admin\ScheduleController;
 use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\Student\ProfileController;
+use App\Http\Controllers\Api\Student\NotificationController as StudentNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +35,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::patch('/auth/profile', [AuthController::class, 'updateProfile']);
+    Route::patch('/auth/password', [AuthController::class, 'updatePassword']);
 
     // Driver routes
     Route::middleware('role:driver')->prefix('driver')->group(function () {
@@ -57,6 +61,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/trips/{tripId}/locations', [TrackingController::class, 'tripLocations']);
         Route::get('/trips/{tripId}/latest-location', [TrackingController::class, 'latestLocation']);
         Route::get('/schedules', [TrackingController::class, 'schedules']);
+
+        // FCM token
+        Route::post('/fcm-token', [ProfileController::class, 'updateFcmToken']);
+
+        // Notifications
+        Route::get('/notifications', [StudentNotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [StudentNotificationController::class, 'unreadCount']);
+        Route::post('/notifications/{id}/read', [StudentNotificationController::class, 'markRead']);
+        Route::post('/notifications/read-all', [StudentNotificationController::class, 'markAllRead']);
     });
 
     // Admin routes

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - {{ $appName }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
+	<head>
+	    <meta charset="UTF-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <title>Admin Login - {{ $appName }}</title>
+	    @vite(['resources/css/admin.css'])
+	    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.min.css') }}">
+	    <style>
+	        @keyframes float {
+	            0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
         }
         @keyframes fadeIn {

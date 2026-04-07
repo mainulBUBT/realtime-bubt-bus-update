@@ -88,6 +88,52 @@
                     </div>
                 </div>
 
+                <!-- About / Help & Support -->
+                <div class="mt-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/20 p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                            <i class="bi bi-info-circle"></i>
+                            About / Help & Support
+                        </h4>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Student app</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Support Email</label>
+                            <input type="email" name="student_support_email"
+                                   value="{{ $studentSettings['student_support_email'] ?? '' }}"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                   placeholder="support@yourdomain.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Support Phone</label>
+                            <input type="text" name="student_support_phone"
+                                   value="{{ $studentSettings['student_support_phone'] ?? '' }}"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                   placeholder="+8801XXXXXXXXX">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Support URL</label>
+                        <input type="url" name="student_support_url"
+                               value="{{ $studentSettings['student_support_url'] ?? '' }}"
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                               placeholder="https://yourdomain.com/help">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">About Text</label>
+                        <textarea name="student_about_text" rows="5"
+                                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                                  placeholder="Write something about the app...">{{ $studentSettings['student_about_text'] ?? '' }}</textarea>
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            This text is shown in the Student app About page.
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Submit Button -->
                 <div class="pt-2">
                     <button type="submit"

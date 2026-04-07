@@ -14,7 +14,7 @@ const navItems = computed(() => [
     name: 'dashboard',
     icon: 'bi-house-door-fill',
     label: 'Home',
-    disabled: false
+    disabled: driverTripStore.hasActiveTrip
   },
   {
     name: 'trip-history',
@@ -54,6 +54,7 @@ const navigate = (item) => {
       :key="item.name"
       class="driver-nav-item"
       :class="{ active: route.name === item.name, disabled: item.disabled }"
+      :disabled="item.disabled"
       @click="navigate(item)"
     >
       <i :class="item.icon"></i>

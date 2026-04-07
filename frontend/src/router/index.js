@@ -40,19 +40,20 @@ const routes = appType === 'driver' ? [
       {
         path: '',
         name: 'dashboard',
-        component: DriverDashboard
+        component: DriverDashboard,
+        meta: { transition: 'tab', tabIndex: 0 }
       },
       {
         path: 'trip/select-bus',
         name: 'trip-select-bus',
         component: SelectBus,
-        meta: { requiresNoActiveTrip: true }
+        meta: { requiresNoActiveTrip: true, transition: 'push', depth: 1 }
       },
       {
         path: 'trip/select-direction',
         name: 'trip-select-direction',
         component: SelectDirection,
-        meta: { requiresNoActiveTrip: true }
+        meta: { requiresNoActiveTrip: true, transition: 'push', depth: 2 }
       },
       {
         path: 'trip/start',
@@ -62,12 +63,14 @@ const routes = appType === 'driver' ? [
       {
         path: 'trip/active',
         name: 'trip-active',
-        component: ActiveTrip
+        component: ActiveTrip,
+        meta: { transition: 'tab', tabIndex: 2 }
       },
       {
         path: 'history',
         name: 'trip-history',
-        component: DriverHistory
+        component: DriverHistory,
+        meta: { transition: 'tab', tabIndex: 1 }
       }
     ]
   }
@@ -81,22 +84,26 @@ const routes = appType === 'driver' ? [
   {
     path: '/',
     name: 'map',
-    component: StudentMap
+    component: StudentMap,
+    meta: { transition: 'tab', tabIndex: 0 }
   },
   {
     path: '/schedules',
     name: 'schedules',
-    component: ScheduleList
+    component: ScheduleList,
+    meta: { transition: 'tab', tabIndex: 1 }
   },
   {
     path: '/routes',
     name: 'routes',
-    component: RoutesView
+    component: RoutesView,
+    meta: { transition: 'tab', tabIndex: 2 }
   },
   {
     path: '/more',
     name: 'menu',
-    component: MoreMenu
+    component: MoreMenu,
+    meta: { transition: 'tab', tabIndex: 3 }
   }
 ]
 

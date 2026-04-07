@@ -133,14 +133,14 @@ class Schedule extends Model
      */
     public function getFormattedWeekdaysAttribute(): string
     {
-        if (empty($this->weekdays) || !is_array($this->weekdays)) {
+        if (empty($this->weekdays) || !\is_array($this->weekdays)) {
             return 'All Days';
         }
 
-        if (count($this->weekdays) === 7) {
+        if (\count($this->weekdays) === 7) {
             return 'All Days';
         }
 
-        return implode(', ', array_map(fn ($day) => ucfirst(substr($day, 0, 3)), $this->weekdays));
+        return implode(', ', array_map(fn ($day) => ucfirst(substr((string) $day, 0, 3)), $this->weekdays));
     }
 }

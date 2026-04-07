@@ -192,9 +192,20 @@ const formatTripCount = (count) => {
     </div>
 
     <div v-if="isInitialLoading" class="space-y-3">
-      <div class="skeleton-card" style="height: 140px;"></div>
-      <div class="skeleton-card" style="height: 140px;"></div>
-      <div class="skeleton-card" style="height: 140px;"></div>
+      <div v-for="i in 3" :key="i" class="skeleton-history-card">
+        <div class="skeleton-header-row">
+          <div class="skeleton-icon"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton-shape" style="width: 60%; height: 16px;"></div>
+            <div class="skeleton-shape" style="width: 40%; height: 12px;"></div>
+            <div class="skeleton-shape" style="width: 50%; height: 12px;"></div>
+          </div>
+          <div class="skeleton-badge"></div>
+        </div>
+        <div class="skeleton-meta-grid">
+          <div v-for="j in 4" :key="j" class="skeleton-meta-item"></div>
+        </div>
+      </div>
     </div>
 
     <div v-else-if="driverTripStore.historyError && !hasLoadedTrips" class="empty-state">

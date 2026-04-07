@@ -45,9 +45,15 @@ const handleRetry = () => {
 
     <!-- Loading State -->
     <div v-if="loading" class="space-y-3">
-      <div class="skeleton-card"></div>
-      <div class="skeleton-card"></div>
-      <div class="skeleton-card"></div>
+      <div v-for="i in 3" :key="i" class="skeleton-bus-card">
+        <div class="skeleton-icon"></div>
+        <div class="skeleton-lines">
+          <div class="skeleton-shape" style="width: 70%; height: 16px;"></div>
+          <div class="skeleton-shape" style="width: 50%; height: 13px;"></div>
+        </div>
+        <div class="skeleton-badge"></div>
+        <div class="skeleton-chevron"></div>
+      </div>
     </div>
 
     <!-- Error State -->

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
+import CarFrontIcon from '@/components/CarFrontIcon.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -34,7 +35,7 @@ const login = async () => {
   <div class="login-screen login-screen--driver">
     <div class="login-card">
       <div class="login-logo">
-        <i class="bi bi-car-front-fill"></i>
+        <CarFrontIcon />
       </div>
       <h1 class="login-title">Driver Portal</h1>
       <p class="login-subtitle">Sign in to manage your trips and track your routes</p>

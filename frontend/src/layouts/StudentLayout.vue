@@ -1,11 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useMapStore } from '@/stores/useMapStore'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { storeToRefs } from 'pinia'
-import SplashScreen from '@/components/SplashScreen.vue'
 import BottomNav from '@/components/BottomNav.vue'
 import BusCard from '@/components/BusCard.vue'
 import TimelinePanel from '@/components/TimelinePanel.vue'
@@ -27,9 +26,8 @@ const { buses, activeCount, delayedCount, inactiveCount, selectedTripId } = stor
 const searchQuery = ref('')
 const showLogoutModal = ref(false)
 
-onMounted(async () => {
-  authStore.loadUserFromStorage()
-})
+const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase())
+const hasActiveSearch = computed(() => normalizedSearchQuery.value.length > 0)
 
 const handleLogoutClick = () => {
   showLogoutModal.value = true
@@ -47,26 +45,32 @@ const cancelLogout = () => {
 }
 
 const filteredBuses = computed(() => {
-  if (!searchQuery.value) return buses.value
-  const q = searchQuery.value.toLowerCase()
+  if (!hasActiveSearch.value) return buses.value
+  const q = normalizedSearchQuery.value
   return buses.value.filter(b =>
-    b.code.toLowerCase().includes(q) ||
-    b.name.toLowerCase().includes(q) ||
-    b.route.toLowerCase().includes(q)
+    b.code?.toLowerCase().includes(q) ||
+    b.name?.toLowerCase().includes(q) ||
+    b.route?.toLowerCase().includes(q)
   )
+})
+
+const sidebarSearchSummary = computed(() => {
+  if (!hasActiveSearch.value) return ''
+  return `Showing ${filteredBuses.value.length} of ${buses.value.length} buses for "${searchQuery.value.trim()}"`
 })
 
 function handleBusClick(bus) {
   mapStore.selectBus(bus.tripId)
   closeSidebar()
 }
+
+function clearSearch() {
+  searchQuery.value = ''
+}
 </script>
 
 <template>
   <div class="main-screen active">
-    <!-- Splash Screen -->
-    <SplashScreen />
-
     <!-- Sidebar overlay backdrop (mobile only) -->
     <div
       class="sidebar-overlay"
@@ -99,6 +103,21 @@ function handleBusClick(bus) {
             type="text"
             placeholder="Search buses..."
           >
+          <button
+            v-if="hasActiveSearch"
+            type="button"
+            class="search-clear-btn"
+            @click="clearSearch"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div v-if="hasActiveSearch" class="sidebar-search-feedback">
+          <span class="sidebar-search-text">{{ sidebarSearchSummary }}</span>
+          <span class="sidebar-search-badge">
+            <i class="bi bi-funnel-fill"></i>
+            Filter active
+          </span>
         </div>
       </div>
 
@@ -141,7 +160,10 @@ function handleBusClick(bus) {
             :class="{ 'bus-card-selected': bus.tripId === selectedTripId }"
             @click="handleBusClick(bus)"
           />
-          <div v-if="filteredBuses.length === 0 && buses.length === 0" class="text-center py-4 text-muted">
+          <div v-if="filteredBuses.length === 0 && hasActiveSearch" class="text-center py-4 text-muted">
+            <small>No buses match "{{ searchQuery.trim() }}"</small>
+          </div>
+          <div v-else-if="filteredBuses.length === 0 && buses.length === 0" class="text-center py-4 text-muted">
             <small>No buses found</small>
           </div>
         </div>

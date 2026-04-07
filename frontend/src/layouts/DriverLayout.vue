@@ -8,6 +8,7 @@ import LogoutConfirmModal from '@/components/LogoutConfirmModal.vue'
 import DriverMobileHeader from '@/components/driver/DriverMobileHeader.vue'
 import DriverBottomNav from '@/components/driver/DriverBottomNav.vue'
 import DriverMenuDrawer from '@/components/driver/DriverMenuDrawer.vue'
+import { useNavigationDirection } from '@/composables/useNavigationDirection'
 
 const router = useRouter()
 const route = useRoute()
@@ -15,6 +16,7 @@ const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const showLogoutModal = ref(false)
 const showMenuDrawer = ref(false)
+const { transitionName } = useNavigationDirection()
 
 const pageTitle = computed(() => {
   const titles = {
@@ -62,7 +64,11 @@ const handleBack = () => {
 
     <!-- Main Content -->
     <main class="driver-main-content">
-      <RouterView />
+      <RouterView v-slot="{ Component, route }">
+        <Transition :name="transitionName" mode="out-in">
+          <component :is="Component" :key="route.path" />
+        </Transition>
+      </RouterView>
     </main>
 
     <!-- Driver Bottom Nav (Visible on all screens) -->

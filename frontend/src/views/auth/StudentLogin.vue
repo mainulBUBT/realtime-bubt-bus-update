@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
+import BusFrontIcon from '@/components/BusFrontIcon.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -34,7 +35,7 @@ const login = async () => {
   <div class="login-screen">
     <div class="login-card">
       <div class="login-logo">
-        <i class="bi bi-bus-front-fill"></i>
+        <BusFrontIcon />
       </div>
       <h1 class="login-title">BUBT Bus Tracker</h1>
       <p class="login-subtitle">Sign in to track your campus shuttle in real-time</p>

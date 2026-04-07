@@ -15,7 +15,17 @@ class FcmService
 
             $message = CloudMessage::withTarget('token', $token)
                 ->withNotification(FcmNotification::create($title, $body))
-                ->withData(array_map('strval', $data));
+                ->withData(array_map('strval', $data))
+                ->withAndroidConfig(
+                    \Kreait\Firebase\Messaging\AndroidConfig::fromArray([
+                        'notification' => [
+                            'icon' => 'ic_notification',
+                            'color' => '#10B981',
+                            'channel_id' => 'bus_tracker_notifications',
+                            'default_sound' => true,
+                        ],
+                    ])
+                );
 
             $messaging->send($message);
         } catch (\Throwable $e) {
@@ -31,7 +41,17 @@ class FcmService
             foreach (array_chunk($tokens, 500) as $chunk) {
                 $message = CloudMessage::new()
                     ->withNotification(FcmNotification::create($title, $body))
-                    ->withData(array_map('strval', $data));
+                    ->withData(array_map('strval', $data))
+                    ->withAndroidConfig(
+                        \Kreait\Firebase\Messaging\AndroidConfig::fromArray([
+                            'notification' => [
+                                'icon' => 'ic_notification',
+                                'color' => '#10B981',
+                                'channel_id' => 'bus_tracker_notifications',
+                                'default_sound' => true,
+                            ],
+                        ])
+                    );
 
                 $messaging->sendMulticast($message, $chunk);
             }
@@ -47,7 +67,17 @@ class FcmService
 
             $message = CloudMessage::withTarget('topic', $topic)
                 ->withNotification(FcmNotification::create($title, $body))
-                ->withData(array_map('strval', $data));
+                ->withData(array_map('strval', $data))
+                ->withAndroidConfig(
+                    \Kreait\Firebase\Messaging\AndroidConfig::fromArray([
+                        'notification' => [
+                            'icon' => 'ic_notification',
+                            'color' => '#10B981',
+                            'channel_id' => 'bus_tracker_notifications',
+                            'default_sound' => true,
+                        ],
+                    ])
+                );
 
             $messaging->send($message);
         } catch (\Throwable $e) {

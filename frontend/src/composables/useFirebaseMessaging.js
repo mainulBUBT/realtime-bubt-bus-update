@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { FirebaseMessaging } from '@capacitor-firebase/messaging'
 import { LocalNotifications } from '@capacitor/local-notifications'
+import { Capacitor } from '@capacitor/core'
 
 export function useFirebaseMessaging() {
   const token = ref(null)
@@ -44,7 +45,6 @@ export function useFirebaseMessaging() {
 
   /**
    * Subscribe to a topic
-   * @param {string} topic - Topic name to subscribe to
    */
   const subscribeToTopic = async (topic) => {
     try {
@@ -58,7 +58,6 @@ export function useFirebaseMessaging() {
 
   /**
    * Unsubscribe from a topic
-   * @param {string} topic - Topic name to unsubscribe from
    */
   const unsubscribeFromTopic = async (topic) => {
     try {
@@ -71,14 +70,35 @@ export function useFirebaseMessaging() {
   }
 
   /**
-   * Listen for incoming FCM messages
-   * @param {Function} onMessage - Callback when message is received
+   * Create notification channel for Android 8+
+   */
+  const createNotificationChannel = async () => {
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return
+
+    try {
+      await LocalNotifications.createChannel({
+        id: 'bus_tracker_notifications',
+        name: 'Bus Tracker Notifications',
+        description: 'Notifications from BUBT Bus Tracker',
+        importance: 5,
+        visibility: 1,
+        lights: true,
+        lightColor: '#10B981',
+        vibration: true,
+      })
+    } catch (err) {
+      console.warn('Failed to create notification channel:', err)
+    }
+  }
+
+  /**
+   * Listen for incoming FCM messages (foreground)
    */
   const onMessage = (onMessage) => {
     FirebaseMessaging.addListener('notificationReceived', (event) => {
       console.log('FCM message received:', event.notification)
 
-      // Show local notification
+      // Show local notification for foreground messages
       LocalNotifications.schedule({
         notifications: [
           {
@@ -98,7 +118,6 @@ export function useFirebaseMessaging() {
 
   /**
    * Listen for when user taps on a notification
-   * @param {Function} onClick - Callback when notification is tapped
    */
   const onNotificationClick = (onClick) => {
     FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
@@ -125,10 +144,12 @@ export function useFirebaseMessaging() {
 
   /**
    * Initialize Firebase messaging with all listeners
-   * @param {Object} options - Configuration options
    */
   const initialize = async (options = {}) => {
     try {
+      // Create notification channel (Android)
+      await createNotificationChannel()
+
       // Request permission
       const granted = await requestPermission()
       if (!granted) {
@@ -138,7 +159,7 @@ export function useFirebaseMessaging() {
       // Get token
       const fcmToken = await getToken()
 
-      // Subscribe to role-based topic if provided
+      // Subscribe to topic if provided
       if (options.topic) {
         await subscribeToTopic(options.topic)
       }

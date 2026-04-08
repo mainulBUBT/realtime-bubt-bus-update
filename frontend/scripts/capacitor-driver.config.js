@@ -11,14 +11,17 @@
  * 4. npx cap sync android --dir capacitor-driver
  */
 
-module.exports = {
+export default {
   appId: 'com.bustracker.driver',
-  appName: 'BUBT Bus Tracker - Driver',
+  appName: 'BUBT Driver',
   webDir: '../dist-driver',
   bundledWebRuntime: false,
   plugins: {
     CapacitorHttp: {
       enabled: true
+    },
+    StatusBar: {
+      overlaysWebView: false
     }
   },
   server: {

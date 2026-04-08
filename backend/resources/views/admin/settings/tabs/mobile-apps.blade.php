@@ -25,9 +25,9 @@
                         App Name
                     </label>
                     <input type="text" name="student_app_name"
-                           value="{{ $studentSettings['student_app_name'] ?? 'BUBT Bus Tracker' }}"
+                           value="{{ $studentSettings['student_app_name'] ?? 'BUBT Tracker' }}"
                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow"
-                           placeholder="BUBT Bus Tracker">
+                           placeholder="BUBT Tracker">
                 </div>
 
                 <!-- Tagline -->
@@ -78,7 +78,7 @@
                             <div class="mb-4">
                                 <i class="bi bi-bus-front-fill text-5xl text-white"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-white student-preview-name">{{ $studentSettings['student_app_name'] ?? 'BUBT Bus Tracker' }}</h3>
+                            <h3 class="text-xl font-bold text-white student-preview-name">{{ $studentSettings['student_app_name'] ?? 'BUBT Tracker' }}</h3>
                             <p class="text-white/80 text-sm mt-1 student-preview-tagline">{{ $studentSettings['student_app_tagline'] ?? 'Your Campus Shuttle Companion' }}</p>
                             <div class="mt-6 flex items-center justify-center gap-2">
                                 <div class="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
@@ -170,9 +170,9 @@
                         App Name
                     </label>
                     <input type="text" name="driver_app_name"
-                           value="{{ $driverSettings['driver_app_name'] ?? 'BUBT Bus Tracker - Driver' }}"
+                           value="{{ $driverSettings['driver_app_name'] ?? 'BUBT Driver' }}"
                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-shadow"
-                           placeholder="BUBT Bus Tracker - Driver">
+                           placeholder="BUBT Driver">
                 </div>
 
                 <!-- Tagline -->
@@ -223,7 +223,7 @@
                             <div class="mb-4">
                                 <i class="bi bi-bus-front-fill text-5xl text-white"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-white driver-preview-name">{{ $driverSettings['driver_app_name'] ?? 'BUBT Bus Tracker - Driver' }}</h3>
+                            <h3 class="text-xl font-bold text-white driver-preview-name">{{ $driverSettings['driver_app_name'] ?? 'BUBT Driver' }}</h3>
                             <p class="text-white/80 text-sm mt-1 driver-preview-tagline">{{ $driverSettings['driver_app_tagline'] ?? 'Campus Shuttle Driver App' }}</p>
                             <div class="mt-6 flex items-center justify-center gap-2">
                                 <div class="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
@@ -304,7 +304,7 @@
         previewBox.style.setProperty('--student-primary', primaryColor);
         previewBox.style.setProperty('--student-dark', darkColor);
 
-        if (nameInput) previewName.textContent = nameInput.value || 'BUBT Bus Tracker';
+        if (nameInput) previewName.textContent = nameInput.value || 'BUBT Tracker';
         if (taglineInput) previewTagline.textContent = taglineInput.value || 'Your Campus Shuttle Companion';
     }
 
@@ -326,7 +326,7 @@
         previewBox.style.setProperty('--driver-primary', primaryColor);
         previewBox.style.setProperty('--driver-dark', darkColor);
 
-        if (nameInput) previewName.textContent = nameInput.value || 'BUBT Bus Tracker - Driver';
+        if (nameInput) previewName.textContent = nameInput.value || 'BUBT Driver';
         if (taglineInput) previewTagline.textContent = taglineInput.value || 'Campus Shuttle Driver App';
     }
 

@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/useAuthStore'
 import { useDriverTripStore } from '@/stores/useDriverTripStore'
 import { useDriverTrackingStore } from '@/stores/useDriverTrackingStore'
 import { useFirebaseMessaging } from '@/composables/useFirebaseMessaging'
+import { useNotificationStore } from '@/stores/useNotificationStore'
 import api from '@/api/client'
 import { resetTokenVerified } from '@/router'
 import StudentLayout from '@/layouts/StudentLayout.vue'
@@ -19,7 +20,30 @@ const driverTrackingStore = appType === 'driver' ? useDriverTrackingStore() : nu
 const hasStartupSplash = appType === 'student' || appType === 'driver'
 const MIN_SPLASH_DURATION_MS = 2500
 const showStartupSplash = ref(hasStartupSplash)
+const toasts = ref([])
 let isFirstAuthCheck = true
+
+const toastIcons = {
+  success: 'bi-check-circle-fill',
+  error: 'bi-x-circle-fill',
+  warning: 'bi-exclamation-triangle-fill'
+}
+
+const dismissToast = (id) => {
+  toasts.value = toasts.value.filter(toast => toast.id !== id)
+}
+
+const handleToast = (event) => {
+  const message = event.detail?.message
+  if (!message) return
+
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const type = event.detail?.type || 'warning'
+  const duration = Number(event.detail?.duration) || 3000
+
+  toasts.value.push({ id, message, type })
+  window.setTimeout(() => dismissToast(id), duration)
+}
 
 const layout = computed(() => {
   // Driver layout is already applied via router nested routes — avoid double-wrapping
@@ -123,7 +147,16 @@ const syncStudentNotifications = async () => {
   }
 
   // Capacitor FCM init
-  const result = await initFirebaseMessaging({ topic: 'all_students' })
+  const result = await initFirebaseMessaging({
+    topic: 'all_students',
+    onMessage: () => {
+      const notificationStore = useNotificationStore()
+      notificationStore.incrementUnread()
+    },
+    onNotificationClick: () => {
+      router.push({ name: 'notifications' })
+    }
+  })
   if (result.success && result.token) {
     try {
       await api.post('/student/fcm-token', { fcm_token: result.token })
@@ -146,6 +179,7 @@ watch(
 
 onMounted(async () => {
   window.addEventListener('auth:unauthorized', handleUnauthorized)
+  window.addEventListener('app:toast', handleToast)
 
   if (hasStartupSplash) {
     const minDurationPromise = new Promise((resolve) => {
@@ -164,7 +198,10 @@ onMounted(async () => {
   }
 })
 
-onUnmounted(() => window.removeEventListener('auth:unauthorized', handleUnauthorized))
+onUnmounted(() => {
+  window.removeEventListener('auth:unauthorized', handleUnauthorized)
+  window.removeEventListener('app:toast', handleToast)
+})
 </script>
 
 <template>
@@ -183,6 +220,20 @@ onUnmounted(() => window.removeEventListener('auth:unauthorized', handleUnauthor
         v-if="hasStartupSplash && showStartupSplash"
       />
     </Transition>
+
+    <div class="toast-container">
+      <TransitionGroup name="toast">
+        <div
+          v-for="toast in toasts"
+          :key="toast.id"
+          class="toast-notification"
+          :class="toast.type"
+        >
+          <i :class="toastIcons[toast.type] || toastIcons.warning"></i>
+          <span>{{ toast.message }}</span>
+        </div>
+      </TransitionGroup>
+    </div>
   </component>
 </template>
 
@@ -195,5 +246,16 @@ onUnmounted(() => window.removeEventListener('auth:unauthorized', handleUnauthor
 .startup-splash-fade-enter-from,
 .startup-splash-fade-leave-to {
   opacity: 0;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.25s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(16px);
 }
 </style>

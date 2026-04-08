@@ -3,17 +3,21 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useNotificationStore } from '@/stores/useNotificationStore'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 import LogoutConfirmModal from '@/components/LogoutConfirmModal.vue'
+import { getDefaultAppName } from '@/utils/appBranding'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
+const settingsStore = useSettingsStore()
 const showLogoutModal = ref(false)
 
 const userInitial = authStore.user?.name?.charAt(0)?.toUpperCase() || 'S'
 const isVerified = computed(() => !!authStore.user?.email_verified_at)
 
 const unreadCount = computed(() => notificationStore.unreadCount)
+const appName = computed(() => settingsStore.appSettings.appName || getDefaultAppName('student'))
 
 const menuSections = [
   {
@@ -104,7 +108,7 @@ const cancelLogout = () => {
 
     <!-- Footer -->
     <div class="more-footer">
-      <p>BUBT Bus Tracker</p>
+      <p>{{ appName }}</p>
       <span>Version 1.0.0</span>
     </div>
 

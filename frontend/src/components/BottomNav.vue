@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
+const emit = defineEmits(['navigate'])
 const router = useRouter()
 
 const currentRoute = computed(() => router.currentRoute.value.name)
@@ -15,6 +16,7 @@ const navItems = [
 
 function navigateTo(item) {
   router.push({ name: item.name })
+  emit('navigate')
 }
 </script>
 

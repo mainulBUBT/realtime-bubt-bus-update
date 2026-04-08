@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/api/client'
+import { getDefaultAppName, getDefaultAppPrimaryColor, getDefaultAppTagline } from '@/utils/appBranding'
+import { applySystemBarTheme } from '@/utils/systemTheme'
 
 export const useSettingsStore = defineStore('settings', () => {
   const appSettings = ref({
@@ -72,9 +74,9 @@ export const useSettingsStore = defineStore('settings', () => {
       const prefix = appType === 'student' ? 'student' : 'driver'
 
       appSettings.value = {
-        appName: data[`${prefix}_app_name`] || (appType === 'student' ? 'BUBT Bus Tracker' : 'BUBT Bus Tracker - Driver'),
+        appName: data[`${prefix}_app_name`] || getDefaultAppName(appType),
         appTagline: data[`${prefix}_app_tagline`] || '',
-        splashPrimaryColor: data[`${prefix}_splash_primary_color`] || (appType === 'student' ? '#4F46E5' : '#059669'),
+        splashPrimaryColor: data[`${prefix}_splash_primary_color`] || getDefaultAppPrimaryColor(appType),
         supportEmail: appType === 'student' ? (data.student_support_email || '') : '',
         supportPhone: appType === 'student' ? (data.student_support_phone || '') : '',
         supportUrl: appType === 'student' ? (data.student_support_url || '') : '',
@@ -90,9 +92,9 @@ export const useSettingsStore = defineStore('settings', () => {
       error.value = err.message
       // Use default values on error
       appSettings.value = {
-        appName: appType === 'student' ? 'BUBT Bus Tracker' : 'BUBT Bus Tracker - Driver',
-        appTagline: appType === 'student' ? 'Your Campus Shuttle Companion' : 'Campus Shuttle Driver App',
-        splashPrimaryColor: appType === 'student' ? '#4F46E5' : '#059669',
+        appName: getDefaultAppName(appType),
+        appTagline: getDefaultAppTagline(appType),
+        splashPrimaryColor: getDefaultAppPrimaryColor(appType),
         supportEmail: '',
         supportPhone: '',
         supportUrl: '',
@@ -125,6 +127,8 @@ export const useSettingsStore = defineStore('settings', () => {
       if (rgb) {
         document.documentElement.style.setProperty('--primary-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`)
       }
+
+      void applySystemBarTheme(variants.primary)
     }
   }
 

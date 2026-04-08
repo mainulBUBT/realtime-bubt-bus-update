@@ -48,6 +48,7 @@ The Capacitor native projects are gitignored to save repository space (~50MB per
    ```bash
    npm run cap:sync:driver   # or cap:sync:student
    ```
+   These sync scripts refresh the matching Android branding assets and local native resource/plugin wiring before copying the latest web build.
 
 ### Driver background tracking extras
 
@@ -157,9 +158,9 @@ export ANDROID_KEYSTORE_PATH=/path/to/keystore.jks
 export ANDROID_KEYSTORE_ALIAS=your-alias
 ```
 
-## App Icons
+## App Branding
 
-The frontend now keeps the app icon source artwork in:
+The frontend keeps the per-app branding source artwork in:
 
 - `public/icons/app-driver.svg`
 - `public/icons/app-student.svg`
@@ -169,21 +170,26 @@ The web favicon automatically switches based on `VITE_APP_TYPE`, so:
 - `npm run dev:driver` and `npm run build:driver` use the driver icon
 - `npm run dev:student` and `npm run build:student` use the student icon
 
-To export PNGs for Android or store assets on macOS:
+Native Android branding can now be synced automatically for each app:
 
 ```bash
-npm run icons:export:driver
-npm run icons:export:student
+npm run icons:sync:driver
+npm run icons:sync:student
 ```
 
-This creates PNGs in `resources/generated/<app>/`, including:
+This sync step:
 
-- `icon-1024.png`
-- `icon-512.png`
-- `icon-192.png`
-- Android launcher sizes (`android-mdpi.png` through `android-xxxhdpi.png`)
+- exports the matching SVG into `resources/generated/<app>/`
+- updates Android launcher icons in `capacitor-<app>/app/src/main/res/mipmap-*`
+- updates splash images in `capacitor-<app>/app/src/main/res/drawable*`
+- refreshes the Android app label, launcher background color, and native status bar theme for that app
 
-Because `capacitor-driver/` and `capacitor-student/` are gitignored and regenerated locally, launcher icons are not committed in this repo. After you generate the native project, use the exported `icon-1024.png` in Android Studio's `Image Asset` tool, or copy the generated Android PNG sizes into the appropriate `mipmap-*` folders in the local native project.
+Because `capacitor-driver/` and `capacitor-student/` are gitignored and regenerated locally, native branding assets are not committed in this repo. The native sync and APK scripts now refresh branding automatically before copying web assets:
+
+- `npm run cap:sync:driver`
+- `npm run cap:sync:student`
+- `npm run apk:driver`
+- `npm run apk:student`
 
 ## Resources
 

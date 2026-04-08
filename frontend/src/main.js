@@ -4,10 +4,15 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/useAuthStore'
 import { useSettingsStore } from './stores/useSettingsStore'
+import { getDefaultAppPrimaryColor } from './utils/appBranding'
+import { applySystemBarTheme } from './utils/systemTheme'
 import './assets/main.css'
 
 const appType = import.meta.env.VITE_APP_TYPE || 'driver'
 const isDev = import.meta.env.DEV
+
+document.body.dataset.appType = appType
+void applySystemBarTheme(getDefaultAppPrimaryColor(appType))
 
 // Development mode logging
 if (isDev) {

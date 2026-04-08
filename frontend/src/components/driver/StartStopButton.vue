@@ -58,9 +58,9 @@ const getIcon = () => {
     <i v-if="!loading" :class="getIcon()"></i>
     <i v-else class="bi bi-arrow-clockwise animate-spin"></i>
 
-    <span v-if="!loading">{{ getDefaultLabel() }}</span>
-    <span v-else>{{ type === 'start' ? 'Starting...' : 'Ending...' }}</span>
+    <span class="start-stop-button-label" v-if="!loading">{{ getDefaultLabel() }}</span>
+    <span class="start-stop-button-label" v-else>{{ type === 'start' ? 'Starting...' : 'Ending...' }}</span>
 
-    <span v-if="!loading" class="text-xs opacity-75">{{ getDefaultSublabel() }}</span>
+    <span v-if="!loading" class="start-stop-button-sublabel text-xs opacity-75">{{ getDefaultSublabel() }}</span>
   </button>
 </template>

@@ -8,6 +8,78 @@
 /* Import Leaflet CSS */
 @import 'leaflet/dist/leaflet.css';
 
+@font-face {
+    font-family: 'Public Sans';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('./fonts/public-sans-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Public Sans';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('./fonts/public-sans-latin-500-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Public Sans';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('./fonts/public-sans-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Public Sans';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('./fonts/public-sans-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('./fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('./fonts/inter-latin-500-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('./fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('./fonts/inter-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url('./fonts/inter-latin-800-normal.woff2') format('woff2');
+}
+
 /* ==========================================
    CSS CUSTOM PROPERTIES
    ========================================== */
@@ -57,6 +129,9 @@
     --timeline-width: 380px;
     --mobile-header-height: 60px;
     --mobile-nav-height: 56px;
+
+    --font-default: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-driver: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* ==========================================
@@ -69,11 +144,15 @@ body {
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-default);
     background-color: var(--gray-100);
     color: var(--gray-900);
     line-height: 1.5;
     -webkit-tap-highlight-color: transparent;
+}
+
+body[data-app-type='driver'] {
+    font-family: var(--font-driver);
 }
 
 #app {
@@ -613,6 +692,10 @@ button {
 
 .toast-notification.error i {
     color: var(--danger);
+}
+
+.toast-notification.warning i {
+    color: var(--warning);
 }
 
 /* ==========================================
@@ -2213,6 +2296,7 @@ button {
     padding-top: 16px;
     padding-bottom: var(--mobile-nav-height);
     background: var(--gray-100);
+    font-family: var(--font-driver);
 }
 
 /* ==========================================
@@ -2254,6 +2338,7 @@ button {
     flex: 1;
     font-size: 18px;
     font-weight: 600;
+    letter-spacing: -0.01em;
     text-align: center;
 }
 
@@ -2296,6 +2381,7 @@ button {
 .driver-nav-item span {
     font-size: 11px;
     font-weight: 500;
+    letter-spacing: 0.01em;
 }
 
 .driver-nav-item.active {
@@ -2304,7 +2390,6 @@ button {
 
 .driver-nav-item.disabled {
     opacity: 0.4;
-    pointer-events: none;
 }
 
 .driver-nav-badge {
@@ -2521,16 +2606,21 @@ button {
     font-size: 24px;
 }
 
-.start-stop-button span:first-of-type {
+.start-stop-button-label {
     font-size: 16px;
     font-weight: 700;
     letter-spacing: 0.5px;
 }
 
-.start-stop-button span:last-of-type {
+.start-stop-button-sublabel {
     font-size: 12px;
     font-weight: 400;
     opacity: 0.85;
+}
+
+.start-stop-button.stop .start-stop-button-label,
+.start-stop-button.stop .start-stop-button-sublabel {
+    transform: translateY(-2px);
 }
 
 /* ==========================================
@@ -2566,6 +2656,7 @@ button {
 .trip-status-title {
     font-size: 18px;
     font-weight: 600;
+    letter-spacing: -0.01em;
     color: var(--gray-900);
 }
 
@@ -2597,6 +2688,33 @@ button {
     font-size: 14px;
     font-weight: 500;
     color: var(--gray-900);
+}
+
+body[data-app-type='driver'] .dash-greeting,
+body[data-app-type='driver'] .dash-date,
+body[data-app-type='driver'] .hero-desc,
+body[data-app-type='driver'] .trip-status-label,
+body[data-app-type='driver'] .trip-status-value,
+body[data-app-type='driver'] .modal-body p,
+body[data-app-type='driver'] .driver-nav-item span {
+    letter-spacing: 0;
+}
+
+body[data-app-type='driver'] .dash-name,
+body[data-app-type='driver'] .hero-title,
+body[data-app-type='driver'] .trip-status-title,
+body[data-app-type='driver'] .driver-header-title,
+body[data-app-type='driver'] .modal-title {
+    font-weight: 600;
+    letter-spacing: -0.015em;
+}
+
+body[data-app-type='driver'] .hero-btn,
+body[data-app-type='driver'] .btn,
+body[data-app-type='driver'] .start-stop-button,
+body[data-app-type='driver'] .driver-header-btn,
+body[data-app-type='driver'] .driver-nav-item {
+    font-family: var(--font-driver);
 }
 
 /* ==========================================

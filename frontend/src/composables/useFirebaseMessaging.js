@@ -105,6 +105,7 @@ export function useFirebaseMessaging() {
             id: Date.now(),
             title: event.notification.title,
             body: event.notification.body,
+            channelId: 'bus_tracker_notifications',
             extra: event.notification
           }
         ]
@@ -171,6 +172,13 @@ export function useFirebaseMessaging() {
 
       if (options.onNotificationClick) {
         onNotificationClick(options.onNotificationClick)
+
+        // Also handle local notification clicks (foreground path)
+        LocalNotifications.addListener('localNotificationActionPerformed', (event) => {
+          if (options.onNotificationClick && typeof options.onNotificationClick === 'function') {
+            options.onNotificationClick(event.notification?.extra || event.notification)
+          }
+        })
       }
 
       return { token: fcmToken, success: true }

@@ -272,11 +272,13 @@ const cancelEndTrip = () => {
     </div>
   </div>
 
-    <StartStopButton
-      type="stop"
-      :loading="endingTrip"
-      @click="handleEndTrip"
-    />
+    <div class="trip-action-section">
+      <StartStopButton
+        type="stop"
+        :loading="endingTrip"
+        @click="handleEndTrip"
+      />
+    </div>
 
     <EndTripConfirmModal
       :show="showEndTripModal"
@@ -287,6 +289,11 @@ const cancelEndTrip = () => {
 </template>
 
 <style scoped>
+.trip-action-section {
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
 .animate-spin {
   animation: spin 1s linear infinite;
 }

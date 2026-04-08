@@ -11,12 +11,27 @@
  * 4. npx cap sync android --dir capacitor-student
  */
 
-module.exports = {
+export default {
   appId: 'com.bustracker.student',
-  appName: 'BUBT Bus Tracker - Student',
+  appName: 'BUBT Tracker',
   webDir: '../dist-student',
   bundledWebRuntime: false,
+  plugins: {
+    CapacitorHttp: {
+      enabled: true
+    },
+    StatusBar: {
+      overlaysWebView: false
+    }
+  },
   server: {
     androidScheme: 'https'
+  },
+  android: {
+    useLegacyBridge: true,
+    buildOptions: {
+      keystorePath: process.env.ANDROID_KEYSTORE_PATH || undefined,
+      keystoreAlias: process.env.ANDROID_KEYSTORE_ALIAS || undefined
+    }
   }
 }

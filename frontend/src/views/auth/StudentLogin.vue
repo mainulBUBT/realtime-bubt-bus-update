@@ -1,11 +1,15 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 import BusFrontIcon from '@/components/BusFrontIcon.vue'
+import { getDefaultAppName } from '@/utils/appBranding'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
+const appName = computed(() => settingsStore.appSettings.appName || getDefaultAppName('student'))
 
 const form = ref({
   email: '',
@@ -37,7 +41,7 @@ const login = async () => {
       <div class="login-logo">
         <BusFrontIcon />
       </div>
-      <h1 class="login-title">BUBT Bus Tracker</h1>
+      <h1 class="login-title">{{ appName }}</h1>
       <p class="login-subtitle">Sign in to track your campus shuttle in real-time</p>
 
       <div class="login-features">

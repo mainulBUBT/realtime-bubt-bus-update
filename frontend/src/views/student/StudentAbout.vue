@@ -2,13 +2,14 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { getDefaultAppName } from '@/utils/appBranding'
 
 const router = useRouter()
 const settingsStore = useSettingsStore()
 
 const loading = ref(true)
 
-const appName = computed(() => settingsStore.appSettings.appName || 'BUBT Bus Tracker')
+const appName = computed(() => settingsStore.appSettings.appName || getDefaultAppName('student'))
 const appTagline = computed(() => settingsStore.appSettings.appTagline || 'University Shuttle Service')
 const aboutText = computed(() => (settingsStore.appSettings.aboutText || '').trim())
 const hasAbout = computed(() => aboutText.value.length > 0)

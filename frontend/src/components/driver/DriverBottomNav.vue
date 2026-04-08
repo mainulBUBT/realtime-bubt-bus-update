@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useDriverTripStore } from '@/stores/useDriverTripStore'
+import { showToast } from '@/composables/useToast'
 
 const router = useRouter()
 const route = useRoute()
@@ -37,7 +38,18 @@ const navItems = computed(() => [
 ])
 
 const navigate = (item) => {
-  if (item.disabled) return
+  if (item.disabled) {
+    if (item.name === 'dashboard') {
+      showToast('Home is unavailable while a trip is active. Please end the current trip first.', {
+        type: 'warning'
+      })
+    } else if (item.name === 'trip-active') {
+      showToast('Active Trip is unavailable because no trip is running right now. Please start a trip first.', {
+        type: 'warning'
+      })
+    }
+    return
+  }
 
   if (item.name === 'menu') {
     emit('open-menu')
@@ -52,9 +64,10 @@ const navigate = (item) => {
     <button
       v-for="item in navItems"
       :key="item.name"
+      type="button"
       class="driver-nav-item"
       :class="{ active: route.name === item.name, disabled: item.disabled }"
-      :disabled="item.disabled"
+      :aria-disabled="item.disabled"
       @click="navigate(item)"
     >
       <i :class="item.icon"></i>

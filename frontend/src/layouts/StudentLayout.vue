@@ -1,22 +1,26 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useMapStore } from '@/stores/useMapStore'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useNotificationStore } from '@/stores/useNotificationStore'
 import { storeToRefs } from 'pinia'
 import BottomNav from '@/components/BottomNav.vue'
 import BusCard from '@/components/BusCard.vue'
 import TimelinePanel from '@/components/TimelinePanel.vue'
 import LogoutConfirmModal from '@/components/LogoutConfirmModal.vue'
+import { getDefaultAppName } from '@/utils/appBranding'
 
 const route = useRoute()
 const isMapView = computed(() => route.name === 'map')
 const settingsStore = useSettingsStore()
+const notificationStore = useNotificationStore()
+const { unreadCount } = storeToRefs(notificationStore)
 
 const sidebarOpen = ref(false)
 const toggleSidebar = () => { sidebarOpen.value = !sidebarOpen.value }
-const closeSidebar  = () => { sidebarOpen.value = false }
+const closeSidebar  = () => { sidebarOpen.value = false; searchQuery.value = '' }
 
 const router    = useRouter()
 const authStore = useAuthStore()
@@ -25,6 +29,7 @@ const mapStore  = useMapStore()
 const { buses, activeCount, delayedCount, inactiveCount, selectedTripId } = storeToRefs(mapStore)
 const searchQuery = ref('')
 const showLogoutModal = ref(false)
+const defaultAppName = getDefaultAppName('student')
 
 const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase())
 const hasActiveSearch = computed(() => normalizedSearchQuery.value.length > 0)
@@ -67,6 +72,14 @@ function handleBusClick(bus) {
 function clearSearch() {
   searchQuery.value = ''
 }
+
+const goToNotifications = () => {
+  router.push({ name: 'notifications' })
+}
+
+onMounted(() => {
+  notificationStore.fetchUnreadCount()
+})
 </script>
 
 <template>
@@ -85,7 +98,7 @@ function clearSearch() {
           <i class="bi bi-bus-front-fill"></i>
         </div>
         <div class="sidebar-brand">
-          <h1>{{ settingsStore.appSettings.appName || 'BUBT Bus Tracker' }}</h1>
+          <h1>{{ settingsStore.appSettings.appName || defaultAppName }}</h1>
           <span>{{ settingsStore.appSettings.appTagline || 'University Shuttle Service' }}</span>
         </div>
         <!-- Close button (mobile only) -->
@@ -194,11 +207,11 @@ function clearSearch() {
           <i class="bi bi-list"></i>
         </button>
         <div class="header-center">
-          <h1>{{ settingsStore.appSettings.appName || 'BUBT Bus Tracker' }}</h1>
+          <h1>{{ settingsStore.appSettings.appName || defaultAppName }}</h1>
         </div>
-        <button class="header-btn">
+        <button class="header-btn" @click="goToNotifications">
           <i class="bi bi-bell-fill"></i>
-          <span class="notification-badge">0</span>
+          <span v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
         </button>
       </header>
 
@@ -209,7 +222,7 @@ function clearSearch() {
     <TimelinePanel />
 
     <!-- Mobile Bottom Nav (< 768px) -->
-    <BottomNav />
+    <BottomNav @navigate="closeSidebar" />
 
     <!-- Logout Confirmation Modal -->
     <LogoutConfirmModal
@@ -236,5 +249,11 @@ function clearSearch() {
 :deep(.bus-card-selected .bus-item) {
   border-left: 4px solid #10B981;
   background: rgba(16, 185, 129, 0.08);
+}
+
+@media (max-width: 767.98px) {
+  .sidebar-footer {
+    display: none;
+  }
 }
 </style>

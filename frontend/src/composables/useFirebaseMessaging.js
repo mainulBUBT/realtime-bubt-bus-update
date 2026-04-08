@@ -1,7 +1,12 @@
 import { ref } from 'vue'
 import { FirebaseMessaging } from '@capacitor-firebase/messaging'
+import { FirebaseApp } from '@capacitor-firebase/app'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { Capacitor } from '@capacitor/core'
+
+function isNative() {
+  return Capacitor.isNativePlatform()
+}
 
 export function useFirebaseMessaging() {
   const token = ref(null)
@@ -12,6 +17,14 @@ export function useFirebaseMessaging() {
    * Request notification permission and get FCM token
    */
   const requestPermission = async () => {
+    if (!isNative()) {
+      // Web: use browser Notification API
+      if (typeof Notification === 'undefined') return false
+      const result = await Notification.requestPermission()
+      isPermissionGranted.value = result === 'granted'
+      return result === 'granted'
+    }
+
     try {
       const permissionResult = await FirebaseMessaging.requestPermission()
 
@@ -32,6 +45,8 @@ export function useFirebaseMessaging() {
    * Get the FCM token
    */
   const getToken = async () => {
+    if (!isNative()) return null
+
     try {
       const result = await FirebaseMessaging.getToken()
       token.value = result.token
@@ -47,6 +62,8 @@ export function useFirebaseMessaging() {
    * Subscribe to a topic
    */
   const subscribeToTopic = async (topic) => {
+    if (!isNative()) return
+
     try {
       await FirebaseMessaging.subscribeToTopic({ topic })
       console.log(`Subscribed to topic: ${topic}`)
@@ -60,6 +77,8 @@ export function useFirebaseMessaging() {
    * Unsubscribe from a topic
    */
   const unsubscribeFromTopic = async (topic) => {
+    if (!isNative()) return
+
     try {
       await FirebaseMessaging.unsubscribeFromTopic({ topic })
       console.log(`Unsubscribed from topic: ${topic}`)
@@ -73,7 +92,7 @@ export function useFirebaseMessaging() {
    * Create notification channel for Android 8+
    */
   const createNotificationChannel = async () => {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return
+    if (!isNative() || Capacitor.getPlatform() !== 'android') return
 
     try {
       await LocalNotifications.createChannel({
@@ -95,6 +114,8 @@ export function useFirebaseMessaging() {
    * Listen for incoming FCM messages (foreground)
    */
   const onMessage = (onMessage) => {
+    if (!isNative()) return
+
     FirebaseMessaging.addListener('notificationReceived', (event) => {
       console.log('FCM message received:', event.notification)
 
@@ -121,6 +142,8 @@ export function useFirebaseMessaging() {
    * Listen for when user taps on a notification
    */
   const onNotificationClick = (onClick) => {
+    if (!isNative()) return
+
     FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
       console.log('Notification clicked:', event.notification)
 
@@ -134,6 +157,8 @@ export function useFirebaseMessaging() {
    * Delete the FCM token
    */
   const deleteToken = async () => {
+    if (!isNative()) return
+
     try {
       await FirebaseMessaging.deleteToken()
       token.value = null
@@ -147,7 +172,15 @@ export function useFirebaseMessaging() {
    * Initialize Firebase messaging with all listeners
    */
   const initialize = async (options = {}) => {
+    if (!isNative()) {
+      console.info('FCM: Skipping initialization on non-native platform')
+      return { token: null, success: false }
+    }
+
     try {
+      // Initialize Firebase App first
+      await FirebaseApp.initialize()
+
       // Create notification channel (Android)
       await createNotificationChannel()
 

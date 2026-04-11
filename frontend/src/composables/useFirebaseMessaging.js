@@ -1,8 +1,11 @@
 import { ref } from 'vue'
 import { FirebaseMessaging } from '@capacitor-firebase/messaging'
-import { FirebaseApp } from '@capacitor-firebase/app'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { Capacitor } from '@capacitor/core'
+
+let messageListenerRegistered = false
+let notificationClickListenerRegistered = false
+let localNotificationClickListenerRegistered = false
 
 function isNative() {
   return Capacitor.isNativePlatform()
@@ -26,13 +29,17 @@ export function useFirebaseMessaging() {
     }
 
     try {
-      const permissionResult = await FirebaseMessaging.requestPermission()
+      const permissionState = await FirebaseMessaging.checkPermissions()
+      console.info('FCM permission state before request:', permissionState.receive)
+
+      const permissionResult = await FirebaseMessaging.requestPermissions()
 
       if (permissionResult.receive === 'granted') {
         isPermissionGranted.value = true
         return true
       }
 
+      console.warn('FCM permission not granted:', permissionResult.receive)
       return false
     } catch (err) {
       error.value = err
@@ -114,7 +121,7 @@ export function useFirebaseMessaging() {
    * Listen for incoming FCM messages (foreground)
    */
   const onMessage = (onMessage) => {
-    if (!isNative()) return
+    if (!isNative() || messageListenerRegistered) return
 
     FirebaseMessaging.addListener('notificationReceived', (event) => {
       console.log('FCM message received:', event.notification)
@@ -136,13 +143,15 @@ export function useFirebaseMessaging() {
         onMessage(event.notification)
       }
     })
+
+    messageListenerRegistered = true
   }
 
   /**
    * Listen for when user taps on a notification
    */
   const onNotificationClick = (onClick) => {
-    if (!isNative()) return
+    if (!isNative() || notificationClickListenerRegistered) return
 
     FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
       console.log('Notification clicked:', event.notification)
@@ -151,6 +160,8 @@ export function useFirebaseMessaging() {
         onClick(event.notification)
       }
     })
+
+    notificationClickListenerRegistered = true
   }
 
   /**
@@ -162,6 +173,7 @@ export function useFirebaseMessaging() {
     try {
       await FirebaseMessaging.deleteToken()
       token.value = null
+      isPermissionGranted.value = false
     } catch (err) {
       error.value = err
       console.error('Failed to delete FCM token:', err)
@@ -178,9 +190,6 @@ export function useFirebaseMessaging() {
     }
 
     try {
-      // Initialize Firebase App first
-      await FirebaseApp.initialize()
-
       // Create notification channel (Android)
       await createNotificationChannel()
 
@@ -192,6 +201,10 @@ export function useFirebaseMessaging() {
 
       // Get token
       const fcmToken = await getToken()
+      if (!fcmToken) {
+        throw new Error('FCM token generation failed')
+      }
+      console.info('FCM token generated successfully')
 
       // Subscribe to topic if provided
       if (options.topic) {
@@ -207,11 +220,14 @@ export function useFirebaseMessaging() {
         onNotificationClick(options.onNotificationClick)
 
         // Also handle local notification clicks (foreground path)
-        LocalNotifications.addListener('localNotificationActionPerformed', (event) => {
-          if (options.onNotificationClick && typeof options.onNotificationClick === 'function') {
-            options.onNotificationClick(event.notification?.extra || event.notification)
-          }
-        })
+        if (!localNotificationClickListenerRegistered) {
+          LocalNotifications.addListener('localNotificationActionPerformed', (event) => {
+            if (options.onNotificationClick && typeof options.onNotificationClick === 'function') {
+              options.onNotificationClick(event.notification?.extra || event.notification)
+            }
+          })
+          localNotificationClickListenerRegistered = true
+        }
       }
 
       return { token: fcmToken, success: true }

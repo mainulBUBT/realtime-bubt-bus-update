@@ -157,12 +157,22 @@ const syncStudentNotifications = async () => {
       router.push({ name: 'notifications' })
     }
   })
-  if (result.success && result.token) {
-    try {
-      await api.post('/student/fcm-token', { fcm_token: result.token })
-    } catch (e) {
-      console.error('Failed to send FCM token to backend', e)
-    }
+
+  if (!result.success) {
+    console.error('Student FCM initialization failed:', result.error || 'Unknown initialization error')
+    return
+  }
+
+  if (!result.token) {
+    console.error('Student FCM token generation failed: no token returned')
+    return
+  }
+
+  try {
+    await api.post('/student/fcm-token', { fcm_token: result.token })
+    console.info('Student FCM token saved to backend successfully')
+  } catch (e) {
+    console.error('Failed to save student FCM token to backend', e)
   }
 }
 

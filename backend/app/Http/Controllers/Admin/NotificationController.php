@@ -82,14 +82,19 @@ class NotificationController extends Controller
             $campaign->recipients()->sync($validated['user_ids'] ?? []);
         }
 
-        $this->sendPushForCampaign($campaign);
+        $pushResult = $this->sendPushForCampaign($campaign);
 
         $recipientCount = $validated['audience'] === 'all_students'
             ? User::where('role', 'student')->count()
             : $campaign->recipients()->count();
 
+        $toastType = ($pushResult['success'] ?? false) ? 'success' : 'warning';
+        $toastMessage = ($pushResult['success'] ?? false)
+            ? 'Notification sent to ' . $recipientCount . ' student(s).'
+            : 'Notification saved, but push delivery failed: ' . ($pushResult['error'] ?? 'Unknown FCM error');
+
         return redirect()->route('admin.notifications.index')
-            ->with('toastr', [['type' => 'success', 'message' => 'Notification sent to ' . $recipientCount . ' student(s).']]);
+            ->with('toastr', [['type' => $toastType, 'message' => $toastMessage]]);
     }
 
     public function edit(NotificationCampaign $campaign)
@@ -160,13 +165,21 @@ class NotificationController extends Controller
             'resend_count' => (int) $campaign->resend_count + 1,
         ]);
 
-        $this->sendPushForCampaign($campaign);
+        $pushResult = $this->sendPushForCampaign($campaign);
+
+        $toastType = ($pushResult['success'] ?? false) ? 'success' : 'warning';
+        $toastMessage = ($pushResult['success'] ?? false)
+            ? 'Notification resent. Unread reset for students.'
+            : 'Notification resent, but push delivery failed: ' . ($pushResult['error'] ?? 'Unknown FCM error');
 
         return redirect()->route('admin.notifications.index')
-            ->with('toastr', [['type' => 'success', 'message' => 'Notification resent. Unread reset for students.']]);
+            ->with('toastr', [['type' => $toastType, 'message' => $toastMessage]]);
     }
 
-    private function sendPushForCampaign(NotificationCampaign $campaign): void
+    /**
+     * @return array<string, mixed>
+     */
+    private function sendPushForCampaign(NotificationCampaign $campaign): array
     {
         $data = [
             'type' => $campaign->type,
@@ -177,8 +190,7 @@ class NotificationController extends Controller
             $fcmService = app(FcmService::class);
 
             if ($campaign->audience === 'all_students') {
-                $fcmService->sendToTopic('all_students', $campaign->title, $campaign->body, $data);
-                return;
+                return $fcmService->sendToTopic('all_students', $campaign->title, $campaign->body, $data);
             }
 
             $tokens = $campaign->recipients()
@@ -188,11 +200,38 @@ class NotificationController extends Controller
                 ->values()
                 ->toArray();
 
-            if (!empty($tokens)) {
-                $fcmService->sendToTokens($tokens, $campaign->title, $campaign->body, $data);
+            if (empty($tokens)) {
+                $result = [
+                    'success' => false,
+                    'target' => 'tokens',
+                    'token_count' => 0,
+                    'error' => 'No student FCM tokens found for the selected audience.',
+                ];
+
+                logger()->warning('Admin notification skipped: no recipient tokens', [
+                    'campaign_id' => $campaign->id,
+                    'audience' => $campaign->audience,
+                ]);
+
+                return $result;
             }
+
+            return $fcmService->sendToTokens($tokens, $campaign->title, $campaign->body, $data);
         } catch (\Throwable $e) {
-            logger()->error('Admin notification FCM failed: ' . $e->getMessage());
+            $result = [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'exception' => $e::class,
+            ];
+
+            logger()->error('Admin notification FCM failed', [
+                'campaign_id' => $campaign->id,
+                'audience' => $campaign->audience,
+                'error' => $e->getMessage(),
+                'exception' => $e::class,
+            ]);
+
+            return $result;
         }
     }
 }

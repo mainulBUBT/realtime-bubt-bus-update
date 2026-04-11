@@ -7,6 +7,9 @@ export const useMapStore = defineStore('map', () => {
   // ── state ─────────────────────────────────────────────
   const trips = ref([])          // raw API trip objects (with latestLocation)
   const loading = ref(false)
+  const lastFetchFailed = ref(false)
+  const lastSuccessfulFetchAt = ref(null)
+  const consecutiveFetchFailures = ref(0)
   const selectedTripId = ref(null)  // null = no selection, number = follow this trip
   const showTimeline = ref(false)   // true only when map marker icon is clicked
 
@@ -58,11 +61,24 @@ export const useMapStore = defineStore('map', () => {
     try {
       const res = await api.get('/student/trips/active')
       trips.value = res.data || []
+      lastFetchFailed.value = false
+      consecutiveFetchFailures.value = 0
+      lastSuccessfulFetchAt.value = new Date().toISOString()
       console.log('[MapStore] fetched', trips.value.length, 'trips')
       subscribeToTrips(trips.value)
     } catch (e) {
       console.error('[MapStore] fetch failed:', e?.response?.status, e?.message)
-      trips.value = []
+      lastFetchFailed.value = true
+      consecutiveFetchFailures.value += 1
+
+      // Keep the last known good trip list on transient failures so
+      // the student map does not flicker buses off and back on.
+      if (e?.response?.status === 401) {
+        trips.value = []
+        selectedTripId.value = null
+        showTimeline.value = false
+        lastSuccessfulFetchAt.value = null
+      }
     } finally {
       loading.value = false
     }
@@ -178,7 +194,7 @@ export const useMapStore = defineStore('map', () => {
   }
 
   return {
-    trips, buses, loading, selectedTripId, selectedTrip, showTimeline, lastLocationUpdate,
+    trips, buses, loading, lastFetchFailed, lastSuccessfulFetchAt, consecutiveFetchFailures, selectedTripId, selectedTrip, showTimeline, lastLocationUpdate,
     activeCount, delayedCount, inactiveCount,
     fetchTrips, selectBus, clearSelection, unsubscribeAll,
   }

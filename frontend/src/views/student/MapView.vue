@@ -75,11 +75,10 @@ function initMap() {
     center: [BUBT.lat, BUBT.lng],
     zoom: 13,
     zoomControl: false,
-    attributionControl: true,
+    attributionControl: false,
   })
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
   }).addTo(mapInstance)
 

@@ -120,7 +120,7 @@ const getBusDisplay = (bus) => {
       <p class="empty-state-text">{{ error }}</p>
       <button
         @click="handleRetry"
-        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        class="retry-button"
       >
         Retry
       </button>
@@ -153,15 +153,36 @@ const getBusDisplay = (bus) => {
       v-if="starting"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
     >
-      <div class="bg-white rounded-lg p-6 text-center">
-        <div class="animate-spin w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-        <p class="text-gray-800 font-semibold">Starting Trip...</p>
+      <div class="starting-overlay-card">
+        <div class="starting-overlay-spinner"></div>
+        <p class="starting-overlay-text">Starting Trip...</p>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.retry-button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--white);
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.24);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+}
+
+.retry-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(var(--primary-rgb), 0.3);
+  filter: brightness(1.04);
+}
+
+.retry-button:active {
+  transform: scale(0.98);
+}
+
 .cancel-action-wrap {
   display: flex;
   justify-content: center;
@@ -183,7 +204,14 @@ const getBusDisplay = (bus) => {
   font-size: 0.95rem;
   font-weight: 600;
   box-shadow: var(--shadow-sm);
-  transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.cancel-selection-button:hover {
+  transform: translateY(-1px);
+  background: var(--gray-50);
+  border-color: rgba(var(--primary-rgb), 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 .cancel-selection-button:active {
@@ -195,5 +223,29 @@ const getBusDisplay = (bus) => {
 .cancel-selection-button i {
   font-size: 1.1rem;
   color: var(--gray-500);
+}
+
+.starting-overlay-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.starting-overlay-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(var(--primary-rgb), 0.22);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 1s linear infinite;
+}
+
+.starting-overlay-text {
+  color: var(--gray-800);
+  font-weight: 700;
+  margin: 0;
 }
 </style>

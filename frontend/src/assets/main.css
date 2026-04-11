@@ -461,6 +461,13 @@ button {
 }
 
 /* ==========================================
+   STUDENT LOGIN VARIANT
+   ========================================== */
+.login-screen--student .login-feature i {
+    color: var(--white);
+}
+
+/* ==========================================
    DRIVER LOGIN VARIANT - DYNAMIC THEME
    ========================================== */
 .login-screen--driver .login-logo {
@@ -488,7 +495,7 @@ button {
 
 .login-screen--driver .login-feature i {
     background: rgba(var(--primary-rgb), 0.15);
-    color: var(--splash-primary);
+    color: var(--white);
 }
 
 .login-screen--driver .btn-login {
@@ -1913,6 +1920,11 @@ button {
     font-size: 0.75rem;
 }
 
+.timeline-stop.approaching .stop-marker i {
+    color: var(--primary-dark, #059669);
+    font-size: 1rem;
+}
+
 .timeline-stop.destination .stop-marker i {
     color: var(--primary, #10B981);
     font-size: 1.2rem;
@@ -1979,6 +1991,14 @@ button {
 
 .timeline-stop.current .stop-name {
     color: var(--primary, #10B981);
+}
+
+.timeline-stop.approaching .stop-name {
+    color: var(--primary-dark, #059669);
+}
+
+.timeline-stop.approaching .stop-status {
+    color: var(--primary-dark, #059669);
 }
 
 .timeline-stop.passed .stop-name {
@@ -2490,6 +2510,12 @@ button {
     min-height: 96px;
 }
 
+.direction-selector:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(var(--primary-rgb), 0.18);
+}
+
 .direction-selector:active {
     transform: scale(0.98);
 }
@@ -2540,23 +2566,23 @@ button {
 
 /* Driver app themed direction colors */
 .direction-selector[data-direction="outbound"] .direction-label {
-    background: rgba(34, 197, 94, 0.1);
-    color: #16A34A;
+    background: rgba(var(--primary-rgb), 0.12);
+    color: var(--primary-dark);
 }
 
 .direction-selector[data-direction="inbound"] .direction-label {
-    background: rgba(245, 158, 11, 0.1);
-    color: #D97706;
+    background: rgba(var(--primary-rgb), 0.08);
+    color: var(--primary);
 }
 
 .direction-selector[data-direction="outbound"] .direction-icon {
-    background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--white);
 }
 
 .direction-selector[data-direction="inbound"] .direction-icon {
-    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    color: var(--white);
 }
 
 .direction-chevron {

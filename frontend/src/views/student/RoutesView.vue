@@ -191,9 +191,12 @@ function isRouteStopsLoading(routeId) {
     <div class="routes-search">
       <i class="bi bi-search"></i>
       <input
-        v-model="searchQuery"
+        :value="searchQuery"
+        @input="searchQuery = $event.target.value"
+        @keyup="searchQuery = $event.target.value"
         type="text"
         placeholder="Search routes, stops..."
+        enterkeyhint="search"
       >
       <button
         v-if="hasActiveSearch"

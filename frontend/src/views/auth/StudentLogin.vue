@@ -36,7 +36,7 @@ const login = async () => {
 </script>
 
 <template>
-  <div class="login-screen">
+  <div class="login-screen login-screen--student">
     <div class="login-card">
       <div class="login-logo">
         <BusFrontIcon />

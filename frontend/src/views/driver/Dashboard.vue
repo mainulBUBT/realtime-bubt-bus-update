@@ -171,6 +171,11 @@ const handleStartTrip = () => {
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
+.hero-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
 .hero-card:active {
   transform: scale(0.98);
   box-shadow: var(--shadow-sm);
@@ -187,7 +192,7 @@ const handleStartTrip = () => {
   font-size: 30px;
   color: var(--white);
   margin-bottom: 20px;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.3);
 }
 
 .hero-body {
@@ -218,8 +223,14 @@ const handleStartTrip = () => {
   border-radius: 50px;
   font-size: 14px;
   font-weight: 700;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-  transition: transform var(--transition-fast);
+  box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.3);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+}
+
+.hero-card:hover .hero-btn {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.35);
+  filter: brightness(1.05);
 }
 
 .hero-card:active .hero-btn {

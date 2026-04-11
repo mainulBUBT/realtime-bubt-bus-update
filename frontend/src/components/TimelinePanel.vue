@@ -58,30 +58,32 @@ function distanceToSegmentMeters(lat, lng, startLat, startLng, endLat, endLng) {
   }
 }
 
-function resolveCurrentStopIndex(stops, busLat, busLng) {
-  if (busLat === null || busLng === null) return 0
-  if (stops.length <= 1) return 0
+function formatDistance(distanceMeters) {
+  if (!Number.isFinite(distanceMeters)) return ''
+  if (distanceMeters < 1000) return `${Math.round(distanceMeters / 10) * 10} m away`
+  return `${(distanceMeters / 1000).toFixed(1)} km away`
+}
 
+function getNearestStop(stops, busLat, busLng) {
   const distances = stops.map(stop =>
     haversineMeters(busLat, busLng, parseFloat(stop.lat), parseFloat(stop.lng))
   )
 
+  let nearest = { index: 0, distance: distances[0] ?? Infinity }
+
+  distances.forEach((distance, index) => {
+    if (distance < nearest.distance) {
+      nearest = { index, distance }
+    }
+  })
+
+  return { distances, nearest }
+}
+
+function resolveRouteProgressIndex(stops, busLat, busLng) {
+  if (stops.length <= 1) return 0
+
   const lastIdx = stops.length - 1
-  const firstTerminalDistance = distances[0]
-  const lastTerminalDistance = distances[lastIdx]
-
-  if (firstTerminalDistance <= TERMINAL_PROXIMITY_METERS || lastTerminalDistance <= TERMINAL_PROXIMITY_METERS) {
-    return firstTerminalDistance <= lastTerminalDistance ? 0 : lastIdx
-  }
-
-  const nearbyStopIndexes = distances
-    .map((distance, index) => distance <= STOP_PROXIMITY_METERS ? index : -1)
-    .filter(index => index >= 0)
-
-  if (nearbyStopIndexes.length > 0) {
-    return Math.max(...nearbyStopIndexes)
-  }
-
   let bestSegment = { distance: Infinity, startIdx: 0, t: 0 }
 
   for (let i = 0; i < lastIdx; i++) {
@@ -108,6 +110,60 @@ function resolveCurrentStopIndex(stops, busLat, busLng) {
   }
 
   return bestSegment.startIdx
+}
+
+function resolveStopState(stops, busLat, busLng) {
+  if (busLat === null || busLng === null) {
+    return {
+      currentIdx: null,
+      approachingIdx: null,
+      approachingDistance: null,
+      progressIdx: null,
+    }
+  }
+
+  if (stops.length <= 1) {
+    return {
+      currentIdx: 0,
+      approachingIdx: null,
+      approachingDistance: 0,
+      progressIdx: 0,
+    }
+  }
+
+  const lastIdx = stops.length - 1
+  const { distances, nearest } = getNearestStop(stops, busLat, busLng)
+  const firstTerminalDistance = distances[0]
+  const lastTerminalDistance = distances[lastIdx]
+
+  if (firstTerminalDistance <= TERMINAL_PROXIMITY_METERS || lastTerminalDistance <= TERMINAL_PROXIMITY_METERS) {
+    const currentIdx = firstTerminalDistance <= lastTerminalDistance ? 0 : lastIdx
+    return {
+      currentIdx,
+      approachingIdx: null,
+      approachingDistance: distances[currentIdx],
+      progressIdx: currentIdx,
+    }
+  }
+
+  if (nearest.distance <= STOP_PROXIMITY_METERS) {
+    return {
+      currentIdx: nearest.index,
+      approachingIdx: null,
+      approachingDistance: nearest.distance,
+      progressIdx: nearest.index,
+    }
+  }
+
+  const progressIdx = resolveRouteProgressIndex(stops, busLat, busLng)
+  const approachingIdx = Math.min(progressIdx + 1, lastIdx)
+
+  return {
+    currentIdx: null,
+    approachingIdx,
+    approachingDistance: distances[approachingIdx] ?? nearest.distance,
+    progressIdx,
+  }
 }
 
 function timeAgo(dateString) {
@@ -178,15 +234,40 @@ const stopsWithState = computed(() => {
   const busLng = loc?.lng ? parseFloat(loc.lng) : null
 
   const lastIdx = stops.length - 1
-  const currentIdx = resolveCurrentStopIndex(stops, busLat, busLng)
+  const { currentIdx, approachingIdx, approachingDistance } = resolveStopState(stops, busLat, busLng)
 
   return stops.map((stop, i) => {
-    let state
-    if (i < currentIdx) state = 'passed'
-    else if (i === currentIdx) state = 'current'
-    else if (i === lastIdx) state = 'destination'
-    else state = 'upcoming'
-    return { ...stop, state }
+    let state = 'upcoming'
+    let statusText = 'Upcoming'
+
+    if (currentIdx !== null) {
+      if (i < currentIdx) {
+        state = 'passed'
+        statusText = 'Passed'
+      } else if (i === currentIdx) {
+        state = 'current'
+        statusText = 'Currently Here'
+      } else if (i === lastIdx) {
+        state = 'destination'
+        statusText = 'Final Stop'
+      }
+    } else if (approachingIdx !== null) {
+      if (i < approachingIdx) {
+        state = 'passed'
+        statusText = 'Passed'
+      } else if (i === approachingIdx) {
+        state = 'approaching'
+        statusText = `Approaching - ${formatDistance(approachingDistance)}`
+      } else if (i === lastIdx) {
+        state = 'destination'
+        statusText = 'Final Stop'
+      }
+    } else if (i === lastIdx) {
+      state = 'destination'
+      statusText = 'Final Stop'
+    }
+
+    return { ...stop, state, statusText }
   })
 })
 
@@ -244,6 +325,7 @@ function close() {
                   :class="{
                     'bi bi-check-circle-fill': stop.state === 'passed',
                     'bi bi-bus-front-fill':    stop.state === 'current',
+                    'bi bi-signpost-fill':     stop.state === 'approaching',
                     'bi bi-circle':            stop.state === 'upcoming',
                     'bi bi-geo-alt-fill':      stop.state === 'destination',
                   }"
@@ -251,12 +333,7 @@ function close() {
               </div>
               <div class="stop-info">
                 <span class="stop-name">{{ stop.name }}</span>
-                <span class="stop-status">
-                  {{ stop.state === 'passed' ? 'Passed' :
-                     stop.state === 'current' ? 'Currently Here' :
-                     stop.state === 'destination' ? 'Final Stop' :
-                     'Upcoming' }}
-                </span>
+                <span class="stop-status">{{ stop.statusText }}</span>
               </div>
             </div>
           </div>

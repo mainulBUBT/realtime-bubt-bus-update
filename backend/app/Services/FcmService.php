@@ -139,7 +139,7 @@ class FcmService
 
     protected function getMessaging(): Messaging
     {
-        $credentialsPath = config('services.firebase.credentials');
+        $credentialsPath = $this->resolveCredentialsPath(config('services.firebase.credentials'));
 
         if (!is_string($credentialsPath) || $credentialsPath === '' || !is_file($credentialsPath)) {
             throw new \RuntimeException('Firebase credentials file not found: ' . (string) $credentialsPath);
@@ -149,6 +149,19 @@ class FcmService
             ->withServiceAccount($credentialsPath);
 
         return $factory->createMessaging();
+    }
+
+    protected function resolveCredentialsPath(mixed $credentialsPath): mixed
+    {
+        if (!is_string($credentialsPath) || $credentialsPath === '') {
+            return $credentialsPath;
+        }
+
+        if (str_starts_with($credentialsPath, DIRECTORY_SEPARATOR) || preg_match('/^[A-Za-z]:[\\\\\\/]/', $credentialsPath)) {
+            return $credentialsPath;
+        }
+
+        return base_path($credentialsPath);
     }
 
     protected function buildAndroidConfig(): AndroidConfig

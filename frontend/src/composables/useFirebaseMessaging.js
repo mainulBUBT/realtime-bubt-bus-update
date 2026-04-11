@@ -6,6 +6,13 @@ import { Capacitor } from '@capacitor/core'
 let messageListenerRegistered = false
 let notificationClickListenerRegistered = false
 let localNotificationClickListenerRegistered = false
+let nextLocalNotificationId = 1
+
+function getSafeNotificationId() {
+  // Capacitor LocalNotifications on Android requires a Java int.
+  nextLocalNotificationId = (nextLocalNotificationId % 2147483647) + 1
+  return nextLocalNotificationId
+}
 
 function isNative() {
   return Capacitor.isNativePlatform()
@@ -130,7 +137,7 @@ export function useFirebaseMessaging() {
       LocalNotifications.schedule({
         notifications: [
           {
-            id: Date.now(),
+            id: getSafeNotificationId(),
             title: event.notification.title,
             body: event.notification.body,
             channelId: 'bus_tracker_notifications',

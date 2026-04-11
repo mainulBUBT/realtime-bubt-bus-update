@@ -20,7 +20,13 @@
     <style>
         /* Additional inline styles for quick customization */
         .sidebar-gradient {
-            background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(20, 184, 166, 0.05) 100%);
+            background-image: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(20, 184, 166, 0.05) 100%);
+            background-repeat: no-repeat;
+            background-size: 100% 100%;
+        }
+
+        html.dark .sidebar-gradient {
+            background-image: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(20, 184, 166, 0.06) 100%);
         }
     </style>
 </head>
@@ -28,53 +34,53 @@
 
     <!-- Top Navigation Bar -->
     <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 fixed w-full top-0 left-0 right-0 transition-colors duration-300" style="z-index: 9998;">
-        <div class="px-3 sm:px-4 lg:px-6">
-            <div class="flex items-center justify-between h-14 sm:h-16">
+        <div class="px-2 sm:px-4 lg:px-6">
+            <div class="flex items-center justify-between gap-2 h-14 sm:h-16">
                 <!-- Logo & Brand -->
-                <div class="flex items-center gap-2 sm:gap-3">
+                <div class="flex min-w-0 items-center gap-2 sm:gap-3">
                     <!-- Mobile Menu Button -->
-                    <button id="sidebar-toggle" class="lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <button id="sidebar-toggle" class="shrink-0 lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                         <i class="bi bi-list text-xl"></i>
                     </button>
 
                     <!-- Logo -->
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 sm:gap-3 group">
-                        <div class="bg-gradient-to-br from-emerald-500 to-teal-600 p-1.5 sm:p-2 rounded-xl shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 transition-all">
+                    <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-2 sm:gap-3 group">
+                        <div class="shrink-0 bg-gradient-to-br from-emerald-500 to-teal-600 p-1.5 sm:p-2 rounded-xl shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 transition-all">
                             <i class="bi bi-bus-front-fill text-white text-base sm:text-lg lg:text-xl"></i>
                         </div>
-                        <div class="hidden sm:block">
-                            <h1 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-tight">{{ $appName }}</h1>
+                        <div class="hidden min-w-0 sm:block">
+                            <h1 class="truncate text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-tight">{{ $appName }}</h1>
                             <p class="text-xs text-gray-500 dark:text-gray-400 hidden lg:block">Admin Panel</p>
                         </div>
                     </a>
                 </div>
 
                 <!-- Right Side Actions -->
-                <div class="flex items-center gap-1 sm:gap-2">
+                <div class="flex shrink-0 items-center gap-0.5 sm:gap-2">
                     <!-- Dark Mode Toggle -->
-                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Toggle dark mode">
+                    <button onclick="toggleDarkMode()" class="p-1.5 sm:p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Toggle dark mode">
                         <i class="bi bi-moon dark:hidden text-lg"></i>
                         <i class="bi bi-sun hidden dark:inline text-lg"></i>
                     </button>
 
                     <!-- Notifications -->
-                    <button class="relative p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <button class="relative p-1.5 sm:p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Notifications">
                         <i class="bi bi-bell text-lg"></i>
                         <span class="notification-badge">3</span>
                     </button>
 
                     <!-- View App Button -->
-                    <a href="{{ route('app') }}" class="hidden sm:flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition text-sm font-medium">
+                    <a href="{{ route('app') }}" class="flex items-center justify-center sm:justify-start gap-2 px-1.5 sm:px-3 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition text-sm font-medium" title="View App">
                         <i class="bi bi-eye"></i>
                         <span class="hidden md:inline">View App</span>
                     </a>
 
                     <!-- User Avatar -->
-                    <div class="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center gap-2 pl-1.5 sm:pl-2 border-l border-gray-200 dark:border-gray-700">
                         <div class="hidden md:block text-right">
                             <p class="text-xs font-semibold text-gray-900 dark:text-white">{{ auth()->user()->name }}</p>
                         </div>
-                        <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold shadow">
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold shadow">
                             {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                         </div>
                     </div>

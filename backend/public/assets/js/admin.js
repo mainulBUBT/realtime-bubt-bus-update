@@ -218,8 +218,7 @@ function toggleSidebar() {
     const overlay = document.getElementById('sidebar-overlay');
 
     if (sidebar && overlay) {
-        sidebar.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('hidden');
+        setSidebarOpen(sidebar.classList.contains('-translate-x-full'));
     }
 }
 
@@ -231,9 +230,44 @@ function closeSidebar() {
     const overlay = document.getElementById('sidebar-overlay');
 
     if (sidebar && overlay) {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
+        setSidebarOpen(false);
     }
+}
+
+/**
+ * Open sidebar
+ */
+function openSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    if (sidebar && overlay) {
+        setSidebarOpen(true);
+    }
+}
+
+/**
+ * Check if the mobile sidebar is open
+ * @returns {boolean}
+ */
+function isSidebarOpen() {
+    const sidebar = document.getElementById('sidebar');
+    return !!sidebar && !sidebar.classList.contains('-translate-x-full');
+}
+
+/**
+ * Sync sidebar and overlay state
+ * @param {boolean} isOpen
+ */
+function setSidebarOpen(isOpen) {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    if (!sidebar || !overlay) return;
+
+    sidebar.classList.toggle('-translate-x-full', !isOpen);
+    overlay.classList.toggle('hidden', !isOpen);
+    document.body.classList.toggle('overflow-hidden', isOpen);
 }
 
 // ============================================
@@ -425,11 +459,43 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize form loading states
     initFormLoadingStates();
 
+    // Initialize mobile sidebar controls
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+
     // Initialize sidebar close on overlay click
     const overlay = document.getElementById('sidebar-overlay');
     if (overlay) {
         overlay.addEventListener('click', closeSidebar);
     }
+
+    // Close the mobile sidebar after a navigation item is tapped
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.querySelectorAll('a[href]').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth < 1024) {
+                    closeSidebar();
+                }
+            });
+        });
+    }
+
+    // Keep the mobile drawer state consistent when the viewport changes
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 1024) {
+            closeSidebar();
+        }
+    });
+
+    // Allow keyboard users to dismiss the sidebar on mobile
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && isSidebarOpen()) {
+            closeSidebar();
+        }
+    });
 
     // Initialize row checkboxes
     document.querySelectorAll('.row-checkbox').forEach(checkbox => {

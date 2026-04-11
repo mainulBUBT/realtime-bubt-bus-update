@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev:driver": "VITE_APP_TYPE=driver vite",
-    "dev:student": "VITE_APP_TYPE=student vite",
+    "dev:driver": "vite --mode driver",
+    "dev:student": "vite --mode student",
     "build:driver": "VITE_APP_TYPE=driver vite build",
     "build:driver:prod": "VITE_APP_TYPE=driver vite build --mode production-driver",
     "build:student": "VITE_APP_TYPE=student vite build",

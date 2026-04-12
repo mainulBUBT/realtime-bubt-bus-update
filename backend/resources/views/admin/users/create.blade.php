@@ -75,6 +75,25 @@
                 @enderror
             </div>
 
+            <div>
+                <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2 flex items-center gap-2" for="approval_status">
+                    <i class="bi bi-patch-check text-emerald-500"></i>
+                    Approval Status
+                </label>
+                <div class="relative">
+                    <select class="w-full px-4 py-3.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all dark:bg-gray-700 dark:text-white appearance-none cursor-pointer @error('approval_status') border-red-500 @enderror"
+                        id="approval_status" name="approval_status">
+                        <option value="approved" {{ old('approval_status', 'approved') == 'approved' ? 'selected' : '' }}>Approved</option>
+                        <option value="pending" {{ old('approval_status') == 'pending' ? 'selected' : '' }}>Pending approval</option>
+                    </select>
+                    <i class="bi bi-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Used for driver accounts. Non-driver accounts are saved as approved.</p>
+                @error('approval_status')
+                    <p class="text-red-500 text-xs mt-2 flex items-center gap-1"><i class="bi bi-exclamation-circle"></i> {{ $message }}</p>
+                @enderror
+            </div>
+
             {{-- Password --}}
             <div>
                 <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2 flex items-center gap-2" for="password">

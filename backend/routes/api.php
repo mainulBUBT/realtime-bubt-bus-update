@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\Student\NotificationController as StudentNotificati
 
 // Public routes
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/register', [AuthController::class, 'register']);
 Route::get('/settings', [SettingsController::class, 'getAppSettings']);
 
 // Protected routes (require authentication)

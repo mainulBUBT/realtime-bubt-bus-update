@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'approval_status',
         'fcm_token',
         'phone',
     ];
@@ -79,5 +80,21 @@ class User extends Authenticatable
     public function isStudent(): bool
     {
         return $this->role === 'student';
+    }
+
+    /**
+     * Check if the user is approved for app access.
+     */
+    public function isApproved(): bool
+    {
+        return ($this->approval_status ?? 'approved') === 'approved';
+    }
+
+    /**
+     * Check if the user is waiting for admin approval.
+     */
+    public function isPendingApproval(): bool
+    {
+        return ($this->approval_status ?? 'approved') === 'pending';
     }
 }

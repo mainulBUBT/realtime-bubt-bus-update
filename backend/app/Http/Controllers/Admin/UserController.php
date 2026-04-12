@@ -59,9 +59,13 @@ class UserController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'role'     => 'required|in:admin,driver,student',
             'phone'    => 'nullable|string|max:20',
+            'approval_status' => 'nullable|in:pending,approved',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
+        $validated['approval_status'] = $validated['role'] === 'driver'
+            ? ($validated['approval_status'] ?? 'approved')
+            : 'approved';
 
         User::create($validated);
 
@@ -88,6 +92,7 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
             'role'     => 'required|in:admin,driver,student',
             'phone'    => 'nullable|string|max:20',
+            'approval_status' => 'nullable|in:pending,approved',
         ]);
 
         if (empty($validated['password'])) {
@@ -96,7 +101,15 @@ class UserController extends Controller
             $validated['password'] = Hash::make($validated['password']);
         }
 
+        $validated['approval_status'] = $validated['role'] === 'driver'
+            ? ($validated['approval_status'] ?? ($user->approval_status ?? 'approved'))
+            : 'approved';
+
         $user->update($validated);
+
+        if ($user->role === 'driver' && $user->isPendingApproval()) {
+            $user->tokens()->delete();
+        }
 
         return redirect()->route('admin.users.index')
             ->with('toastr', [['type' => 'success', 'message' => 'User updated successfully.']]);
@@ -117,5 +130,35 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('toastr', [['type' => 'success', 'message' => 'User deleted successfully.']]);
+    }
+
+    /**
+     * Update approval status for a driver.
+     */
+    public function updateApproval(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'approval_status' => 'required|in:pending,approved',
+        ]);
+
+        if ($user->role !== 'driver') {
+            return redirect()->route('admin.users.index')
+                ->with('toastr', [['type' => 'error', 'message' => 'Only driver accounts can be approved or revoked.']]);
+        }
+
+        $user->update([
+            'approval_status' => $validated['approval_status'],
+        ]);
+
+        if ($user->isPendingApproval()) {
+            $user->tokens()->delete();
+        }
+
+        $message = $user->isApproved()
+            ? 'Driver approved successfully.'
+            : 'Driver approval revoked successfully.';
+
+        return redirect()->route('admin.users.index')
+            ->with('toastr', [['type' => 'success', 'message' => $message]]);
     }
 }

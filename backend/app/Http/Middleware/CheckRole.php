@@ -19,6 +19,10 @@ class CheckRole
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        if ($role === 'driver' && method_exists($request->user(), 'isPendingApproval') && $request->user()->isPendingApproval()) {
+            return response()->json(['message' => 'Your account is waiting for admin approval.'], 403);
+        }
+
         return $next($request);
     }
 }

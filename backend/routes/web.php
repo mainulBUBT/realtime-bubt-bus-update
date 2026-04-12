@@ -52,6 +52,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('schedule-periods', \App\Http\Controllers\Admin\SchedulePeriodController::class);
     Route::resource('trips', \App\Http\Controllers\Admin\TripController::class);
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    Route::patch('/users/{user}/approval', [\App\Http\Controllers\Admin\UserController::class, 'updateApproval'])->name('users.approval');
 
     // Settings routes with tab support
     Route::prefix('settings')->group(function () {

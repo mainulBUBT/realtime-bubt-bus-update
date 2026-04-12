@@ -48,6 +48,12 @@ class AuthController extends Controller
             ], 403);
         }
 
+        if ($user->role === 'driver' && $user->isPendingApproval()) {
+            return response()->json([
+                'message' => 'Your account is waiting for admin approval.',
+            ], 403);
+        }
+
         // Revoke old tokens
         $user->tokens()->delete();
 
@@ -57,6 +63,35 @@ class AuthController extends Controller
             'user' => $user,
             'token' => $token,
         ]);
+    }
+
+    /**
+     * Register a new student or driver
+     */
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|min:2|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:50',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|in:student,driver',
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => $request->password,
+            'role' => $request->role,
+            'approval_status' => 'pending',
+        ]);
+
+        return response()->json([
+            'message' => 'Your account is waiting for admin approval.',
+            'user' => $user,
+            'requires_approval' => true,
+        ], 201);
     }
 
     /**

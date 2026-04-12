@@ -54,6 +54,7 @@
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Contact</th>
                     <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
+                    <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Approval</th>
                     <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Trips</th>
                     <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
                     <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
@@ -102,6 +103,23 @@
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center">
+                        @if($user->role === 'driver')
+                            @if(($user->approval_status ?? 'approved') === 'approved')
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 text-emerald-700 dark:text-emerald-400">
+                                    <i class="bi bi-check-circle"></i> Approved
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-700 dark:text-amber-400">
+                                    <i class="bi bi-hourglass-split"></i> Pending
+                                </span>
+                            @endif
+                        @else
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                <i class="bi bi-dash-circle"></i> N/A
+                            </span>
+                        @endif
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
                         <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-semibold">
                             <i class="bi bi-signpost-2"></i>
                             {{ $user->trips_count }}
@@ -112,6 +130,18 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-center">
                         <div class="flex items-center justify-center gap-2">
+                            @if($user->role === 'driver')
+                            <form action="{{ route('admin.users.approval', $user) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="approval_status" value="{{ ($user->approval_status ?? 'approved') === 'approved' ? 'pending' : 'approved' }}">
+                                <button type="submit"
+                                        class="w-10 h-10 rounded-xl {{ ($user->approval_status ?? 'approved') === 'approved' ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50' : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50' }} flex items-center justify-center transition-all duration-200 hover:scale-110"
+                                        title="{{ ($user->approval_status ?? 'approved') === 'approved' ? 'Revoke approval' : 'Approve driver' }}">
+                                    <i class="bi {{ ($user->approval_status ?? 'approved') === 'approved' ? 'bi-pause-circle-fill' : 'bi-check-circle-fill' }} text-lg"></i>
+                                </button>
+                            </form>
+                            @endif
                             <a href="{{ route('admin.users.edit', $user) }}"
                                class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 flex items-center justify-center transition-all duration-200 hover:scale-110"
                                title="Edit">
@@ -133,7 +163,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-6 py-16 text-center">
+                    <td colspan="7" class="px-6 py-16 text-center">
                         <div class="flex flex-col items-center">
                             <div class="w-24 h-24 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-3xl flex items-center justify-center mb-4">
                                 <i class="bi bi-people text-emerald-500 dark:text-emerald-400 text-5xl"></i>

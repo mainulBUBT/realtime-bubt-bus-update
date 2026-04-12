@@ -78,8 +78,9 @@ function initMap() {
     attributionControl: false,
   })
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors',
   }).addTo(mapInstance)
 
   setTimeout(() => mapInstance.invalidateSize(), 200)

@@ -56,7 +56,7 @@ export async function applySystemBarTheme(color) {
     await StatusBar.setOverlaysWebView({ overlay: false })
     await StatusBar.setBackgroundColor({ color: normalized })
     await StatusBar.setStyle({
-      style: shouldUseLightStatusBarText(normalized) ? Style.Dark : Style.Light
+      style: shouldUseLightStatusBarText(normalized) ? Style.Light : Style.Dark
     })
   } catch (error) {
     if (import.meta.env.DEV) {

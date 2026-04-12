@@ -4,8 +4,8 @@ export const DEFAULT_APP_NAMES = {
 }
 
 export const DEFAULT_APP_PRIMARY_COLORS = {
-  driver: '#10B981',
-  student: '#10B981'
+  driver: '#059669',
+  student: '#4F46E5'
 }
 
 export const DEFAULT_APP_TAGLINES = {

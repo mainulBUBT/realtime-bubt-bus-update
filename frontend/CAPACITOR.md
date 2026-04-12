@@ -134,7 +134,7 @@ frontend/
 Run `npm run cap:add:driver` to create the Capacitor project.
 
 ### Sync fails after code changes
-Always run `npm run build:driver` (or `build:student`) before syncing.
+Always run `npm run cap:sync:driver` (or `cap:sync:student`) before rebuilding/installing the APK so the latest web bundle is copied into `capacitor-*/android/app/src/main/assets/public/`.
 
 ### Android Studio can't find the project
 Make sure you've run `npm run cap:sync:driver` at least once.

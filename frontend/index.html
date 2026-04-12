@@ -5,11 +5,11 @@
     <link rel="icon" type="image/svg+xml" href="/icons/app-%VITE_APP_TYPE%.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="Real-time bus tracking for BUBT university shuttle services.">
-    <meta name="theme-color" content="#10B981">
+    <meta name="theme-color" content="#4F46E5">
     <script>
       (function() {
         const appType = '%VITE_APP_TYPE%' === 'student' ? 'student' : 'driver';
-        const themeColor = appType === 'student' ? '#10B981' : '#059669';
+        const themeColor = appType === 'student' ? '#4F46E5' : '#059669';
         const themeMeta = document.querySelector('meta[name="theme-color"]');
         if (themeMeta) {
           themeMeta.setAttribute('content', themeColor);

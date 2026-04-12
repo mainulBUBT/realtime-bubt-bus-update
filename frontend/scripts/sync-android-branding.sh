@@ -11,25 +11,22 @@ APP_TYPE="$1"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT_DIR="$ROOT_DIR/capacitor-${APP_TYPE}"
-RES_DIR="$PROJECT_DIR/app/src/main/res"
-ASSETS_DIR="$PROJECT_DIR/app/src/main/assets"
+ANDROID_DIR="$PROJECT_DIR/android"
+RES_DIR="$ANDROID_DIR/app/src/main/res"
+ASSETS_DIR="$ANDROID_DIR/app/src/main/assets"
 GENERATED_DIR="$ROOT_DIR/resources/generated/$APP_TYPE"
 MASTER_ICON="$GENERATED_DIR/icon-1024.png"
-SPLASH_SOURCE_SVG="$ROOT_DIR/public/icons/app-${APP_TYPE}.svg"
+
+source <("$SCRIPT_DIR/resolve-app-branding.php" "$APP_TYPE")
 
 case "$APP_TYPE" in
   driver)
-    APP_NAME="BUBT Driver"
     APP_ID="com.bustracker.driver"
-    BRAND_COLOR="#059669"
-    BRAND_COLOR_DARK="#047857"
     SPLASH_SOURCE_SVG="$ROOT_DIR/public/icons/splash-driver.svg"
     ;;
   student)
-    APP_NAME="BUBT Tracker"
     APP_ID="com.bustracker.student"
-    BRAND_COLOR="#4F46E5"
-    BRAND_COLOR_DARK="#4338CA"
+    SPLASH_SOURCE_SVG="$ROOT_DIR/public/icons/app-student.svg"
     ;;
   *)
     echo "Unsupported app type: $APP_TYPE"
@@ -43,13 +40,6 @@ if [[ ! -d "$PROJECT_DIR" ]]; then
   exit 1
 fi
 
-"$SCRIPT_DIR/export-app-icons.sh" "$APP_TYPE" "$GENERATED_DIR"
-
-if [[ ! -f "$MASTER_ICON" ]]; then
-  echo "Master icon not generated: $MASTER_ICON"
-  exit 1
-fi
-
 mkdir -p "$RES_DIR" "$RES_DIR/values"
 mkdir -p "$ASSETS_DIR"
 
@@ -57,14 +47,83 @@ hex_color="${BRAND_COLOR#\#}"
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/branding-${APP_TYPE}.XXXXXX")"
 trap 'rm -rf "$tmp_dir"' EXIT
 SPLASH_MASTER="$tmp_dir/splash-1024.png"
+THEMED_ICON_SVG="$tmp_dir/app-${APP_TYPE}-themed.svg"
+THEMED_SPLASH_SVG="$tmp_dir/splash-${APP_TYPE}-themed.svg"
+
+mix_hex_colors() {
+  php -r '
+    [$base, $target, $weight] = array_slice($argv, 1);
+    $weight = max(0.0, min(1.0, (float) $weight));
+    $hexToRgb = static function (string $hex): array {
+      $hex = ltrim($hex, "#");
+      return [
+        hexdec(substr($hex, 0, 2)),
+        hexdec(substr($hex, 2, 2)),
+        hexdec(substr($hex, 4, 2)),
+      ];
+    };
+    [$r1, $g1, $b1] = $hexToRgb($base);
+    [$r2, $g2, $b2] = $hexToRgb($target);
+    $mix = static function (int $from, int $to, float $weight): int {
+      return (int) round(($from * (1 - $weight)) + ($to * $weight));
+    };
+    printf(
+      "#%02X%02X%02X",
+      $mix($r1, $r2, $weight),
+      $mix($g1, $g2, $weight),
+      $mix($b1, $b2, $weight)
+    );
+  ' "$1" "$2" "$3"
+}
+
+theme_svg() {
+  local source_svg="$1"
+  local output_svg="$2"
+  local tone_color light_color lighter_color badge_color badge_soft_color
+
+  tone_color="$(mix_hex_colors "$BRAND_COLOR" "$BRAND_COLOR_DARK" "0.45")"
+  light_color="$(mix_hex_colors "$BRAND_COLOR" "#FFFFFF" "0.28")"
+  lighter_color="$(mix_hex_colors "$BRAND_COLOR" "#FFFFFF" "0.42")"
+  badge_color="$(mix_hex_colors "$BRAND_COLOR_DARK" "#000000" "0.18")"
+  badge_soft_color="$(mix_hex_colors "$BRAND_COLOR" "#FFFFFF" "0.92")"
+
+  cp "$source_svg" "$output_svg"
+
+  perl -0pi -e "
+    s/#19B97A/$BRAND_COLOR/g;
+    s/#0F8C6D/$BRAND_COLOR_DARK/g;
+    s/#16A26F/$tone_color/g;
+    s/#4CE0A4/$light_color/g;
+    s/#73E8B6/$lighter_color/g;
+    s/#0B5C49/$badge_color/g;
+    s/#F5FFF9/$badge_soft_color/g;
+    s/#1753B5/$BRAND_COLOR/g;
+    s/#0E2F6E/$BRAND_COLOR_DARK/g;
+    s/#114293/$tone_color/g;
+    s/#67A1FF/$light_color/g;
+    s/#8AB9FF/$lighter_color/g;
+    s/#0F766E/$BRAND_COLOR/g;
+    s/#065F46/$BRAND_COLOR_DARK/g;
+  " "$output_svg"
+}
 
 if [[ ! -f "$SPLASH_SOURCE_SVG" ]]; then
   echo "Splash source not found: $SPLASH_SOURCE_SVG"
   exit 1
 fi
 
-qlmanage -t -s 1024 -o "$tmp_dir" "$SPLASH_SOURCE_SVG" >/dev/null
-splash_thumbnail="$tmp_dir/$(basename "$SPLASH_SOURCE_SVG").png"
+theme_svg "$ROOT_DIR/public/icons/app-${APP_TYPE}.svg" "$THEMED_ICON_SVG"
+theme_svg "$SPLASH_SOURCE_SVG" "$THEMED_SPLASH_SVG"
+
+"$SCRIPT_DIR/export-app-icons.sh" "$APP_TYPE" "$GENERATED_DIR" "$THEMED_ICON_SVG"
+
+if [[ ! -f "$MASTER_ICON" ]]; then
+  echo "Master icon not generated: $MASTER_ICON"
+  exit 1
+fi
+
+qlmanage -t -s 1024 -o "$tmp_dir" "$THEMED_SPLASH_SVG" >/dev/null
+splash_thumbnail="$tmp_dir/$(basename "$THEMED_SPLASH_SVG").png"
 
 if [[ ! -f "$splash_thumbnail" ]]; then
   echo "Quick Look did not create splash PNG export for $SPLASH_SOURCE_SVG"
@@ -181,7 +240,7 @@ cat > "$RES_DIR/values/styles.xml" <<EOF
 </resources>
 EOF
 
-settings_gradle="$PROJECT_DIR/capacitor.settings.gradle"
+settings_gradle="$ANDROID_DIR/capacitor.settings.gradle"
 if [[ -f "$settings_gradle" ]] && ! grep -q "capacitor-status-bar" "$settings_gradle"; then
   cat >> "$settings_gradle" <<'EOF'
 
@@ -190,7 +249,7 @@ project(':capacitor-status-bar').projectDir = new File('../node_modules/@capacit
 EOF
 fi
 
-capacitor_build_gradle="$PROJECT_DIR/app/capacitor.build.gradle"
+capacitor_build_gradle="$ANDROID_DIR/app/capacitor.build.gradle"
 if [[ -f "$capacitor_build_gradle" ]] && ! grep -q "capacitor-status-bar" "$capacitor_build_gradle"; then
   perl -0pi -e "s/\n\}\n\n\nif \(hasProperty\('postBuildExtras'\)\) \{/\n    implementation project(':capacitor-status-bar')\n\n}\n\n\nif (hasProperty('postBuildExtras')) {/s" "$capacitor_build_gradle"
 fi

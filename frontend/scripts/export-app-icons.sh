@@ -3,15 +3,15 @@
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: ./scripts/export-app-icons.sh <driver|student> [output-dir]"
+  echo "Usage: ./scripts/export-app-icons.sh <driver|student> [output-dir] [source-svg]"
   exit 1
 fi
 
 APP_TYPE="$1"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-SOURCE_SVG="$ROOT_DIR/public/icons/app-${APP_TYPE}.svg"
 OUTPUT_DIR="${2:-$ROOT_DIR/resources/generated/$APP_TYPE}"
+SOURCE_SVG="${3:-$ROOT_DIR/public/icons/app-${APP_TYPE}.svg}"
 
 if [[ ! -f "$SOURCE_SVG" ]]; then
   echo "Icon source not found: $SOURCE_SVG"

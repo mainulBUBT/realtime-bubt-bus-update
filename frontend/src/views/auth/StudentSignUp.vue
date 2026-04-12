@@ -131,7 +131,7 @@ const signup = async () => {
 <style scoped>
 .signup-back-btn {
   position: absolute;
-  top: 16px;
+  top: calc(16px + env(safe-area-inset-top, 0px));
   left: 16px;
   z-index: 10;
   width: 40px;

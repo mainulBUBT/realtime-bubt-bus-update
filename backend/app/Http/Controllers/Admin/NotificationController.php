@@ -31,6 +31,8 @@ class NotificationController extends Controller
 
         $query = User::query()
             ->where('role', 'student')
+            ->whereNotNull('fcm_token')
+            ->where('fcm_token', '!=', '')
             ->orderBy('name')
             ->select(['id', 'name', 'email']);
 
@@ -56,6 +58,8 @@ class NotificationController extends Controller
             'body' => 'required|string|max:1000',
             'type' => 'nullable|string|in:info,warning,alert',
             'image' => 'nullable|image|max:5120',
+        ], [
+            'image.max' => 'Image size must be 5MB or smaller.',
         ]);
 
         $type = $validated['type'] ?? 'info';
@@ -123,6 +127,8 @@ class NotificationController extends Controller
             'type' => 'nullable|string|in:info,warning,alert',
             'image' => 'nullable|image|max:5120',
             'remove_image' => 'nullable|in:1',
+        ], [
+            'image.max' => 'Image size must be 5MB or smaller.',
         ]);
 
         $imagePath = $campaign->image_path;
@@ -153,8 +159,21 @@ class NotificationController extends Controller
             $campaign->recipients()->sync([]);
         }
 
-        return redirect()->route('admin.notifications.edit', $campaign)
-            ->with('toastr', [['type' => 'success', 'message' => 'Notification saved.']]);
+        $now = now();
+        $campaign->update([
+            'last_sent_at' => $now,
+            'resend_count' => (int) $campaign->resend_count + 1,
+        ]);
+
+        $pushResult = $this->sendPushForCampaign($campaign);
+
+        $toastType = ($pushResult['success'] ?? false) ? 'success' : 'warning';
+        $toastMessage = ($pushResult['success'] ?? false)
+            ? 'Notification saved and sent successfully.'
+            : 'Notification saved, but push delivery failed: ' . ($pushResult['error'] ?? 'Unknown FCM error');
+
+        return redirect()->route('admin.notifications.index')
+            ->with('toastr', [['type' => $toastType, 'message' => $toastMessage]]);
     }
 
     public function resend(NotificationCampaign $campaign)
@@ -184,13 +203,18 @@ class NotificationController extends Controller
         $data = [
             'type' => $campaign->type,
             'campaign_id' => (string) $campaign->id,
+            'target_route' => 'map',
         ];
+
+        $imageUrl = $campaign->image_path
+            ? Storage::disk('public')->url($campaign->image_path)
+            : null;
 
         try {
             $fcmService = app(FcmService::class);
 
             if ($campaign->audience === 'all_students') {
-                return $fcmService->sendToTopic('all_students', $campaign->title, $campaign->body, $data);
+                return $fcmService->sendToTopic('all_students', $campaign->title, $campaign->body, $data, $imageUrl);
             }
 
             $tokens = $campaign->recipients()
@@ -205,7 +229,7 @@ class NotificationController extends Controller
                     'success' => false,
                     'target' => 'tokens',
                     'token_count' => 0,
-                    'error' => 'No student FCM tokens found for the selected audience.',
+                    'error' => 'No registered student devices found for the selected audience. Ask students to open the app and allow notifications first.',
                 ];
 
                 logger()->warning('Admin notification skipped: no recipient tokens', [
@@ -216,7 +240,7 @@ class NotificationController extends Controller
                 return $result;
             }
 
-            return $fcmService->sendToTokens($tokens, $campaign->title, $campaign->body, $data);
+            return $fcmService->sendToTokens($tokens, $campaign->title, $campaign->body, $data, $imageUrl);
         } catch (\Throwable $e) {
             $result = [
                 'success' => false,

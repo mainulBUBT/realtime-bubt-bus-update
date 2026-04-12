@@ -3,13 +3,18 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useFirebaseMessaging } from '@/composables/useFirebaseMessaging'
+import { useNotificationStore } from '@/stores/useNotificationStore'
+import api from '@/api/client'
 import BusFrontIcon from '@/components/BusFrontIcon.vue'
 import { getDefaultAppName } from '@/utils/appBranding'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
+const notificationStore = useNotificationStore()
 const appName = computed(() => settingsStore.appSettings.appName || getDefaultAppName('student'))
+const { initialize: initFirebaseMessaging } = useFirebaseMessaging()
 
 const form = ref({
   email: '',
@@ -20,12 +25,37 @@ const form = ref({
 const loading = ref(false)
 const error = ref('')
 
+const registerStudentDeviceForPush = async () => {
+  const result = await initFirebaseMessaging({
+    topic: 'all_students',
+    onMessage: () => {
+      notificationStore.incrementUnread()
+    },
+    onNotificationClick: () => {
+      router.push({ name: 'map' })
+    }
+  })
+
+  if (!result.success || !result.token) {
+    console.error('Student FCM initialization failed during login:', result.error || 'No token returned')
+    return
+  }
+
+  try {
+    await api.post('/student/fcm-token', { fcm_token: result.token })
+    console.info('Student FCM token saved during login')
+  } catch (err) {
+    console.error('Failed to save student FCM token during login', err)
+  }
+}
+
 const login = async () => {
   loading.value = true
   error.value = ''
 
   try {
     await authStore.login(form.value)
+    await registerStudentDeviceForPush()
     router.push({ name: 'map' })
   } catch (err) {
     error.value = err.message || 'Login failed'

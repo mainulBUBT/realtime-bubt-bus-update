@@ -360,7 +360,14 @@ watch(lastLocationUpdate, (update) => {
     <!-- Map Controls -->
     <div class="map-controls">
       <button class="map-control-btn" title="My Location" @click="locateMe">
-        <i class="bi bi-crosshairs"></i>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4" />
+          <circle cx="12" cy="12" r="8" stroke-width="1.5" opacity="0.4" />
+          <line x1="12" y1="2" x2="12" y2="6" />
+          <line x1="12" y1="18" x2="12" y2="22" />
+          <line x1="2" y1="12" x2="6" y2="12" />
+          <line x1="18" y1="12" x2="22" y2="12" />
+        </svg>
       </button>
       <button class="map-control-btn" title="Zoom In" @click="zoomIn">
         <i class="bi bi-plus-lg"></i>

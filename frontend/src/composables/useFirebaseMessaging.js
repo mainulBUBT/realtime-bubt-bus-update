@@ -18,6 +18,17 @@ function isNative() {
   return Capacitor.isNativePlatform()
 }
 
+function extractNotificationPayload(notification = {}) {
+  const data = notification.data || notification.extra || {}
+
+  return {
+    title: notification.title,
+    body: notification.body,
+    image: notification.image || data.image || data.imageUrl || data.image_url || null,
+    data
+  }
+}
+
 export function useFirebaseMessaging() {
   const token = ref(null)
   const error = ref(null)
@@ -132,16 +143,23 @@ export function useFirebaseMessaging() {
 
     FirebaseMessaging.addListener('notificationReceived', (event) => {
       console.log('FCM message received:', event.notification)
+      const payload = extractNotificationPayload(event.notification)
 
       // Show local notification for foreground messages
       LocalNotifications.schedule({
         notifications: [
           {
             id: getSafeNotificationId(),
-            title: event.notification.title,
-            body: event.notification.body,
+            title: payload.title,
+            body: payload.body,
             channelId: 'bus_tracker_notifications',
-            extra: event.notification
+            largeBody: payload.body,
+            summaryText: payload.data?.target_route === 'map' ? 'Tap to open home' : undefined,
+            extra: {
+              ...event.notification,
+              ...payload.data,
+              image: payload.image
+            }
           }
         ]
       })
@@ -164,7 +182,7 @@ export function useFirebaseMessaging() {
       console.log('Notification clicked:', event.notification)
 
       if (onClick && typeof onClick === 'function') {
-        onClick(event.notification)
+        onClick(event.notification?.data || event.notification)
       }
     })
 

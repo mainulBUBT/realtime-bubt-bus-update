@@ -279,6 +279,8 @@ button {
     justify-content: center;
     align-items: center;
     padding: 20px;
+    padding-top: max(20px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
     z-index: 1500;
     overflow-y: auto;
 }
@@ -825,7 +827,9 @@ button {
     align-items: center;
     justify-content: space-between;
     padding: 0 16px;
-    height: var(--mobile-header-height);
+    padding-top: env(safe-area-inset-top, 0px);
+    height: auto;
+    min-height: var(--mobile-header-height);
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
     flex-shrink: 0;
@@ -2327,7 +2331,9 @@ button {
     align-items: center;
     justify-content: space-between;
     padding: 0 16px;
-    height: var(--mobile-header-height);
+    padding-top: env(safe-area-inset-top, 0px);
+    height: auto;
+    min-height: var(--mobile-header-height);
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
     flex-shrink: 0;
@@ -2990,6 +2996,7 @@ body[data-app-type='driver'] .driver-nav-item {
     border-radius: var(--radius-md, 12px);
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--gray-100);
+    border-left: 3px solid var(--gray-200);
     overflow: hidden;
     transition: all 200ms ease;
 }

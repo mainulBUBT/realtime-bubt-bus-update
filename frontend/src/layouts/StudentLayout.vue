@@ -20,7 +20,7 @@ const { unreadCount } = storeToRefs(notificationStore)
 
 const sidebarOpen = ref(false)
 const toggleSidebar = () => { sidebarOpen.value = !sidebarOpen.value }
-const closeSidebar  = () => { sidebarOpen.value = false; searchQuery.value = '' }
+const closeSidebar  = () => { sidebarOpen.value = false; searchQuery.value = ''; mapStore.clearSelection() }
 
 const router    = useRouter()
 const authStore = useAuthStore()
@@ -204,7 +204,11 @@ onMounted(() => {
       <!-- Mobile Header (< 768px) -->
       <header class="mobile-header">
         <button class="header-btn" @click="toggleSidebar">
-          <i class="bi bi-list"></i>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor" style="flex-shrink:0">
+            <rect x="1" y="3" width="20" height="2.2" rx="1.1"/>
+            <rect x="1" y="9.9" width="20" height="2.2" rx="1.1"/>
+            <rect x="1" y="16.8" width="20" height="2.2" rx="1.1"/>
+          </svg>
         </button>
         <div class="header-center">
           <h1>{{ settingsStore.appSettings.appName || defaultAppName }}</h1>

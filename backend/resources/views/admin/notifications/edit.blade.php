@@ -33,7 +33,7 @@
     </div>
 
     <div class="p-4 md:p-6">
-        <form action="{{ route('admin.notifications.update', $campaign) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('admin.notifications.update', $campaign) }}" method="POST" enctype="multipart/form-data" id="notification-edit-form">
             @csrf
             @method('PUT')
 
@@ -82,6 +82,9 @@
                                class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:border-emerald-500 dark:bg-gray-600 dark:text-white">
                         <div id="search-results" class="mt-2 hidden border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden"></div>
                         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            Only students with registered devices are shown here.
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             <span id="selected-count">{{ count($selectedRecipients) }}</span> student(s) selected
                         </p>
                     </div>
@@ -126,7 +129,7 @@
                         </label>
                     </div>
                 @endif
-                <input type="file" name="image" accept="image/*"
+                <input type="file" name="image" accept="image/*" id="notification-image-input"
                        class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white">
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Max 5MB. Recommended square image.</p>
             </div>
@@ -189,14 +192,12 @@ async function searchStudents(q) {
     const results = document.getElementById('search-results');
     if (!results) return;
 
-    if (!q || q.trim().length < 2) {
-        results.innerHTML = '';
-        results.classList.add('hidden');
-        return;
-    }
+    const normalizedQuery = (q || '').trim();
 
     const url = new URL(studentsUrl, window.location.origin);
-    url.searchParams.set('q', q);
+    if (normalizedQuery !== '') {
+        url.searchParams.set('q', normalizedQuery);
+    }
 
     const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' }});
     const json = await res.json();
@@ -204,9 +205,22 @@ async function searchStudents(q) {
     const selected = new Set(currentRecipientIds());
     const items = (json.data || []).filter(u => !selected.has(u.id));
 
+    if (items.length === 0) {
+        results.innerHTML = `
+            <div class="px-3 py-3 text-sm text-gray-500 dark:text-gray-400">
+                ${normalizedQuery === '' ? 'No registered student devices available.' : 'No registered students matched your search.'}
+            </div>
+        `;
+        results.classList.remove('hidden');
+        return;
+    }
+
     results.innerHTML = items.map(u => `
-        <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
-                onclick="addRecipient(${u.id}, ${JSON.stringify(u.name)}, ${JSON.stringify(u.email)})">
+        <button type="button"
+                class="student-search-result w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
+                data-student-id="${u.id}"
+                data-student-name="${encodeURIComponent(u.name)}"
+                data-student-email="${encodeURIComponent(u.email)}">
             <span>
                 <span class="text-sm font-medium text-gray-900 dark:text-white">${u.name}</span>
                 <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">${u.email}</span>
@@ -215,7 +229,7 @@ async function searchStudents(q) {
         </button>
     `).join('');
 
-    results.classList.toggle('hidden', items.length === 0);
+    results.classList.remove('hidden');
 }
 
 function addRecipient(id, name, email) {
@@ -248,15 +262,71 @@ function addRecipient(id, name, email) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('student-search');
+    const form = document.getElementById('notification-edit-form');
+    const imageInput = document.getElementById('notification-image-input');
+    const maxImageBytes = 5 * 1024 * 1024;
+
+    if (imageInput) {
+        imageInput.addEventListener('change', () => {
+            const file = imageInput.files && imageInput.files[0];
+            if (file && file.size > maxImageBytes) {
+                imageInput.value = '';
+                showError('Image size must be 5MB or smaller.');
+            }
+        });
+    }
+
+    if (form && imageInput) {
+        form.addEventListener('submit', (event) => {
+            const file = imageInput.files && imageInput.files[0];
+            if (file && file.size > maxImageBytes) {
+                event.preventDefault();
+                imageInput.value = '';
+                showError('Image size must be 5MB or smaller.');
+            }
+        });
+    }
+
+    @if($errors->has('image'))
+        showError(@json($errors->first('image')));
+    @endif
+
     if (!input) return;
+
+    const results = document.getElementById('search-results');
+    if (results) {
+        results.addEventListener('click', (event) => {
+            const button = event.target.closest('.student-search-result');
+            if (!button) return;
+
+            addRecipient(
+                Number(button.dataset.studentId),
+                decodeURIComponent(button.dataset.studentName || ''),
+                decodeURIComponent(button.dataset.studentEmail || '')
+            );
+        });
+    }
 
     input.addEventListener('input', () => {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => searchStudents(input.value), 250);
     });
 
+    input.addEventListener('focus', () => {
+        searchStudents(input.value);
+    });
+
+    const selectedRadio = document.querySelector('input[name="audience"][value="selected_students"]');
+    if (selectedRadio) {
+        selectedRadio.addEventListener('change', () => {
+            if (selectedRadio.checked) {
+                searchStudents('');
+                input.focus();
+            }
+        });
+    }
+
     updateSelectedCount();
 });
 </script>
 @endpush
-

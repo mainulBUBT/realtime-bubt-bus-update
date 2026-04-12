@@ -12,15 +12,15 @@ class FcmService
     /**
      * @return array<string, mixed>
      */
-    public function sendToToken(string $token, string $title, string $body, array $data = []): array
+    public function sendToToken(string $token, string $title, string $body, array $data = [], ?string $imageUrl = null): array
     {
         try {
             $messaging = $this->getMessaging();
 
             $message = CloudMessage::withTarget('token', $token)
-                ->withNotification(FcmNotification::create($title, $body))
+                ->withNotification(FcmNotification::create($title, $body, $imageUrl))
                 ->withData(array_map('strval', $data))
-                ->withAndroidConfig($this->buildAndroidConfig());
+                ->withAndroidConfig($this->buildAndroidConfig($imageUrl));
 
             $messaging->send($message);
 
@@ -47,9 +47,12 @@ class FcmService
     /**
      * @return array<string, mixed>
      */
-    public function sendToTokens(array $tokens, string $title, string $body, array $data = []): array
+    public function sendToTokens(array $tokens, string $title, string $body, array $data = [], ?string $imageUrl = null): array
     {
-        $tokens = array_values(array_filter($tokens));
+        $tokens = array_values(array_unique(array_filter(array_map(
+            static fn ($token) => is_string($token) ? trim($token) : null,
+            $tokens
+        ))));
 
         if ($tokens === []) {
             $result = [
@@ -71,9 +74,9 @@ class FcmService
 
             foreach (array_chunk($tokens, 500) as $chunk) {
                 $message = CloudMessage::new()
-                    ->withNotification(FcmNotification::create($title, $body))
+                    ->withNotification(FcmNotification::create($title, $body, $imageUrl))
                     ->withData(array_map('strval', $data))
-                    ->withAndroidConfig($this->buildAndroidConfig());
+                    ->withAndroidConfig($this->buildAndroidConfig($imageUrl));
 
                 $report = $messaging->sendMulticast($message, $chunk);
                 $successCount += $report->successes()->count();
@@ -105,15 +108,15 @@ class FcmService
     /**
      * @return array<string, mixed>
      */
-    public function sendToTopic(string $topic, string $title, string $body, array $data = []): array
+    public function sendToTopic(string $topic, string $title, string $body, array $data = [], ?string $imageUrl = null): array
     {
         try {
             $messaging = $this->getMessaging();
 
             $message = CloudMessage::withTarget('topic', $topic)
-                ->withNotification(FcmNotification::create($title, $body))
+                ->withNotification(FcmNotification::create($title, $body, $imageUrl))
                 ->withData(array_map('strval', $data))
-                ->withAndroidConfig($this->buildAndroidConfig());
+                ->withAndroidConfig($this->buildAndroidConfig($imageUrl));
 
             $messaging->send($message);
 
@@ -164,15 +167,23 @@ class FcmService
         return base_path($credentialsPath);
     }
 
-    protected function buildAndroidConfig(): AndroidConfig
+    protected function buildAndroidConfig(?string $imageUrl = null): AndroidConfig
     {
+        $notification = [
+            'icon' => 'ic_notification',
+            'color' => '#10B981',
+            'channel_id' => 'bus_tracker_notifications',
+            'default_sound' => true,
+            'click_action' => 'FCM_PLUGIN_ACTIVITY',
+        ];
+
+        if ($imageUrl) {
+            $notification['image'] = $imageUrl;
+        }
+
         return AndroidConfig::fromArray([
-            'notification' => [
-                'icon' => 'ic_notification',
-                'color' => '#10B981',
-                'channel_id' => 'bus_tracker_notifications',
-                'default_sound' => true,
-            ],
+            'priority' => 'high',
+            'notification' => $notification,
         ]);
     }
 }

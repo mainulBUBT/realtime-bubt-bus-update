@@ -221,7 +221,7 @@ const syncStudentNotifications = async () => {
       notificationStore.incrementUnread()
     },
     onNotificationClick: () => {
-      router.push({ name: 'notifications' })
+      router.push({ name: 'map' })
     }
   })
 

@@ -89,6 +89,10 @@ const login = async () => {
         </button>
       </form>
 
+      <p class="login-privacy">
+        Don't have an account? <router-link :to="{ name: 'signup' }">Sign Up</router-link>
+      </p>
+
       <div class="login-privacy">
         <i class="bi bi-shield-check"></i>
         <span>Authorized BUBT Drivers Only</span>

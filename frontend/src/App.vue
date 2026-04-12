@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { App as CapacitorApp } from '@capacitor/app'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useDriverTripStore } from '@/stores/useDriverTripStore'
 import { useDriverTrackingStore } from '@/stores/useDriverTrackingStore'
@@ -10,6 +11,7 @@ import api from '@/api/client'
 import { resetTokenVerified } from '@/router'
 import StudentLayout from '@/layouts/StudentLayout.vue'
 import SplashScreen from '@/components/SplashScreen.vue'
+import { isDriverTaskGuardAvailable, setDriverTaskGuardEnabled } from '@/utils/driverTaskGuard'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,7 +23,9 @@ const hasStartupSplash = appType === 'student' || appType === 'driver'
 const MIN_SPLASH_DURATION_MS = 2500
 const showStartupSplash = ref(hasStartupSplash)
 const toasts = ref([])
+const tripProtectionEnabled = ref(null)
 let isFirstAuthCheck = true
+let protectedBackButtonListener = null
 
 const toastIcons = {
   success: 'bi-check-circle-fill',
@@ -52,6 +56,66 @@ const layout = computed(() => {
   return StudentLayout
 })
 
+const canUseProtectedBackNavigation = appType === 'driver' && isDriverTaskGuardAvailable()
+
+const shouldProtectDriverTrip = () => (
+  appType === 'driver'
+  && !!driverTripStore
+  && authStore.isAuthenticated
+  && authStore.user?.role === 'driver'
+  && !!driverTripStore.currentTrip?.id
+)
+
+const releaseProtectedBackButtonListener = async () => {
+  if (!protectedBackButtonListener) return
+
+  await protectedBackButtonListener.remove()
+  protectedBackButtonListener = null
+}
+
+const ensureProtectedBackButtonListener = async () => {
+  if (!canUseProtectedBackNavigation || protectedBackButtonListener) return
+
+  protectedBackButtonListener = await CapacitorApp.addListener('backButton', async () => {
+    if (!shouldProtectDriverTrip()) {
+      await releaseProtectedBackButtonListener()
+
+      const currentRouteName = router.currentRoute.value.name
+      if (currentRouteName && currentRouteName !== 'dashboard' && currentRouteName !== 'login') {
+        router.back()
+        return
+      }
+
+      await CapacitorApp.exitApp()
+      return
+    }
+
+    if (router.currentRoute.value.name === 'trip-active') {
+      return
+    }
+
+    await router.push({ name: 'trip-active' })
+  })
+}
+
+const syncTripProtection = async () => {
+  if (appType !== 'driver') return
+
+  const shouldEnable = shouldProtectDriverTrip()
+
+  if (tripProtectionEnabled.value !== shouldEnable) {
+    tripProtectionEnabled.value = shouldEnable
+    await setDriverTaskGuardEnabled({ enabled: shouldEnable })
+  }
+
+  if (shouldEnable) {
+    await ensureProtectedBackButtonListener()
+    return
+  }
+
+  await releaseProtectedBackButtonListener()
+}
+
 // Show splash on logout transition (not on first app load)
 watch(
   () => authStore.isAuthenticated,
@@ -75,6 +139,10 @@ watch(
 
 // Handle 401s from the API interceptor without a full page reload
 const handleUnauthorized = async () => {
+  await setDriverTaskGuardEnabled({ enabled: false })
+  tripProtectionEnabled.value = false
+  await releaseProtectedBackButtonListener()
+
   if (driverTrackingStore) {
     await driverTrackingStore.stop({ clearQueue: true, resetTrip: true })
   }
@@ -123,12 +191,11 @@ watch(
 
     if (tripId && driverTripStore?.currentTrip) {
       void safelyStartDriverTracking(driverTripStore.currentTrip)
-      return
-    }
-
-    if (previousTripId) {
+    } else if (previousTripId) {
       void driverTrackingStore.stop({ clearQueue: true, resetTrip: true })
     }
+
+    void syncTripProtection()
   }
 )
 
@@ -178,9 +245,10 @@ const syncStudentNotifications = async () => {
 
 watch(
   () => [authStore.isAuthenticated, authStore.user?.role],
-  () => {
+  async () => {
     if (appType === 'driver') {
-      void syncDriverTracking()
+      await syncDriverTracking()
+      await syncTripProtection()
     } else if (appType === 'student') {
       void syncStudentNotifications()
     }
@@ -203,6 +271,7 @@ onMounted(async () => {
   if (appType === 'driver' && driverTrackingStore) {
     await driverTrackingStore.initialize()
     await syncDriverTracking()
+    await syncTripProtection()
   } else if (appType === 'student' && authStore.isAuthenticated) {
     await syncStudentNotifications()
   }
@@ -211,11 +280,12 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('auth:unauthorized', handleUnauthorized)
   window.removeEventListener('app:toast', handleToast)
+  void releaseProtectedBackButtonListener()
 })
 </script>
 
 <template>
-  <component :is="layout">
+  <component :is="layout" :class="appType === 'student' && route.meta.layout === null ? 'auth-transition-bg' : undefined">
     <router-view v-slot="{ Component, route }">
       <template v-if="appType === 'driver'">
         <component :is="Component" />
@@ -248,6 +318,13 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.auth-transition-bg {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+  z-index: 1;
+}
+
 .startup-splash-fade-enter-active,
 .startup-splash-fade-leave-active {
   transition: opacity 0.35s ease;

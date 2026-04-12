@@ -30,6 +30,29 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async register(data) {
+      try {
+        const response = await api.post('/auth/register', data)
+
+        if (response.data.token) {
+          this.user = response.data.user
+          this.token = response.data.token
+          localStorage.setItem('auth_token', this.token)
+          localStorage.setItem('user', JSON.stringify(this.user))
+        } else {
+          this.user = null
+          this.token = null
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('user')
+        }
+
+        return response.data
+      } catch (error) {
+        console.error('Register error:', error.response?.data)
+        throw error.response?.data || { message: 'Registration failed' }
+      }
+    },
+
     async logout() {
       try {
         await api.post('/auth/logout')

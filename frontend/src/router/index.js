@@ -22,7 +22,9 @@ import Notifications from '@/views/student/Notifications.vue'
 
 // Auth routes
 import DriverLogin from '@/views/auth/DriverLogin.vue'
+import DriverSignUp from '@/views/auth/DriverSignUp.vue'
 import StudentLogin from '@/views/auth/StudentLogin.vue'
+import StudentSignUp from '@/views/auth/StudentSignUp.vue'
 
 // Layouts
 import DriverLayout from '@/layouts/DriverLayout.vue'
@@ -35,7 +37,13 @@ const routes = appType === 'driver' ? [
     path: '/login',
     name: 'login',
     component: DriverLogin,
-    meta: { layout: null }
+    meta: { layout: null, transition: 'push', depth: 0 }
+  },
+  {
+    path: '/signup',
+    name: 'signup',
+    component: DriverSignUp,
+    meta: { layout: null, transition: 'push', depth: 1 }
   },
   {
     path: '/',
@@ -83,7 +91,13 @@ const routes = appType === 'driver' ? [
     path: '/login',
     name: 'login',
     component: StudentLogin,
-    meta: { layout: null }
+    meta: { layout: null, transition: 'push', depth: 0 }
+  },
+  {
+    path: '/signup',
+    name: 'signup',
+    component: StudentSignUp,
+    meta: { layout: null, transition: 'push', depth: 1 }
   },
   {
     path: '/',
@@ -147,7 +161,7 @@ export function resetTokenVerified() { tokenVerified = false }
 // Navigation guard
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  const publicRoutes = ['login']
+  const publicRoutes = ['login', 'signup']
   const isDev = import.meta.env.DEV
 
   try {

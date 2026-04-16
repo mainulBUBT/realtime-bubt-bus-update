@@ -1,7 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useDriverTripStore } from '@/stores/useDriverTripStore'
-import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 const driverTripStore = useDriverTripStore()
 
@@ -73,20 +72,8 @@ const paginationLabel = computed(() => {
   return driverTripStore.hasMoreHistory ? `${label} so far` : label
 })
 
-const refreshData = async () => {
-  driverTripStore.resetHistory()
-  await driverTripStore.fetchHistory(1)
-}
-
-const { isRefreshing, pullDistance, canRelease, onMount: initPull } = usePullToRefresh(refreshData, {
-  threshold: 60
-})
-
-const contentRef = ref(null)
-
 onMounted(async () => {
   await loadHistory()
-  initPull(contentRef.value)
 })
 
 const loadHistory = async () => {
@@ -185,18 +172,7 @@ const formatTripCount = (count) => {
 </script>
 
 <template>
-  <div ref="contentRef" class="container mx-auto px-4 py-6">
-    <!-- Pull Indicator -->
-    <div 
-      v-if="isPulling" 
-      class="pull-indicator"
-      :class="{ visible: pullDistance > 0, releasing: canRelease, refreshing: isRefreshing }"
-    >
-      <i v-if="isRefreshing" class="bi bi-arrow-repeat spinning"></i>
-      <i v-else-if="canRelease" class="bi bi-arrow-up-circle-fill"></i>
-      <i v-else class="bi bi-arrow-down"></i>
-    </div>
-    
+  <div class="container mx-auto px-4 py-6">
     <div class="trip-status-card history-summary-card">
       <div class="trip-status-header">
         <div class="trip-status-icon">
@@ -471,49 +447,6 @@ const formatTripCount = (count) => {
 }
 
 .animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* ── Pull to Refresh ── */
-.pull-indicator {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary);
-  color: var(--white);
-  z-index: 100;
-  transform: translateY(-100%);
-  transition: transform 0.2s ease;
-  pointer-events: none;
-}
-
-.pull-indicator.visible {
-  transform: translateY(0);
-}
-
-.pull-indicator.releasing {
-  background: var(--primary-dark);
-}
-
-.pull-indicator.refreshing {
-  background: var(--primary-dark);
-}
-
-.pull-indicator i {
-  font-size: 22px;
-}
-
-.pull-indicator i.spinning {
   animation: spin 1s linear infinite;
 }
 

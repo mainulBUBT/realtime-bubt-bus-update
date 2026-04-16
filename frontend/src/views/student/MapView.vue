@@ -3,7 +3,6 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import L from 'leaflet'
 import { useMapStore } from '@/stores/useMapStore'
 import { storeToRefs } from 'pinia'
-import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 // Fix Leaflet default marker icon paths broken by Vite bundling
 delete L.Icon.Default.prototype._getIconUrl
@@ -265,25 +264,12 @@ function locateMe() {
 function zoomIn()  { mapInstance?.zoomIn() }
 function zoomOut() { mapInstance?.zoomOut() }
 
-// ── pull to refresh ─────────────────────────────────────────
-const refreshData = async () => {
-  await mapStore.fetchTrips()
-  updateMapMarkers(trips.value)
-}
-
-const { isRefreshing, pullDistance, canRelease, onMount: initPull } = usePullToRefresh(refreshData, {
-  threshold: 60
-})
-
-const contentRef = ref(null)
-
 // ── lifecycle ─────────────────────────────────────────────
 onMounted(async () => {
   initMap()
   locateOnStart()
   await mapStore.fetchTrips()
   updateMapMarkers(trips.value)
-  initPull(contentRef.value)
   // Poll every 30s as a fallback — Reverb WebSocket handles live updates
   refreshInterval = setInterval(async () => {
     await mapStore.fetchTrips()
@@ -373,18 +359,7 @@ watch(lastLocationUpdate, (update) => {
 </script>
 
 <template>
-  <div ref="contentRef" class="map-wrapper">
-    <!-- Pull Indicator -->
-    <div 
-      v-if="isPulling" 
-      class="pull-indicator"
-      :class="{ visible: pullDistance > 0, releasing: canRelease, refreshing: isRefreshing }"
-    >
-      <i v-if="isRefreshing" class="bi bi-arrow-repeat spinning"></i>
-      <i v-else-if="canRelease" class="bi bi-arrow-up-circle-fill"></i>
-      <i v-else class="bi bi-arrow-down"></i>
-    </div>
-    
+  <div class="map-wrapper">
     <!-- Loading placeholder -->
     <div v-if="mapLoading" class="map-loading-overlay">
       <div class="spinner-border spinner-border-sm text-success" role="status"></div>
@@ -417,41 +392,4 @@ watch(lastLocationUpdate, (update) => {
 </template>
 
 <style scoped>
-/* ── Pull to Refresh ── */
-.pull-indicator {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary);
-  color: var(--white);
-  z-index: 1000;
-  transform: translateY(-100%);
-  transition: transform 0.2s ease;
-  pointer-events: none;
-}
-
-.pull-indicator.visible {
-  transform: translateY(0);
-}
-
-.pull-indicator.releasing {
-  background: var(--primary-dark);
-}
-
-.pull-indicator.refreshing {
-  background: var(--primary-dark);
-}
-
-.pull-indicator i {
-  font-size: 22px;
-}
-
-.pull-indicator i.spinning {
-  animation: spin 1s linear infinite;
-}
 </style>

@@ -3,6 +3,7 @@ import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/client'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { showToast } from '@/composables/useToast'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -17,10 +18,6 @@ const confirmPassword = ref('')
 
 const savingProfile = ref(false)
 const savingPassword = ref(false)
-const profileMessage = ref('')
-const passwordMessage = ref('')
-const profileError = ref('')
-const passwordError = ref('')
 
 const isVerified = computed(() => !!authStore.user?.email_verified_at)
 const userInitial = computed(() => authStore.user?.name?.charAt(0)?.toUpperCase() || 'S')
@@ -35,23 +32,19 @@ onMounted(async () => {
 })
 
 async function saveProfile() {
-  profileMessage.value = ''
-  profileError.value = ''
   savingProfile.value = true
   try {
     await api.patch('/auth/profile', { name: name.value, phone: phone.value })
     await authStore.fetchMe()
-    profileMessage.value = 'Profile updated successfully.'
+    showToast('Profile updated successfully.', { type: 'success' })
   } catch (err) {
-    profileError.value = err?.response?.data?.message || err?.message || 'Failed to update profile'
+    showToast(err?.response?.data?.message || 'Failed to update profile', { type: 'error' })
   } finally {
     savingProfile.value = false
   }
 }
 
 async function changePassword() {
-  passwordMessage.value = ''
-  passwordError.value = ''
   savingPassword.value = true
   try {
     await api.patch('/auth/password', {
@@ -62,9 +55,9 @@ async function changePassword() {
     currentPassword.value = ''
     newPassword.value = ''
     confirmPassword.value = ''
-    passwordMessage.value = 'Password updated successfully.'
+    showToast('Password updated successfully.', { type: 'success' })
   } catch (err) {
-    passwordError.value = err?.response?.data?.message || err?.message || 'Failed to update password'
+    showToast(err?.response?.data?.message || 'Failed to update password', { type: 'error' })
   } finally {
     savingPassword.value = false
   }
@@ -140,9 +133,6 @@ async function changePassword() {
           <input v-model="phone" type="text" class="field-input" placeholder="Phone number">
         </div>
 
-        <div v-if="profileError" class="msg-error">{{ profileError }}</div>
-        <div v-if="profileMessage" class="msg-success">{{ profileMessage }}</div>
-
         <button class="btn-primary" :disabled="savingProfile" @click="saveProfile">
           <span v-if="savingProfile" class="loading-spinner-sm"></span>
           {{ savingProfile ? 'Saving...' : 'Save Profile' }}
@@ -167,9 +157,6 @@ async function changePassword() {
           <label class="field-label">Confirm Password</label>
           <input v-model="confirmPassword" type="password" class="field-input" placeholder="Confirm new password">
         </div>
-
-        <div v-if="passwordError" class="msg-error">{{ passwordError }}</div>
-        <div v-if="passwordMessage" class="msg-success">{{ passwordMessage }}</div>
 
         <button class="btn-secondary" :disabled="savingPassword" @click="changePassword">
           <span v-if="savingPassword" class="loading-spinner-sm"></span>
@@ -230,9 +217,6 @@ async function changePassword() {
   outline: none; transition: all 0.2s; box-sizing: border-box;
 }
 .field-input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px var(--primary-50); }
-
-.msg-error { font-size: 13px; color: #DC2626; margin-bottom: 12px; padding: 8px 12px; background: #FEF2F2; border-radius: 8px; }
-.msg-success { font-size: 13px; color: #16A34A; margin-bottom: 12px; padding: 8px 12px; background: #F0FDF4; border-radius: 8px; }
 
 .btn-primary, .btn-secondary {
   width: 100%; padding: 12px; border: none; border-radius: 12px;

@@ -308,6 +308,7 @@ onUnmounted(() => {
           :key="toast.id"
           class="toast-notification"
           :class="toast.type"
+          @click="dismissToast(toast.id)"
         >
           <i :class="toastIcons[toast.type] || toastIcons.warning"></i>
           <span>{{ toast.message }}</span>
@@ -337,12 +338,12 @@ onUnmounted(() => {
 
 .toast-enter-active,
 .toast-leave-active {
-  transition: all 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.21, 1.02, 0.73, 1);
 }
 
 .toast-enter-from,
 .toast-leave-to {
   opacity: 0;
-  transform: translateX(16px);
+  transform: translateY(16px);
 }
 </style>

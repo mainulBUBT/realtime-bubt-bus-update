@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/client'
+import { showToast } from '@/composables/useToast'
 
 const router = useRouter()
 
@@ -32,7 +33,7 @@ const fetchResources = async () => {
     routes.value = routesRes.data
   } catch (error) {
     console.error('Failed to fetch resources:', error)
-    alert('Failed to load buses and routes. Please try again.')
+    showToast('Failed to load buses and routes. Please try again.', { type: 'error' })
   } finally {
     loading.value = false
   }
@@ -44,7 +45,7 @@ const startTrip = async () => {
     await api.post('/driver/trips/start', form.value)
     router.push({ name: 'trip-active' })
   } catch (error) {
-    alert('Failed to start trip: ' + (error.response?.data?.message || 'Unknown error'))
+    showToast('Failed to start trip: ' + (error.response?.data?.message || 'Unknown error'), { type: 'error' })
   } finally {
     submitting.value = false
   }

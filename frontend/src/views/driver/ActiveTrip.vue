@@ -5,6 +5,7 @@ import { useDriverTripStore } from '@/stores/useDriverTripStore'
 import { useDriverTrackingStore } from '@/stores/useDriverTrackingStore'
 import StartStopButton from '@/components/driver/StartStopButton.vue'
 import EndTripConfirmModal from '@/components/EndTripConfirmModal.vue'
+import { showToast } from '@/composables/useToast'
 
 const router = useRouter()
 const driverTripStore = useDriverTripStore()
@@ -207,7 +208,7 @@ const confirmEndTrip = async () => {
     await driverTripStore.endTrip(trip.value.id)
     router.push({ name: 'dashboard' })
   } catch (error) {
-    alert('Failed to end trip. Please try again.')
+    showToast('Failed to end trip. Please try again.', { type: 'error' })
     endingTrip.value = false
   }
 }

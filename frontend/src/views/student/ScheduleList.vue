@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import api from '@/api/client'
-import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 const schedules = ref([])
 const loadingInitial = ref(true)
@@ -16,20 +15,8 @@ const loadingStops = ref(new Set())
 const PER_PAGE = 20
 let scheduleRequestController = null
 
-const refreshData = async () => {
-  schedules.value = []
-  await fetchSchedulesPage(1, { replace: true })
-}
-
-const { isRefreshing, pullDistance, canRelease, onMount: initPull } = usePullToRefresh(refreshData, {
-  threshold: 60
-})
-
-const contentRef = ref(null)
-
 onMounted(async () => {
   await fetchSchedulesPage(1, { replace: true })
-  initPull(contentRef.value)
 })
 
 onUnmounted(() => {
@@ -173,18 +160,7 @@ const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 </script>
 
 <template>
-  <div ref="contentRef" class="schedule-page">
-    <!-- Pull Indicator -->
-    <div 
-      v-if="isPulling" 
-      class="pull-indicator"
-      :class="{ visible: pullDistance > 0, releasing: canRelease, refreshing: isRefreshing }"
-    >
-      <i v-if="isRefreshing" class="bi bi-arrow-repeat spinning"></i>
-      <i v-else-if="canRelease" class="bi bi-arrow-up-circle-fill"></i>
-      <i v-else class="bi bi-arrow-down"></i>
-    </div>
-    
+  <div class="schedule-page">
     <!-- Filter Tabs -->
     <div class="filter-tabs">
       <button

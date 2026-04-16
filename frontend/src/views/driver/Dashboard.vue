@@ -3,7 +3,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useDriverTripStore } from '@/stores/useDriverTripStore'
-import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -21,11 +20,6 @@ const refreshData = async () => {
     statsLoading.value = false
   }
 }
-
-const { isRefreshing, pullDistance, canRelease, onMount: initPull } = usePullToRefresh(refreshData, {
-  disabled: pullRefreshDisabled,
-  threshold: 60
-})
 
 const contentRef = ref(null)
 
@@ -171,7 +165,6 @@ onMounted(async () => {
     driverTripStore.fetchHistory(1)
   ])
   statsLoading.value = false
-  initPull(contentRef.value)
 })
 
 const checkActiveTrip = async () => {
@@ -261,17 +254,7 @@ const handleStartTrip = () => {
     </div>
 
     <!-- Dashboard Content -->
-    <div v-else ref="contentRef" class="dashboard-content" :class="{ 'pull-disabled': pullRefreshDisabled }">
-      <!-- Pull Indicator -->
-      <div 
-        v-if="isPulling" 
-        class="pull-indicator"
-        :class="{ visible: pullDistance > 0, releasing: canRelease, refreshing: isRefreshing }"
-      >
-        <i v-if="isRefreshing" class="bi bi-arrow-repeat spinning"></i>
-        <i v-else-if="canRelease" class="bi bi-arrow-up-circle-fill"></i>
-        <i v-else class="bi bi-arrow-down"></i>
-      </div>
+    <div v-else class="dashboard-content">
       <!-- Top Bar: Greeting left, Avatar right -->
       <div class="dash-top">
         <div>
@@ -829,53 +812,6 @@ const handleStartTrip = () => {
 .activity-skeleton .skeleton-content {
   flex: 1;
   display: flex;
-  flex-direction: column;
-}
-
-/* ── Pull to Refresh ── */
-.pull-indicator {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary);
-  color: var(--white);
-  z-index: 100;
-  transform: translateY(-100%);
-  transition: transform 0.2s ease;
-  pointer-events: none;
-}
-
-.pull-indicator.visible {
-  transform: translateY(0);
-}
-
-.pull-indicator.releasing {
-  background: var(--primary-dark);
-}
-
-.pull-indicator.refreshing {
-  background: var(--primary-dark);
-}
-
-.pull-indicator i {
-  font-size: 22px;
-}
-
-.pull-indicator i.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.dashboard-content.pull-disabled {
-  overscroll-behavior: none;
+flex-direction: column;
 }
 </style>

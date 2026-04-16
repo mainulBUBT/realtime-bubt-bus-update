@@ -330,3 +330,6 @@ function isRouteStopsLoading(routeId) {
     </div>
   </div>
 </template>
+
+<style scoped>
+</style>

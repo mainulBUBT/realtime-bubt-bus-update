@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useDriverTripStore } from '@/stores/useDriverTripStore'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -10,6 +11,35 @@ const driverTripStore = useDriverTripStore()
 
 const loading = ref(false)
 const statsLoading = ref(true)
+const pullRefreshDisabled = computed(() => driverTripStore.hasActiveTrip)
+
+const refreshData = async () => {
+  statsLoading.value = true
+  try {
+    await driverTripStore.fetchHistory(1)
+  } finally {
+    statsLoading.value = false
+  }
+}
+
+const { isRefreshing, pullDistance, pullText, onMount: initPull } = usePullToRefresh(refreshData, {
+  disabled: pullRefreshDisabled,
+  threshold: 60,
+  pullText: 'Pull to refresh',
+  releasingText: 'Release to refresh',
+  refreshingText: 'Refreshing...'
+})
+
+const contentRef = ref(null)
+
+onMounted(async () => {
+  await Promise.all([
+    checkActiveTrip(),
+    driverTripStore.fetchHistory(1)
+  ])
+  statsLoading.value = false
+  initPull(contentRef.value)
+})
 
 const driverName = computed(() => authStore.user?.name || 'Driver')
 
@@ -144,6 +174,7 @@ onMounted(async () => {
     driverTripStore.fetchHistory(1)
   ])
   statsLoading.value = false
+  initPull(contentRef.value)
 })
 
 const checkActiveTrip = async () => {
@@ -173,22 +204,78 @@ const handleStartTrip = () => {
   <div class="dashboard-page">
     <!-- Loading State -->
     <div v-if="loading" class="dashboard-skeleton">
-      <div class="skeleton-top">
-        <div class="skeleton-shape" style="width: 40%; height: 12px;"></div>
-        <div class="skeleton-shape" style="width: 55%; height: 20px;"></div>
-        <div class="skeleton-shape" style="width: 30%; height: 12px; margin-top: 4px;"></div>
+      <div class="dash-top dashboard-skeleton-top">
+        <div class="dashboard-skeleton-copy">
+          <div class="skeleton-shape" style="width: 88px; height: 14px;"></div>
+          <div class="skeleton-shape" style="width: 148px; height: 28px; margin-top: 8px;"></div>
+          <div class="skeleton-shape" style="width: 116px; height: 12px; margin-top: 8px;"></div>
+        </div>
+        <div class="dashboard-skeleton-avatar"></div>
       </div>
-      <div class="skeleton-hero">
+
+      <div class="stats-card dashboard-skeleton-card">
+        <div class="stats-header">
+          <div class="skeleton-shape" style="width: 118px; height: 16px;"></div>
+        </div>
+        <div class="stats-row-skeleton">
+          <div class="skeleton-stat">
+            <div class="skeleton-icon"></div>
+            <div class="skeleton-text">
+              <div class="skeleton-shape" style="width: 40px; height: 24px;"></div>
+              <div class="skeleton-shape" style="width: 50px; height: 14px; margin-top: 6px;"></div>
+            </div>
+          </div>
+          <div class="skeleton-divider"></div>
+          <div class="skeleton-stat">
+            <div class="skeleton-icon"></div>
+            <div class="skeleton-text">
+              <div class="skeleton-shape" style="width: 40px; height: 24px;"></div>
+              <div class="skeleton-shape" style="width: 50px; height: 14px; margin-top: 6px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-card dashboard-skeleton-card dashboard-skeleton-hero">
         <div class="skeleton-hero-icon"></div>
         <div class="skeleton-hero-body">
-          <div class="skeleton-shape" style="width: 50%; height: 16px;"></div>
-          <div class="skeleton-shape" style="width: 80%; height: 12px; margin-top: 8px;"></div>
+          <div class="skeleton-shape" style="width: 138px; height: 22px;"></div>
+          <div class="skeleton-shape" style="width: 85%; height: 13px; margin-top: 10px;"></div>
+          <div class="skeleton-shape" style="width: 72%; height: 13px; margin-top: 8px;"></div>
+        </div>
+        <div class="dashboard-skeleton-pill"></div>
+      </div>
+
+      <div class="activity-section dashboard-skeleton-card">
+        <div class="activity-header">
+          <div class="skeleton-shape" style="width: 132px; height: 16px;"></div>
+        </div>
+        <div class="activity-list">
+          <div v-for="i in 3" :key="i" class="activity-skeleton">
+            <div class="skeleton-icon"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-shape" style="width: 60%; height: 14px;"></div>
+              <div class="skeleton-shape" style="width: 40%; height: 12px; margin-top: 6px;"></div>
+            </div>
+            <div class="skeleton-shape" style="width: 40px; height: 14px;"></div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Dashboard Content -->
-    <div v-else class="dashboard-content">
+    <div v-else ref="contentRef" class="dashboard-content" :class="{ 'pull-disabled': pullRefreshDisabled }">
+      <!-- Pull Indicator -->
+      <div 
+        v-if="pullDistance > 0" 
+        class="pull-indicator"
+        :class="{ releasing: pullDistance >= 60, refreshing: isRefreshing }"
+      >
+        <i v-if="isRefreshing" class="bi bi-arrow-repeat spinning"></i>
+        <i v-else-if="pullDistance >= 60" class="bi bi-arrow-up-circle-fill"></i>
+        <i v-else class="bi bi-arrow-down"></i>
+        <span>{{ pullText }}</span>
+      </div>
       <!-- Top Bar: Greeting left, Avatar right -->
       <div class="dash-top">
         <div>
@@ -323,19 +410,32 @@ const handleStartTrip = () => {
   gap: 28px;
 }
 
-.skeleton-top {
-  display: flex;
-  flex-direction: column;
+.dashboard-skeleton-top {
+  align-items: flex-start;
 }
 
-.skeleton-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40px 24px;
-  background: var(--white);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
+.dashboard-skeleton-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-skeleton-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.dashboard-skeleton-card {
+  overflow: hidden;
+}
+
+.dashboard-skeleton-hero {
+  cursor: default;
+  pointer-events: none;
 }
 
 .skeleton-hero-icon {
@@ -352,6 +452,14 @@ const handleStartTrip = () => {
   align-items: center;
   text-align: center;
   width: 100%;
+}
+
+.dashboard-skeleton-pill {
+  width: 144px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--gray-100);
+  animation: skeleton-loading 1.5s ease-in-out infinite;
 }
 
 .dashboard-content {
@@ -590,6 +698,13 @@ const handleStartTrip = () => {
   flex-direction: column;
 }
 
+.skeleton-divider {
+  width: 1px;
+  height: 44px;
+  background: var(--gray-200);
+  flex-shrink: 0;
+}
+
 /* ── Transitions ── */
 .fade-enter-active,
 .fade-leave-active {
@@ -719,5 +834,42 @@ const handleStartTrip = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+/* ── Pull to Refresh ── */
+.pull-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--primary);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.pull-indicator.releasing {
+  background: var(--primary-dark);
+}
+
+.pull-indicator.refreshing {
+  background: var(--primary-dark);
+}
+
+.pull-indicator i.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.dashboard-content.pull-disabled {
+  overscroll-behavior: none;
 }
 </style>

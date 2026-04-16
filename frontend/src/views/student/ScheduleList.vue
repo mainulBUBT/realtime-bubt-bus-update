@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import api from '@/api/client'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 
 const schedules = ref([])
 const loadingInitial = ref(true)
@@ -15,8 +16,23 @@ const loadingStops = ref(new Set())
 const PER_PAGE = 20
 let scheduleRequestController = null
 
+const refreshData = async () => {
+  schedules.value = []
+  await fetchSchedulesPage(1, { replace: true })
+}
+
+const { isRefreshing, pullDistance, pullText, onMount: initPull } = usePullToRefresh(refreshData, {
+  threshold: 60,
+  pullText: 'Pull to refresh',
+  releasingText: 'Release to refresh',
+  refreshingText: 'Refreshing...'
+})
+
+const contentRef = ref(null)
+
 onMounted(async () => {
   await fetchSchedulesPage(1, { replace: true })
+  initPull(contentRef.value)
 })
 
 onUnmounted(() => {
@@ -160,20 +176,19 @@ const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 </script>
 
 <template>
-  <div class="schedule-page">
-    <!-- Page Header -->
-    <div class="schedule-header">
-      <div class="schedule-header-top">
-        <h2 class="schedule-title">
-          <i class="bi bi-calendar3"></i>
-          Schedules
-        </h2>
-        <span class="schedule-day-badge">
-          <i class="bi bi-calendar-check"></i>
-          {{ todayName }}
-        </span>
-      </div>
-
+  <div ref="contentRef" class="schedule-page">
+    <!-- Pull Indicator -->
+    <div 
+      v-if="pullDistance > 0" 
+      class="pull-indicator"
+      :class="{ releasing: pullDistance >= 60, refreshing: isRefreshing }"
+    >
+      <i v-if="isRefreshing" class="bi bi-arrow-repeat spinning"></i>
+      <i v-else-if="pullDistance >= 60" class="bi bi-arrow-up-circle-fill"></i>
+      <i v-else class="bi bi-arrow-down"></i>
+      <span>{{ pullText }}</span>
+    </div>
+    
     <!-- Filter Tabs -->
     <div class="filter-tabs">
       <button
@@ -193,7 +208,6 @@ const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
         All Days
       </button>
     </div>
-  </div>
 
     <!-- Loading State -->
     <div v-if="loadingInitial" class="schedule-list">

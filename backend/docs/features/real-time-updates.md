@@ -2,32 +2,50 @@
 
 ## Overview
 
-The real-time bus movement feature provides smooth, animated bus movement on the map based on crowd-sourced user GPS locations. Bus markers glide smoothly to new positions instead of teleporting instantly.
+The real-time bus movement feature provides smooth, animated bus movement on the map based on crowd-sourced driver GPS locations. Bus markers glide smoothly to new positions instead of teleporting instantly.
 
 ## How It Works
 
-### Data Flow
+### Data Flow (Driver App)
 
 ```
-User GPS Location (every ~1s)
+Driver GPS Location (background, every ~5-10s)
     ↓
-saveLocation API
+Driver sends to location API
     ↓
-CalculateBusLocationJob (averages user positions)
+Location stored in `locations` table
     ↓
-BusLocationUpdated Event (broadcast via Reverb)
+Reverb broadcasts to all subscribers
     ↓
-Frontend Echo Listener receives event
-    ↓
-updateBusMarker() with smooth animation
+Frontend receives and animates marker
 ```
 
 ### Rate Limiting
 
-- **Backend**: Location calculations limited to once per second per bus
-- **Frontend**: Animations complete in 1 second (matching the update rate)
+- **Backend**: Locations batched and sent every ~10 seconds
+- **Frontend**: Animations complete in 3 seconds (smooth interpolation)
 
 This provides a "live movement" feel without overwhelming the server.
+
+## OSRM Road Distance Calculation
+
+### Overview
+
+The system uses OSRM (Open Source Routing Machine) to calculate actual road distance between the bus and upcoming stops.
+
+### API Endpoint
+
+```
+GET /api/route/distance?lat=X&lng=Y&stop_id=Z
+```
+
+Returns road distance in meters.
+
+### Use Cases
+
+1. **Stop ETA**: Calculate how far the bus is from each upcoming stop
+2. **Arrival Prediction**: Show "arriving in X min" based on average speed
+3. **Stop Approach State**: Mark stop as "approaching" when within 200m road distance
 
 ## Animation Engine
 

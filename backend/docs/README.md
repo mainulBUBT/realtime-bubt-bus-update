@@ -29,6 +29,8 @@ The BUBT Bus Tracker is a real-time bus tracking system that allows users to:
 
 ## Quick Links
 
+- [Changelog](CHANGELOG.md) - Version history and notable changes
+
 - **API Endpoints**: See [Deployment Guide](deployment.md#api-endpoints)
 - **System Settings**: See [Installation Guide](installation.md#system-settings)
 - **Troubleshooting**: See [Deployment Guide](deployment.md#troubleshooting)

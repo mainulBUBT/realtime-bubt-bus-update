@@ -195,7 +195,8 @@
                                 <i class="bi bi-pencil"></i> Edit
                             </a>
                             <form action="{{ route('admin.notifications.resend', $campaign) }}" method="POST"
-                                  onsubmit="return confirm('Resend this notification? This will reset unread for students.');">
+                                  class="notification-resend-form"
+                                  data-notification-title="{{ $campaign->title }}">
                                 @csrf
                                 <button type="submit"
                                         class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm transition">
@@ -330,11 +331,42 @@ function addRecipient(id, name, email) {
     document.getElementById('student-search').value = '';
 }
 
+function attachResendConfirmation(form) {
+    if (!form) return;
+
+    form.addEventListener('submit', (event) => {
+        if (form.dataset.confirmed === 'true') {
+            delete form.dataset.confirmed;
+            return;
+        }
+
+        event.preventDefault();
+
+        const title = form.dataset.notificationTitle || 'this notification';
+
+        showConfirmModal({
+            title: 'Resend Notification?',
+            message: `Resend "${title}"? This will reset unread for students.`,
+            icon: 'bi-arrow-repeat',
+            iconBgClass: 'bg-gradient-to-br from-emerald-500 to-teal-500',
+            confirmBtnClass: 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/30 hover:shadow-emerald-500/50',
+            confirmIcon: 'bi-arrow-repeat',
+            confirmText: 'Resend',
+            onConfirm: function() {
+                form.dataset.confirmed = 'true';
+                form.requestSubmit();
+            }
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('student-search');
     const form = document.getElementById('notification-compose-form');
     const imageInput = document.getElementById('notification-image-input');
     const maxImageBytes = 5 * 1024 * 1024;
+
+    document.querySelectorAll('.notification-resend-form').forEach(attachResendConfirmation);
 
     if (imageInput) {
         imageInput.addEventListener('change', () => {
@@ -353,7 +385,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
                 imageInput.value = '';
                 showError('Image size must be 5MB or smaller.');
+                return;
             }
+
+            if (form.dataset.confirmed === 'true') {
+                delete form.dataset.confirmed;
+                return;
+            }
+
+            event.preventDefault();
+
+            const audience = form.querySelector('input[name="audience"]:checked')?.value;
+            const title = form.querySelector('input[name="title"]')?.value?.trim() || 'Untitled notification';
+            const selectedCount = currentRecipientIds().length;
+            const audienceText = audience === 'selected_students'
+                ? `${selectedCount} selected student${selectedCount === 1 ? '' : 's'}`
+                : 'all students';
+
+            showConfirmModal({
+                title: 'Send Notification Now?',
+                message: `Are you sure you want to send "${title}" to ${audienceText}?`,
+                icon: 'bi-send-fill',
+                iconBgClass: 'bg-gradient-to-br from-emerald-500 to-teal-500',
+                confirmBtnClass: 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/30 hover:shadow-emerald-500/50',
+                confirmIcon: 'bi-send-fill',
+                confirmText: 'Send',
+                onConfirm: function() {
+                    form.dataset.confirmed = 'true';
+                    form.requestSubmit();
+                }
+            });
         });
     }
 

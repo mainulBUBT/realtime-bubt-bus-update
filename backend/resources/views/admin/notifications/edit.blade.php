@@ -15,7 +15,8 @@
             <i class="bi bi-arrow-left"></i> Back
         </a>
         <form action="{{ route('admin.notifications.resend', $campaign) }}" method="POST"
-              onsubmit="return confirm('Resend this notification? This will reset unread for students.');">
+              id="notification-resend-form"
+              data-notification-title="{{ $campaign->title }}">
             @csrf
             <button type="submit"
                     class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold py-2.5 px-4 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300">
@@ -260,11 +261,43 @@ function addRecipient(id, name, email) {
     if (input) input.value = '';
 }
 
+function attachResendConfirmation(form) {
+    if (!form) return;
+
+    form.addEventListener('submit', (event) => {
+        if (form.dataset.confirmed === 'true') {
+            delete form.dataset.confirmed;
+            return;
+        }
+
+        event.preventDefault();
+
+        const title = form.dataset.notificationTitle || 'this notification';
+
+        showConfirmModal({
+            title: 'Resend Notification?',
+            message: `Resend "${title}"? This will reset unread for students.`,
+            icon: 'bi-arrow-repeat',
+            iconBgClass: 'bg-gradient-to-br from-emerald-500 to-teal-500',
+            confirmBtnClass: 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/30 hover:shadow-emerald-500/50',
+            confirmIcon: 'bi-arrow-repeat',
+            confirmText: 'Resend',
+            onConfirm: function() {
+                form.dataset.confirmed = 'true';
+                form.requestSubmit();
+            }
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('student-search');
     const form = document.getElementById('notification-edit-form');
+    const resendForm = document.getElementById('notification-resend-form');
     const imageInput = document.getElementById('notification-image-input');
     const maxImageBytes = 5 * 1024 * 1024;
+
+    attachResendConfirmation(resendForm);
 
     if (imageInput) {
         imageInput.addEventListener('change', () => {
@@ -283,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
                 imageInput.value = '';
                 showError('Image size must be 5MB or smaller.');
+                return;
             }
         });
     }

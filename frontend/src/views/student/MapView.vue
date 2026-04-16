@@ -271,11 +271,8 @@ const refreshData = async () => {
   updateMapMarkers(trips.value)
 }
 
-const { isRefreshing, pullDistance, pullText, onMount: initPull } = usePullToRefresh(refreshData, {
-  threshold: 60,
-  pullText: 'Pull to refresh',
-  releasingText: 'Release to refresh',
-  refreshingText: 'Refreshing...'
+const { isRefreshing, pullDistance, canRelease, onMount: initPull } = usePullToRefresh(refreshData, {
+  threshold: 60
 })
 
 const contentRef = ref(null)
@@ -379,14 +376,13 @@ watch(lastLocationUpdate, (update) => {
   <div ref="contentRef" class="map-wrapper">
     <!-- Pull Indicator -->
     <div 
-      v-if="pullDistance > 0" 
+      v-if="isPulling" 
       class="pull-indicator"
-      :class="{ releasing: pullDistance >= 60, refreshing: isRefreshing }"
+      :class="{ visible: pullDistance > 0, releasing: canRelease, refreshing: isRefreshing }"
     >
       <i v-if="isRefreshing" class="bi bi-arrow-repeat spinning"></i>
-      <i v-else-if="pullDistance >= 60" class="bi bi-arrow-up-circle-fill"></i>
+      <i v-else-if="canRelease" class="bi bi-arrow-up-circle-fill"></i>
       <i v-else class="bi bi-arrow-down"></i>
-      <span>{{ pullText }}</span>
     </div>
     
     <!-- Loading placeholder -->
@@ -431,15 +427,16 @@ watch(lastLocationUpdate, (update) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   background: var(--primary);
   color: var(--white);
-  font-size: 13px;
-  font-weight: 600;
   z-index: 1000;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  transform: translateY(-100%);
+  transition: transform 0.2s ease;
   pointer-events: none;
+}
+
+.pull-indicator.visible {
+  transform: translateY(0);
 }
 
 .pull-indicator.releasing {
@@ -448,6 +445,10 @@ watch(lastLocationUpdate, (update) => {
 
 .pull-indicator.refreshing {
   background: var(--primary-dark);
+}
+
+.pull-indicator i {
+  font-size: 22px;
 }
 
 .pull-indicator i.spinning {

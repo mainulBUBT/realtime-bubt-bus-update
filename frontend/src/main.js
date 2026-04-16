@@ -60,12 +60,7 @@ if (!usedCachedBranding) {
 // Fetch settings before mounting
 settingsStore.fetchSettings(appType).then(() => {
   if (isDev) {
-    console.log('⚙️ Settings loaded:', settingsStore.appSettings)
-    console.log('👤 Auth State:', {
-      isAuthenticated: authStore.isAuthenticated,
-      user: authStore.user,
-      hasToken: !!authStore.token
-    })
+    console.log('⚙️ Settings loaded')
   }
 }).catch((err) => {
   console.error('❌ Failed to load settings:', err)

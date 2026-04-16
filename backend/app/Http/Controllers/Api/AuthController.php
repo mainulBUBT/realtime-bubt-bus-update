@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Trip;
 use App\Events\BusTripEnded;
+use App\Http\Resources\UserResource;
 
 class AuthController extends Controller
 {
@@ -28,23 +29,9 @@ class AuthController extends Controller
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        // Debug logging
-        \Log::info('Login attempt', [
-            'email' => $request->email,
-            'request_role' => $request->role,
-            'request_role_type' => gettype($request->role),
-            'user_role' => $user->role,
-            'user_role_type' => gettype($user->role),
-            'match' => $user->role === $request->role,
-        ]);
-
         if ($user->role !== $request->role) {
             return response()->json([
                 'message' => 'Unauthorized for this role',
-                'debug' => [
-                    'expected' => $user->role,
-                    'received' => $request->role,
-                ]
             ], 403);
         }
 
@@ -60,7 +47,7 @@ class AuthController extends Controller
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user),
             'token' => $token,
         ]);
     }
@@ -89,7 +76,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Your account is waiting for admin approval.',
-            'user' => $user,
+            'user' => new UserResource($user),
             'requires_approval' => true,
         ], 201);
     }
@@ -123,7 +110,7 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json(new UserResource($request->user()));
     }
 
     /**
@@ -141,7 +128,7 @@ class AuthController extends Controller
         $user->phone = $request->input('phone');
         $user->save();
 
-        return response()->json($user);
+        return response()->json(new UserResource($user));
     }
 
     /**

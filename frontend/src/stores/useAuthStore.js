@@ -25,7 +25,9 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('user', JSON.stringify(this.user))
         return response.data
       } catch (error) {
-        console.error('Login error:', error.response?.data)
+        if (import.meta.env.DEV) {
+          console.error('Login failed:', error.response?.status)
+        }
         throw error.response?.data || { message: 'Login failed' }
       }
     },
@@ -48,7 +50,9 @@ export const useAuthStore = defineStore('auth', {
 
         return response.data
       } catch (error) {
-        console.error('Register error:', error.response?.data)
+        if (import.meta.env.DEV) {
+          console.error('Registration failed:', error.response?.status)
+        }
         throw error.response?.data || { message: 'Registration failed' }
       }
     },

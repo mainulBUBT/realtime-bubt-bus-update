@@ -21,11 +21,8 @@ const refreshData = async () => {
   await fetchSchedulesPage(1, { replace: true })
 }
 
-const { isRefreshing, pullDistance, pullText, onMount: initPull } = usePullToRefresh(refreshData, {
-  threshold: 60,
-  pullText: 'Pull to refresh',
-  releasingText: 'Release to refresh',
-  refreshingText: 'Refreshing...'
+const { isRefreshing, pullDistance, canRelease, onMount: initPull } = usePullToRefresh(refreshData, {
+  threshold: 60
 })
 
 const contentRef = ref(null)
@@ -179,14 +176,13 @@ const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
   <div ref="contentRef" class="schedule-page">
     <!-- Pull Indicator -->
     <div 
-      v-if="pullDistance > 0" 
+      v-if="isPulling" 
       class="pull-indicator"
-      :class="{ releasing: pullDistance >= 60, refreshing: isRefreshing }"
+      :class="{ visible: pullDistance > 0, releasing: canRelease, refreshing: isRefreshing }"
     >
       <i v-if="isRefreshing" class="bi bi-arrow-repeat spinning"></i>
-      <i v-else-if="pullDistance >= 60" class="bi bi-arrow-up-circle-fill"></i>
+      <i v-else-if="canRelease" class="bi bi-arrow-up-circle-fill"></i>
       <i v-else class="bi bi-arrow-down"></i>
-      <span>{{ pullText }}</span>
     </div>
     
     <!-- Filter Tabs -->

@@ -39,7 +39,7 @@ class BusController extends Controller
     public function show(Bus $bus)
     {
         return response()->json($bus->load(['trips' => function ($query) {
-            $query->with(['route', 'driver'])->latest()->limit(10);
+            $query->with(['route', 'driver:id,name,role'])->latest()->limit(10);
         }]));
     }
 

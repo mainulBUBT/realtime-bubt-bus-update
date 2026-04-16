@@ -22,12 +22,9 @@ const refreshData = async () => {
   }
 }
 
-const { isRefreshing, pullDistance, pullText, onMount: initPull } = usePullToRefresh(refreshData, {
+const { isRefreshing, pullDistance, canRelease, onMount: initPull } = usePullToRefresh(refreshData, {
   disabled: pullRefreshDisabled,
-  threshold: 60,
-  pullText: 'Pull to refresh',
-  releasingText: 'Release to refresh',
-  refreshingText: 'Refreshing...'
+  threshold: 60
 })
 
 const contentRef = ref(null)
@@ -267,14 +264,13 @@ const handleStartTrip = () => {
     <div v-else ref="contentRef" class="dashboard-content" :class="{ 'pull-disabled': pullRefreshDisabled }">
       <!-- Pull Indicator -->
       <div 
-        v-if="pullDistance > 0" 
+        v-if="isPulling" 
         class="pull-indicator"
-        :class="{ releasing: pullDistance >= 60, refreshing: isRefreshing }"
+        :class="{ visible: pullDistance > 0, releasing: canRelease, refreshing: isRefreshing }"
       >
         <i v-if="isRefreshing" class="bi bi-arrow-repeat spinning"></i>
-        <i v-else-if="pullDistance >= 60" class="bi bi-arrow-up-circle-fill"></i>
+        <i v-else-if="canRelease" class="bi bi-arrow-up-circle-fill"></i>
         <i v-else class="bi bi-arrow-down"></i>
-        <span>{{ pullText }}</span>
       </div>
       <!-- Top Bar: Greeting left, Avatar right -->
       <div class="dash-top">
@@ -846,15 +842,16 @@ const handleStartTrip = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   background: var(--primary);
   color: var(--white);
-  font-size: 13px;
-  font-weight: 600;
   z-index: 100;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  transform: translateY(-100%);
+  transition: transform 0.2s ease;
   pointer-events: none;
+}
+
+.pull-indicator.visible {
+  transform: translateY(0);
 }
 
 .pull-indicator.releasing {
@@ -865,8 +862,17 @@ const handleStartTrip = () => {
   background: var(--primary-dark);
 }
 
+.pull-indicator i {
+  font-size: 22px;
+}
+
 .pull-indicator i.spinning {
   animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .dashboard-content.pull-disabled {

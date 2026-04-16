@@ -1,72 +1,62 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 
 export function usePullToRefresh(refreshFn, options = {}) {
   const {
     threshold = 60,
-    resistance = 2.5,
-    disabled = false,
-    pullText = 'Pull to refresh',
-    releasingText = 'Release to refresh',
-    refreshingText = 'Refreshing...'
+    disabled = false
   } = options
 
   const isPulling = ref(false)
   const isRefreshing = ref(false)
   const pullDistance = ref(0)
-  const pullTextDisplay = ref(pullText)
+  const canRelease = ref(false)
 
   let startY = 0
-  let currentY = 0
   let element = null
+  let savedScrollTop = 0
+  let scrollTimeout = null
 
   const onTouchStart = (e) => {
     if (disabled || isRefreshing.value) return
     if (e.touches.length !== 1) return
     
     const touch = e.touches[0]
-    if (touch.clientY === 0) return
-    
     startY = touch.clientY
-    currentY = touch.clientY
+    savedScrollTop = 0
     pullDistance.value = 0
     isPulling.value = false
+    canRelease.value = false
   }
 
   const onTouchMove = (e) => {
     if (disabled || isRefreshing.value) return
     if (e.touches.length !== 1) return
-    if (window.scrollY > 0) return
     
     const touch = e.touches[0]
-    currentY = touch.clientY
-    const diff = currentY - startY
+    const diff = touch.clientY - startY
     
-    if (diff > 0) {
-      e.preventDefault()
-      
-      const distance = diff / resistance
-      pullDistance.value = Math.min(distance, threshold * 1.5)
-      
-      if (!isPulling.value && pullDistance.value > 10) {
+    if (diff > 0 && !isPulling.value) {
+      if (savedScrollTop === 0) {
+        e.preventDefault()
+        
+        pullDistance.value = diff
         isPulling.value = true
-        pullTextDisplay.value = releasingText
-      } else if (isPulling.value && pullDistance.value < 10) {
-        isPulling.value = false
-        pullTextDisplay.value = pullText
-      }
-      
-      if (isPulling.value && pullDistance.value < 10) {
-        pullTextDisplay.value = pullText
+        
+        if (pullDistance.value >= threshold) {
+          canRelease.value = true
+        } else {
+          canRelease.value = false
+        }
       }
     }
   }
 
   const onTouchEnd = async () => {
-    if (disabled || isRefreshing.value) return
+    if (!isPulling.value) return
     
-    if (isPulling.value && pullDistance.value >= threshold) {
+    if (canRelease.value) {
       isRefreshing.value = true
-      pullTextDisplay.value = refreshingText
+      pullDistance.value = threshold
       
       try {
         await refreshFn()
@@ -76,12 +66,23 @@ export function usePullToRefresh(refreshFn, options = {}) {
         isRefreshing.value = false
         pullDistance.value = 0
         isPulling.value = false
-        pullTextDisplay.value = pullText
+        canRelease.value = false
+        
+        if (scrollTimeout) clearTimeout(scrollTimeout)
+        scrollTimeout = setTimeout(() => {
+          if (element) element.scrollTop = 0
+        }, 50)
       }
     } else {
       pullDistance.value = 0
       isPulling.value = false
-      pullTextDisplay.value = pullText
+      canRelease.value = false
+    }
+  }
+
+  const onScroll = (e) => {
+    if (!isPulling.value) {
+      savedScrollTop = e.target.scrollTop
     }
   }
 
@@ -92,6 +93,7 @@ export function usePullToRefresh(refreshFn, options = {}) {
       element.addEventListener('touchmove', onTouchMove, { passive: false })
       element.addEventListener('touchend', onTouchEnd, { passive: true })
       element.addEventListener('touchcancel', onTouchEnd, { passive: true })
+      element.addEventListener('scroll', onScroll, { passive: true })
     }
   }
 
@@ -101,14 +103,16 @@ export function usePullToRefresh(refreshFn, options = {}) {
       element.removeEventListener('touchmove', onTouchMove)
       element.removeEventListener('touchend', onTouchEnd)
       element.removeEventListener('touchcancel', onTouchEnd)
+      element.removeEventListener('scroll', onScroll)
     }
+    if (scrollTimeout) clearTimeout(scrollTimeout)
   }
 
   return {
     isPulling,
     isRefreshing,
     pullDistance,
-    pullText: pullTextDisplay,
+    canRelease,
     onMount,
     onUnmount
   }

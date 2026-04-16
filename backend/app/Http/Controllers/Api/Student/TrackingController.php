@@ -100,7 +100,7 @@ class TrackingController extends Controller
     public function activeTrips(Request $request)
     {
         $trips = Trip::activeToday()
-            ->with(['bus', 'route', 'route.stops', 'driver', 'latestLocation'])
+            ->with(['bus', 'route', 'route.stops', 'driver:id,name,role', 'latestLocation'])
             ->get();
 
         return response()->json($trips);
@@ -111,7 +111,7 @@ class TrackingController extends Controller
      */
     public function tripLocations(Request $request, $tripId)
     {
-        $trip = Trip::with(['bus', 'route', 'route.stops', 'driver'])
+        $trip = Trip::with(['bus', 'route', 'route.stops', 'driver:id,name,role'])
             ->findOrFail($tripId);
 
         $locations = Location::where('trip_id', $tripId)

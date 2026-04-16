@@ -11,9 +11,12 @@ const STORAGE_KEY = 'driver_tracking_state'
 const SEND_INTERVAL_MS = 5000
 const MAX_BATCH_SIZE = 25
 const MAX_QUEUE_SIZE = 200
+const DEV_RELAXED_WEB_GPS = import.meta.env.DEV
 
 // Location filtering (reduce GPS drift while stopped)
 const MAX_ACCEPTABLE_ACCURACY_M = 50
+const MAX_BOOTSTRAP_ACCEPTABLE_ACCURACY_M = 200
+const DEV_MAX_WEB_BOOTSTRAP_ACCEPTABLE_ACCURACY_M = 1000
 const MIN_DISTANCE_M = 15
 const MIN_TIME_BETWEEN_POINTS_MS = 5000
 const MAX_JUMP_M = 250
@@ -92,6 +95,20 @@ function createHttpError(status, data) {
   return error
 }
 
+function getTrackingThresholdPolicy(providerValue, isBootstrapMode) {
+  const isDevRelaxedWebBootstrap = DEV_RELAXED_WEB_GPS
+    && providerValue === 'web-geolocation'
+    && isBootstrapMode
+
+  return {
+    isDevRelaxedWebBootstrap,
+    maxAcceptableAccuracyM: MAX_ACCEPTABLE_ACCURACY_M,
+    maxBootstrapAccuracyM: isDevRelaxedWebBootstrap
+      ? DEV_MAX_WEB_BOOTSTRAP_ACCEPTABLE_ACCURACY_M
+      : MAX_BOOTSTRAP_ACCEPTABLE_ACCURACY_M
+  }
+}
+
 export const useDriverTrackingStore = defineStore('driverTracking', () => {
   const {
     isTracking,
@@ -153,6 +170,34 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     return createEmptyLocation()
   })
   const isAndroidNative = computed(() => Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android')
+  const trackingBootstrapState = computed(() => {
+    const permissionGranted = permissionState.value === 'granted' || permissionState.value === 'limited'
+    const hasAcceptedFix = Boolean(lastAcceptedLocation.value?.timestamp)
+    const hasCurrentLiveFix = Boolean(currentLocation.value?.timestamp)
+    const recentAccuracyRejectCount = recentAccuracyRejects.value
+    const hasAccuracyRejects = recentAccuracyRejectCount > 0 || ignoredCounts.value.accuracy > 0
+    const policy = getTrackingThresholdPolicy(provider.value, bootstrapping.value && queue.value.length === 0)
+
+    let reason = 'ready'
+    if (!permissionGranted) {
+      reason = 'permission'
+    } else if (!hasAcceptedFix && hasAccuracyRejects) {
+      reason = 'accuracy'
+    } else if (!hasAcceptedFix) {
+      reason = 'first-fix'
+    }
+
+    return {
+      permissionGranted,
+      hasAcceptedFix,
+      hasCurrentLiveFix,
+      hasAccuracyRejects,
+      recentAccuracyRejectCount,
+      devRelaxedWebBootstrap: policy.isDevRelaxedWebBootstrap,
+      maxBootstrapAccuracyM: policy.maxBootstrapAccuracyM,
+      reason
+    }
+  })
 
   function persistState() {
     if (!activeTripId.value && queue.value.length === 0 && !lastSentAt.value) {
@@ -221,9 +266,17 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     const candidateAccuracy = normalized.accuracy == null ? null : Number(normalized.accuracy)
 
     const isBootstrapMode = bootstrapping.value && queue.value.length === 0
-    const canAcceptPoorAccuracy = isBootstrapMode && candidateAccuracy != null && candidateAccuracy <= 200
+    const thresholdPolicy = getTrackingThresholdPolicy(provider.value, isBootstrapMode)
+    const canAcceptPoorAccuracy = isBootstrapMode
+      && candidateAccuracy != null
+      && candidateAccuracy <= thresholdPolicy.maxBootstrapAccuracyM
 
-    if (candidateAccuracy != null && Number.isFinite(candidateAccuracy) && candidateAccuracy > MAX_ACCEPTABLE_ACCURACY_M && !canAcceptPoorAccuracy) {
+    if (
+      candidateAccuracy != null
+      && Number.isFinite(candidateAccuracy)
+      && candidateAccuracy > thresholdPolicy.maxAcceptableAccuracyM
+      && !canAcceptPoorAccuracy
+    ) {
       if (isBootstrapMode) {
         recentAccuracyRejects.value += 1
       }
@@ -522,6 +575,7 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     isOnline,
     appState,
     isAndroidNative,
+    trackingBootstrapState,
     ignoredCounts,
     isTracking,
     currentLocation,

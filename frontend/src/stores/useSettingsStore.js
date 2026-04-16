@@ -4,6 +4,10 @@ import api from '@/api/client'
 import { getDefaultAppName, getDefaultAppPrimaryColor, getDefaultAppTagline } from '@/utils/appBranding'
 import { applySystemBarTheme } from '@/utils/systemTheme'
 
+function brandingCacheKey(appType) {
+  return `app_branding_${appType === 'student' ? 'student' : 'driver'}`
+}
+
 export const useSettingsStore = defineStore('settings', () => {
   const appSettings = ref({
     appName: '',
@@ -60,6 +64,71 @@ export const useSettingsStore = defineStore('settings', () => {
   const error = ref(null)
   const isReady = ref(false)
 
+  function persistBranding(appType) {
+    if (typeof localStorage === 'undefined') return
+
+    try {
+      localStorage.setItem(brandingCacheKey(appType), JSON.stringify({
+        appName: appSettings.value.appName || '',
+        appTagline: appSettings.value.appTagline || '',
+        splashPrimaryColor: appSettings.value.splashPrimaryColor || ''
+      }))
+    } catch (err) {
+      console.warn('Failed to persist app branding cache:', err)
+    }
+  }
+
+  function loadCachedBranding(appType) {
+    if (typeof localStorage === 'undefined') return null
+
+    try {
+      const cached = JSON.parse(localStorage.getItem(brandingCacheKey(appType)) || 'null')
+      if (!cached || typeof cached !== 'object') return null
+
+      const splashPrimaryColor = typeof cached.splashPrimaryColor === 'string' && cached.splashPrimaryColor
+        ? cached.splashPrimaryColor
+        : getDefaultAppPrimaryColor(appType)
+
+      return {
+        appName: typeof cached.appName === 'string' ? cached.appName : getDefaultAppName(appType),
+        appTagline: typeof cached.appTagline === 'string' ? cached.appTagline : getDefaultAppTagline(appType),
+        splashPrimaryColor,
+        supportEmail: '',
+        supportPhone: '',
+        supportUrl: '',
+        aboutText: ''
+      }
+    } catch (err) {
+      console.warn('Failed to load cached app branding:', err)
+      return null
+    }
+  }
+
+  function applyCachedBranding(appType) {
+    const cached = loadCachedBranding(appType)
+    if (!cached) return false
+
+    appSettings.value = {
+      ...appSettings.value,
+      ...cached
+    }
+    applyAppColors()
+    return true
+  }
+
+  function applyDefaultBranding(appType) {
+    appSettings.value = {
+      appName: getDefaultAppName(appType),
+      appTagline: getDefaultAppTagline(appType),
+      splashPrimaryColor: getDefaultAppPrimaryColor(appType),
+      supportEmail: '',
+      supportPhone: '',
+      supportUrl: '',
+      aboutText: ''
+    }
+    applyAppColors()
+  }
+
   async function fetchSettings(appType) {
     loading.value = true
     error.value = null
@@ -85,13 +154,14 @@ export const useSettingsStore = defineStore('settings', () => {
 
       // Apply CSS variables for splash colors
       applySplashColors()
+      persistBranding(appType)
 
       isReady.value = true
     } catch (err) {
       console.error('Failed to fetch settings:', err)
       error.value = err.message
-      // Use default values on error
-      appSettings.value = {
+      const cached = loadCachedBranding(appType)
+      appSettings.value = cached || {
         appName: getDefaultAppName(appType),
         appTagline: getDefaultAppTagline(appType),
         splashPrimaryColor: getDefaultAppPrimaryColor(appType),
@@ -100,7 +170,6 @@ export const useSettingsStore = defineStore('settings', () => {
         supportUrl: '',
         aboutText: ''
       }
-      // Apply default colors
       applySplashColors()
       isReady.value = true
     } finally {
@@ -143,6 +212,9 @@ export const useSettingsStore = defineStore('settings', () => {
     error,
     isReady,
     fetchSettings,
+    loadCachedBranding,
+    applyCachedBranding,
+    applyDefaultBranding,
     applySplashColors,  // Keep for backward compatibility
     applyAppColors      // New function for clarity
   }

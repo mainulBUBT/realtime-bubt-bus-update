@@ -14,9 +14,9 @@ const navItems = [
   { name: 'menu', icon: 'bi-grid', label: 'More' }
 ]
 
-function navigateTo(item) {
-  router.push({ name: item.name })
+async function navigateTo(item) {
   emit('navigate')
+  await router.push({ name: item.name })
 }
 </script>
 

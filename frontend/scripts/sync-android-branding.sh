@@ -42,6 +42,7 @@ fi
 
 mkdir -p "$RES_DIR" "$RES_DIR/values"
 mkdir -p "$ASSETS_DIR"
+mkdir -p "$RES_DIR/drawable"
 
 hex_color="${BRAND_COLOR#\#}"
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/branding-${APP_TYPE}.XXXXXX")"
@@ -232,12 +233,22 @@ cat > "$RES_DIR/values/styles.xml" <<EOF
     </style>
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="android:background">@drawable/launch_background</item>
         <item name="android:statusBarColor">@color/statusBarColor</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>
+EOF
+
+cat > "$RES_DIR/drawable/launch_background.xml" <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:angle="135"
+        android:startColor="$BRAND_COLOR"
+        android:endColor="$BRAND_COLOR_DARK" />
+</shape>
 EOF
 
 settings_gradle="$ANDROID_DIR/capacitor.settings.gradle"

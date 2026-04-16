@@ -15,6 +15,15 @@ const showEndTripModal = ref(false)
 const nowTick = ref(Date.now())
 
 const trip = computed(() => driverTripStore.currentTrip)
+const trackingBootstrapState = computed(() => driverTrackingStore.trackingBootstrapState)
+const hasTripFallbackCoordinates = computed(() => (
+  Number.isFinite(Number(trip.value?.current_lat))
+  && Number.isFinite(Number(trip.value?.current_lng))
+  && (Number(trip.value?.current_lat) !== 0 || Number(trip.value?.current_lng) !== 0)
+))
+const usingFallbackCoordinates = computed(() => (
+  hasTripFallbackCoordinates.value && !trackingBootstrapState.value.hasAcceptedFix
+))
 
 const location = computed(() => {
   const acceptedLocation = driverTrackingStore.lastAcceptedLocation
@@ -108,8 +117,34 @@ const trackingMessage = computed(() => {
   }
 
   if (driverTrackingStore.status === 'starting') {
+    const bootstrap = trackingBootstrapState.value
+
+    if (!bootstrap.permissionGranted) {
+      return driverTrackingStore.provider === 'web-geolocation'
+        ? 'Allow browser location access to start live trip tracking.'
+        : 'Allow location access to start live trip tracking.'
+    }
+
+    if (bootstrap.reason === 'accuracy') {
+      if (bootstrap.devRelaxedWebBootstrap) {
+        return usingFallbackCoordinates.value
+          ? `Location permission is granted. Development mode is allowing a wider first-fix GPS accuracy window (up to ${bootstrap.maxBootstrapAccuracyM} m), but the browser has not produced an acceptable live fix yet. Showing the trip's last saved coordinates for now.`
+          : `Location permission is granted. Development mode is allowing a wider first-fix GPS accuracy window (up to ${bootstrap.maxBootstrapAccuracyM} m), but the browser is still reporting weak GPS.`
+      }
+
+      return usingFallbackCoordinates.value
+        ? 'Location permission is granted, but recent GPS fixes were too weak to accept. Showing the trip\'s last saved coordinates until a live fix is accepted.'
+        : 'Location permission is granted, but recent GPS fixes were too weak to accept. Move to a clearer area or wait for GPS to stabilize.'
+    }
+
+    if (bootstrap.reason === 'first-fix') {
+      return usingFallbackCoordinates.value
+        ? 'Location permission is granted. Showing the trip\'s last saved coordinates while waiting for the first live GPS fix.'
+        : 'Location permission is granted. Waiting for the first live GPS fix from your device.'
+    }
+
     if (driverTrackingStore.provider === 'web-geolocation') {
-      return 'Waiting for browser permission or your first location fix.'
+      return 'Starting browser location tracking...'
     }
 
     return 'Starting location tracking...'

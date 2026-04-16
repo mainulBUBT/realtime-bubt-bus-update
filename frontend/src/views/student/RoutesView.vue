@@ -128,7 +128,7 @@ async function toggleExpand(route) {
 }
 
 function directionLabel(dir) {
-  return dir === 'inbound' ? 'To Campus' : 'From Campus'
+  return dir === 'outbound' ? 'To Campus' : 'From Campus'
 }
 
 function clearSearch() {
@@ -259,7 +259,7 @@ function isRouteStopsLoading(routeId) {
             </div>
             <div class="route-meta">
               <span class="direction-badge" :class="route.direction">
-                <i :class="route.direction === 'inbound' ? 'bi bi-arrow-down-left-circle' : 'bi bi-arrow-up-right-circle'"></i>
+                <i :class="route.direction === 'outbound' ? 'bi bi-arrow-up-right-circle' : 'bi bi-arrow-down-left-circle'"></i>
                 {{ directionLabel(route.direction) }}
               </span>
               <span class="stops-count">

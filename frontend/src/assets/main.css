@@ -900,7 +900,10 @@ button {
 .sidebar-overlay {
     display: none;
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: var(--mobile-nav-height);
     background: rgba(0, 0, 0, 0.45);
     z-index: 199;
 }
@@ -1662,8 +1665,8 @@ button {
 
 @media (max-width: 767px) {
     .timeline-header {
-        padding: 16px;
-        padding-top: env(safe-area-inset-top, 16px);
+        padding: 12px 12px 10px;
+        padding-top: calc(env(safe-area-inset-top, 12px) + 12px);
     }
 }
 
@@ -1691,8 +1694,8 @@ button {
 
 @media (max-width: 767px) {
     .timeline-close {
-        top: 12px;
-        right: 12px;
+        top: calc(env(safe-area-inset-top, 12px) + 8px);
+        right: 10px;
         width: 32px;
         height: 32px;
     }
@@ -1702,35 +1705,35 @@ button {
     display: flex;
     align-items: center;
     gap: 14px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     padding-right: 44px;
 }
 
 @media (max-width: 767px) {
     .timeline-bus-info {
-        gap: 12px;
-        padding-right: 40px;
-        margin-bottom: 10px;
+        gap: 10px;
+        padding-right: 42px;
+        margin-bottom: 8px;
     }
 }
 
 .timeline-badge {
-    width: 52px;
-    height: 52px;
+    width: 44px;
+    height: 44px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-md, 10px);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     flex-shrink: 0;
 }
 
 @media (max-width: 767px) {
     .timeline-badge {
-        width: 44px;
-        height: 44px;
-        font-size: 1.3rem;
+        width: 38px;
+        height: 38px;
+        font-size: 1.1rem;
         border-radius: var(--radius-sm, 8px);
     }
 }
@@ -1740,9 +1743,9 @@ button {
 }
 
 .timeline-details h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
-    margin: 0 0 2px 0;
+    margin: 0 0 1px 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1750,12 +1753,12 @@ button {
 
 @media (max-width: 767px) {
     .timeline-details h2 {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
 }
 
 .timeline-route {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     opacity: 0.9;
     display: block;
     white-space: nowrap;
@@ -1765,26 +1768,26 @@ button {
 
 @media (max-width: 767px) {
     .timeline-route {
-        font-size: 0.75rem;
+        font-size: 0.72rem;
     }
 }
 
 .timeline-status {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 @media (max-width: 767px) {
     .timeline-status {
-        gap: 8px;
+        gap: 6px;
     }
 }
 
 .status-badge {
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: 999px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
     background: rgba(255, 255, 255, 0.2);
 }
@@ -1804,20 +1807,20 @@ button {
 
 @media (max-width: 767px) {
     .status-badge {
-        padding: 3px 10px;
-        font-size: 0.7rem;
+        padding: 2px 8px;
+        font-size: 0.68rem;
     }
 }
 
 .arrival-time {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 600;
     opacity: 0.9;
 }
 
 @media (max-width: 767px) {
     .arrival-time {
-        font-size: 0.75rem;
+        font-size: 0.72rem;
     }
 }
 
@@ -1832,17 +1835,17 @@ button {
 
 @media (max-width: 767px) {
     .timeline-content {
-        padding: 16px;
+        padding: 12px;
     }
 }
 
 .timeline-section {
-    margin-bottom: 28px;
+    margin-bottom: 24px;
 }
 
 @media (max-width: 767px) {
     .timeline-section {
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
 }
 
@@ -1862,15 +1865,15 @@ button {
 
 @media (max-width: 767px) {
     .timeline-section h3 {
-        font-size: 0.82rem;
-        margin-bottom: 12px;
+        font-size: 0.8rem;
+        margin-bottom: 10px;
     }
 }
 
 /* ── Route Timeline ──────────────────────────────── */
 .route-timeline {
     position: relative;
-    padding-left: 24px;
+    padding-left: 22px;
 }
 
 .route-timeline::before {
@@ -1885,10 +1888,10 @@ button {
 
 .timeline-stop {
     position: relative;
-    padding-bottom: 20px;
+    padding-bottom: 18px;
     display: flex;
     align-items: flex-start;
-    gap: 16px;
+    gap: 14px;
 }
 
 .timeline-stop:last-child {
@@ -1897,8 +1900,8 @@ button {
 
 @media (max-width: 767px) {
     .timeline-stop {
-        padding-bottom: 16px;
-        gap: 12px;
+        padding-bottom: 14px;
+        gap: 10px;
     }
 }
 
@@ -1973,23 +1976,23 @@ button {
 }
 
 .stop-name {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 600;
     color: var(--gray-900, #111827);
     display: block;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
     word-break: break-word;
 }
 
 .stop-status {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--gray-500, #6b7280);
     display: block;
 }
 
 @media (max-width: 767px) {
     .stop-name {
-        font-size: 0.85rem;
+        font-size: 0.82rem;
     }
 }
 

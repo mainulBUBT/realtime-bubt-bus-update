@@ -20,7 +20,10 @@ const { unreadCount } = storeToRefs(notificationStore)
 
 const sidebarOpen = ref(false)
 const toggleSidebar = () => { sidebarOpen.value = !sidebarOpen.value }
-const closeSidebar  = () => { sidebarOpen.value = false; searchQuery.value = ''; mapStore.clearSelection() }
+const closeSidebar = () => {
+  sidebarOpen.value = false
+  searchQuery.value = ''
+}
 
 const router    = useRouter()
 const authStore = useAuthStore()
@@ -64,9 +67,13 @@ const sidebarSearchSummary = computed(() => {
   return `Showing ${filteredBuses.value.length} of ${buses.value.length} buses for "${searchQuery.value.trim()}"`
 })
 
-function handleBusClick(bus) {
+async function handleBusClick(bus) {
   mapStore.selectBus(bus.tripId)
   closeSidebar()
+
+  if (route.name !== 'map') {
+    await router.push({ name: 'map' })
+  }
 }
 
 function clearSearch() {

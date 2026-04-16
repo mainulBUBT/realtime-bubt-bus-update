@@ -9,6 +9,7 @@ const authStore = useAuthStore()
 const driverTripStore = useDriverTripStore()
 
 const loading = ref(false)
+const statsLoading = ref(true)
 
 const driverName = computed(() => authStore.user?.name || 'Driver')
 
@@ -33,12 +34,119 @@ const currentDate = computed(() => {
   })
 })
 
+const todayStats = computed(() => {
+  const today = new Date().toISOString().split('T')[0]
+  const trips = driverTripStore.historyTrips || []
+  
+  const todayTrips = trips.filter(t => {
+    return t.trip_date === today && t.status === 'completed'
+  })
+  
+  const groupedByBus = {}
+  todayTrips.forEach(trip => {
+    const busKey = trip.bus?.code || trip.bus?.plate_number || 'Unknown'
+    if (!groupedByBus[busKey]) {
+      groupedByBus[busKey] = { count: 0, time: 0 }
+    }
+    groupedByBus[busKey].count += 1
+    if (trip.started_at && trip.ended_at) {
+      const start = new Date(trip.started_at)
+      const end = new Date(trip.ended_at)
+      groupedByBus[busKey].time += Math.round((end - start) / 60000)
+    }
+  })
+  
+  const busStats = Object.entries(groupedByBus).map(([bus, data]) => ({
+    bus,
+    count: data.count,
+    time: formatTime(data.time)
+  }))
+  
+  return {
+    trips: todayTrips.length,
+    busStats
+  }
+})
+
+const totalStats = computed(() => {
+  const trips = driverTripStore.historyTrips || []
+  
+  const completedTrips = trips.filter(t => t.status === 'completed')
+  
+  const groupedByBus = {}
+  completedTrips.forEach(trip => {
+    const busKey = trip.bus?.code || trip.bus?.plate_number || 'Unknown'
+    if (!groupedByBus[busKey]) {
+      groupedByBus[busKey] = { count: 0, time: 0 }
+    }
+    groupedByBus[busKey].count += 1
+    if (trip.started_at && trip.ended_at) {
+      const start = new Date(trip.started_at)
+      const end = new Date(trip.ended_at)
+      groupedByBus[busKey].time += Math.round((end - start) / 60000)
+    }
+  })
+  
+  const busStats = Object.entries(groupedByBus).map(([bus, data]) => ({
+    bus,
+    count: data.count,
+    time: formatTime(data.time)
+  }))
+  
+  return {
+    trips: completedTrips.length,
+    busStats
+  }
+})
+
+const formatTime = (mins) => {
+  if (!mins || mins <= 0) return '0m'
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return h > 0 ? `${h}h ${m}m` : `${m}m`
+}
+
+const recentTrips = computed(() => {
+  const trips = driverTripStore.historyTrips || []
+  return trips.slice(0, 3).map(trip => ({
+    ...trip,
+    routeName: trip.route?.name || 'Unknown Route',
+    busCode: trip.bus?.code || trip.bus?.plate_number || 'BUS',
+    formattedTime: formatTripTime(trip),
+    statusClass: trip.status === 'completed' ? 'completed' : 'cancelled'
+  }))
+})
+
+const formatTripTime = (trip) => {
+  if (!trip.started_at) return ''
+  const time = new Date(trip.started_at).toLocaleTimeString([], { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true
+  })
+  return time
+}
+
+const formatDuration = (trip) => {
+  if (!trip.started_at || !trip.ended_at) return ''
+  const start = new Date(trip.started_at)
+  const end = new Date(trip.ended_at)
+  const mins = Math.round((end - start) / 60000)
+  if (mins < 60) return `${mins}m`
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return `${h}h ${m}m`
+}
+
 onMounted(async () => {
-  await checkActiveTrip()
+  await Promise.all([
+    checkActiveTrip(),
+    driverTripStore.fetchHistory(1)
+  ])
+  statsLoading.value = false
 })
 
 const checkActiveTrip = async () => {
-  // Skip loading state if we have recent cached data
   const hasCache = driverTripStore.apiCache?.currentTrip &&
     (Date.now() - driverTripStore.apiCache.currentTrip) < 30000
 
@@ -64,11 +172,19 @@ const handleStartTrip = () => {
 <template>
   <div class="dashboard-page">
     <!-- Loading State -->
-    <div v-if="loading" class="space-y-4">
-      <div class="skeleton-shape" style="width: 40%; height: 12px;"></div>
-      <div class="skeleton-shape" style="width: 55%; height: 20px;"></div>
-      <div class="skeleton-shape" style="width: 60%; height: 12px; margin-top: 4px;"></div>
-      <div class="skeleton-shape" style="height: 200px; border-radius: var(--radius-lg, 16px); margin-top: 12px;"></div>
+    <div v-if="loading" class="dashboard-skeleton">
+      <div class="skeleton-top">
+        <div class="skeleton-shape" style="width: 40%; height: 12px;"></div>
+        <div class="skeleton-shape" style="width: 55%; height: 20px;"></div>
+        <div class="skeleton-shape" style="width: 30%; height: 12px; margin-top: 4px;"></div>
+      </div>
+      <div class="skeleton-hero">
+        <div class="skeleton-hero-icon"></div>
+        <div class="skeleton-hero-body">
+          <div class="skeleton-shape" style="width: 50%; height: 16px;"></div>
+          <div class="skeleton-shape" style="width: 80%; height: 12px; margin-top: 8px;"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Dashboard Content -->
@@ -81,6 +197,58 @@ const handleStartTrip = () => {
           <p class="dash-date">{{ currentDate }}</p>
         </div>
         <div class="dash-avatar">{{ driverInitials }}</div>
+      </div>
+
+      <!-- Dashboard Stats -->
+      <div class="stats-card">
+        <div class="stats-header">
+          <i class="bi bi-bar-chart-fill"></i>
+          <span>Trip Stats</span>
+        </div>
+        
+        <!-- Stats Skeleton -->
+        <div v-if="statsLoading" class="stats-row-skeleton">
+          <div class="skeleton-stat">
+            <div class="skeleton-icon"></div>
+            <div class="skeleton-text">
+              <div class="skeleton-shape" style="width: 40px; height: 24px;"></div>
+              <div class="skeleton-shape" style="width: 50px; height: 14px; margin-top: 6px;"></div>
+            </div>
+          </div>
+          <div class="skeleton-divider"></div>
+          <div class="skeleton-stat">
+            <div class="skeleton-icon"></div>
+            <div class="skeleton-text">
+              <div class="skeleton-shape" style="width: 40px; height: 24px;"></div>
+              <div class="skeleton-shape" style="width: 50px; height: 14px; margin-top: 6px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Content -->
+        <Transition name="fade" mode="out-in">
+          <div v-if="!statsLoading" class="stats-row" key="stats">
+            <div class="stat-item">
+              <div class="stat-icon">
+                <i class="bi bi-calendar-check"></i>
+              </div>
+              <div class="stat-detail">
+                <div class="stat-value">{{ todayStats.trips }}</div>
+                <div class="stat-label">Today</div>
+              </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-icon">
+                <i class="bi bi-graph-up-arrow"></i>
+              </div>
+              <div class="stat-detail">
+                <div class="stat-value">{{ totalStats.trips }}</div>
+                <div class="stat-label">Total</div>
+              </div>
+            </div>
+          </div>
+        </Transition>
       </div>
 
       <!-- Start Trip Hero Card -->
@@ -97,6 +265,49 @@ const handleStartTrip = () => {
           <i class="bi bi-arrow-right"></i>
         </div>
       </button>
+
+      <!-- Recent Activity -->
+      <Transition name="fade" mode="out-in">
+        <div v-if="statsLoading" class="activity-section" key="loading">
+          <div class="activity-header">
+            <i class="bi bi-clock-history"></i>
+            <span>Recent Activity</span>
+          </div>
+          <div class="activity-list">
+            <div v-for="i in 3" :key="i" class="activity-skeleton">
+              <div class="skeleton-icon"></div>
+              <div class="skeleton-content">
+                <div class="skeleton-shape" style="width: 60%; height: 14px;"></div>
+                <div class="skeleton-shape" style="width: 40%; height: 12px; margin-top: 6px;"></div>
+              </div>
+              <div class="skeleton-shape" style="width: 40px; height: 14px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="recentTrips.length > 0" class="activity-section" key="content">
+          <div class="activity-header">
+            <i class="bi bi-clock-history"></i>
+            <span>Recent Activity</span>
+          </div>
+          <div class="activity-list">
+            <div v-for="trip in recentTrips" :key="trip.id" class="activity-item">
+              <div class="activity-icon" :class="trip.statusClass">
+                <i class="bi bi-bus-front-fill"></i>
+              </div>
+              <div class="activity-content">
+                <div class="activity-route">{{ trip.routeName }}</div>
+                <div class="activity-meta">
+                  <span>{{ trip.busCode }}</span>
+                  <span class="activity-dot">•</span>
+                  <span>{{ formatDuration(trip) }}</span>
+                </div>
+              </div>
+              <div class="activity-time">{{ trip.formattedTime }}</div>
+            </div>
+          </div>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -104,6 +315,43 @@ const handleStartTrip = () => {
 <style scoped>
 .dashboard-page {
   padding: 24px 16px;
+}
+
+.dashboard-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.skeleton-top {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.skeleton-hero-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  margin-bottom: 20px;
+}
+
+.skeleton-hero-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
 }
 
 .dashboard-content {
@@ -239,5 +487,237 @@ const handleStartTrip = () => {
 
 .hero-btn i {
   font-size: 16px;
+}
+
+/* ── Stats Card ── */
+.stats-card {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-500);
+  margin-bottom: 16px;
+}
+
+.stats-header i {
+  font-size: 16px;
+  color: var(--primary);
+}
+
+.stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--primary-50);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.stat-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--gray-900);
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  margin-top: 2px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 44px;
+  background: var(--gray-200);
+}
+
+/* ── Skeleton ── */
+.stats-row-skeleton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.skeleton-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skeleton-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--gray-100);
+}
+
+.skeleton-text {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Transitions ── */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ── Recent Activity ── */
+.activity-section {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.activity-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-500);
+  margin-bottom: 16px;
+}
+
+.activity-header i {
+  font-size: 16px;
+  color: var(--primary);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+  transition: background var(--transition-fast);
+}
+
+.activity-item:hover {
+  background: var(--gray-100);
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.activity-icon.completed {
+  background: var(--primary-50);
+  color: var(--primary);
+}
+
+.activity-icon.cancelled {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-route {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-top: 2px;
+}
+
+.activity-dot {
+  font-size: 8px;
+  opacity: 0.5;
+}
+
+.activity-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-400);
+  flex-shrink: 0;
+}
+
+/* ── Activity Skeleton ── */
+.activity-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+}
+
+.activity-skeleton .skeleton-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.activity-skeleton .skeleton-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 </style>

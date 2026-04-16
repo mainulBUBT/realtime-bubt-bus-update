@@ -8,9 +8,35 @@
     <meta name="theme-color" content="#4F46E5">
     <script>
       (function() {
+        function adjustBrightness(hex, percent) {
+          const value = hex.replace('#', '');
+          const rgb = [
+            parseInt(value.slice(0, 2), 16),
+            parseInt(value.slice(2, 4), 16),
+            parseInt(value.slice(4, 6), 16)
+          ];
+
+          const adjust = (channel) => {
+            const adjusted = Math.round(channel + (percent * 255));
+            return Math.max(0, Math.min(255, adjusted));
+          };
+
+          return `#${rgb.map((channel) => adjust(channel).toString(16).padStart(2, '0')).join('')}`;
+        }
+
         const appType = '%VITE_APP_TYPE%' === 'student' ? 'student' : 'driver';
-        const themeColor = appType === 'student' ? '#4F46E5' : '#059669';
+        const primaryColor = appType === 'student' ? '#4F46E5' : '#059669';
+        const splashColors = {
+          primary: primaryColor,
+          secondary: adjustBrightness(primaryColor, -0.2)
+        };
+        const themeColor = splashColors.primary;
         const themeMeta = document.querySelector('meta[name="theme-color"]');
+
+        document.documentElement.style.setProperty('--splash-primary', splashColors.primary);
+        document.documentElement.style.setProperty('--splash-secondary', splashColors.secondary);
+        document.documentElement.style.background = `linear-gradient(135deg, ${splashColors.primary} 0%, ${splashColors.secondary} 100%)`;
+
         if (themeMeta) {
           themeMeta.setAttribute('content', themeColor);
         }

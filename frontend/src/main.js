@@ -50,8 +50,14 @@ app.use(router)
 const authStore = useAuthStore()
 authStore.loadUserFromStorage()
 
-// Fetch settings before mounting
 const settingsStore = useSettingsStore()
+const usedCachedBranding = settingsStore.applyCachedBranding(appType)
+
+if (!usedCachedBranding) {
+  settingsStore.applyDefaultBranding(appType)
+}
+
+// Fetch settings before mounting
 settingsStore.fetchSettings(appType).then(() => {
   if (isDev) {
     console.log('⚙️ Settings loaded:', settingsStore.appSettings)

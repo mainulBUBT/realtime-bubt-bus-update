@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useMapStore } from '@/stores/useMapStore'
 import { storeToRefs } from 'pinia'
 
@@ -60,6 +60,7 @@ function distanceToSegmentMeters(lat, lng, startLat, startLng, endLat, endLng) {
 
 function formatDistance(distanceMeters) {
   if (!Number.isFinite(distanceMeters)) return ''
+  if (distanceMeters < 20) return `${Math.round(distanceMeters)} m away`
   if (distanceMeters < 1000) return `${Math.round(distanceMeters / 10) * 10} m away`
   return `${(distanceMeters / 1000).toFixed(1)} km away`
 }
@@ -112,6 +113,59 @@ function resolveRouteProgressIndex(stops, busLat, busLng) {
   return bestSegment.startIdx
 }
 
+// ── OSRM road distance ───────────────────────────────────
+// Fetches real road distance from bus position to approaching stop via OSRM.
+// Falls back to haversine if OSRM fails.
+const approachingRoadDist = ref(null)  // { stopId, distance }
+let osrmAbortController = null
+let osrmRefreshTimer = null
+let lastFetchKey = ''
+
+async function fetchApproachingDistance(busLat, busLng, stopLat, stopLng, stopId) {
+  const key = `${busLat.toFixed(4)},${busLng.toFixed(4)}→${stopId}`
+  if (key === lastFetchKey) return  // already fetched for this position
+  lastFetchKey = key
+
+  if (osrmAbortController) osrmAbortController.abort()
+  osrmAbortController = new AbortController()
+
+  // OSRM uses lng,lat order
+  const url = `https://router.project-osrm.org/route/v1/driving/${busLng},${busLat};${stopLng},${stopLat}?overview=false`
+
+  try {
+    const res = await fetch(url, { signal: osrmAbortController.signal })
+    if (!res.ok) throw new Error(`OSRM ${res.status}`)
+    const data = await res.json()
+
+    if (data.code === 'Ok' && data.routes?.[0]?.distance != null) {
+      approachingRoadDist.value = { stopId, distance: data.routes[0].distance }
+    } else {
+      approachingRoadDist.value = {
+        stopId,
+        distance: haversineMeters(busLat, busLng, stopLat, stopLng),
+      }
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') return
+    console.warn('[TimelinePanel] OSRM failed, haversine fallback:', e.message)
+    approachingRoadDist.value = {
+      stopId,
+      distance: haversineMeters(busLat, busLng, stopLat, stopLng),
+    }
+  }
+}
+
+// Refresh approaching distance when bus position changes
+watch(selectedTripId, (newId) => {
+  if (osrmRefreshTimer) { clearInterval(osrmRefreshTimer); osrmRefreshTimer = null }
+  if (!newId) { approachingRoadDist.value = null; lastFetchKey = ''; return }
+})
+
+onUnmounted(() => {
+  if (osrmAbortController) osrmAbortController.abort()
+  if (osrmRefreshTimer) clearInterval(osrmRefreshTimer)
+})
+
 function resolveStopState(stops, busLat, busLng) {
   if (busLat === null || busLng === null) {
     return {
@@ -133,9 +187,20 @@ function resolveStopState(stops, busLat, busLng) {
 
   const lastIdx = stops.length - 1
   const { distances, nearest } = getNearestStop(stops, busLat, busLng)
+
+  // 1st priority: if bus is within standard proximity of ANY stop → "Currently Here"
+  if (nearest.distance <= STOP_PROXIMITY_METERS) {
+    return {
+      currentIdx: nearest.index,
+      approachingIdx: null,
+      approachingDistance: nearest.distance,
+      progressIdx: nearest.index,
+    }
+  }
+
+  // 2nd priority: terminal fallback — wider radius for first/last stops
   const firstTerminalDistance = distances[0]
   const lastTerminalDistance = distances[lastIdx]
-
   if (firstTerminalDistance <= TERMINAL_PROXIMITY_METERS || lastTerminalDistance <= TERMINAL_PROXIMITY_METERS) {
     const currentIdx = firstTerminalDistance <= lastTerminalDistance ? 0 : lastIdx
     return {
@@ -143,15 +208,6 @@ function resolveStopState(stops, busLat, busLng) {
       approachingIdx: null,
       approachingDistance: distances[currentIdx],
       progressIdx: currentIdx,
-    }
-  }
-
-  if (nearest.distance <= STOP_PROXIMITY_METERS) {
-    return {
-      currentIdx: nearest.index,
-      approachingIdx: null,
-      approachingDistance: nearest.distance,
-      progressIdx: nearest.index,
     }
   }
 
@@ -236,6 +292,22 @@ const stopsWithState = computed(() => {
   const lastIdx = stops.length - 1
   const { currentIdx, approachingIdx, approachingDistance } = resolveStopState(stops, busLat, busLng)
 
+  // Trigger OSRM road distance fetch when approaching a stop
+  let displayDistance = approachingDistance
+  if (approachingIdx !== null && busLat !== null && busLng !== null) {
+    const stop = stops[approachingIdx]
+    const stopLat = parseFloat(stop.lat)
+    const stopLng = parseFloat(stop.lng)
+
+    // Use cached OSRM distance if available for this stop
+    if (approachingRoadDist.value?.stopId === stop.id) {
+      displayDistance = approachingRoadDist.value.distance
+    }
+
+    // Fetch road distance asynchronously (will update this computed when ready)
+    fetchApproachingDistance(busLat, busLng, stopLat, stopLng, stop.id)
+  }
+
   return stops.map((stop, i) => {
     let state = 'upcoming'
     let statusText = 'Upcoming'
@@ -257,7 +329,7 @@ const stopsWithState = computed(() => {
         statusText = 'Passed'
       } else if (i === approachingIdx) {
         state = 'approaching'
-        statusText = `Approaching - ${formatDistance(approachingDistance)}`
+        statusText = `Approaching - ${formatDistance(displayDistance)}`
       } else if (i === lastIdx) {
         state = 'destination'
         statusText = 'Final Stop'

@@ -21,4 +21,15 @@ const echo = new Echo({
   }),
 })
 
+// Connection diagnostics — helps debug WS issues on real devices
+echo.connector.pusher.connection.bind('connected', () => {
+  console.log('[Echo] WebSocket CONNECTED')
+})
+echo.connector.pusher.connection.bind('disconnected', () => {
+  console.warn('[Echo] WebSocket DISCONNECTED')
+})
+echo.connector.pusher.connection.bind('error', (err) => {
+  console.error('[Echo] WebSocket ERROR:', err?.error || err)
+})
+
 export default echo

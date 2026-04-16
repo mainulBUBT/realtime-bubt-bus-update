@@ -139,11 +139,18 @@ function updateMapMarkers(tripList) {
     seen.add(id)
 
     if (busMarkers[id]) {
-      // Position is owned exclusively by the WS animation system (watch lastLocationUpdate).
-      // Never call setLatLng here — it resets the marker mid-animation which causes
-      // the perpetual re-animate bug on stationary buses.
       busMarkers[id].setIcon(createBusIcon(code, status, hasGps, selected))
       busMarkers[id].setPopupContent(buildPopup(code, routeName, status, eta, hasGps))
+
+      // Polling safety net: update marker position when no WS animation is active.
+      // This ensures markers move even when WebSocket is disconnected.
+      if (hasGps && !markerAnimations[id]) {
+        const currentPos = busMarkers[id].getLatLng()
+        const newPos = L.latLng(lat, lng)
+        if (currentPos.distanceTo(newPos) > 1) {
+          busMarkers[id].setLatLng(newPos)
+        }
+      }
     } else {
       const marker = L.marker([lat, lng], { icon: createBusIcon(code, status, hasGps, selected) })
         .addTo(mapInstance)
@@ -297,6 +304,10 @@ watch(selectedTripId, (newId) => {
 // Also pan the map if this is the currently selected bus.
 watch(lastLocationUpdate, (update) => {
   if (!update || !mapInstance) return
+  if (!busMarkers[update.tripId]) {
+    updateMapMarkers(trips.value)
+  }
+
   const marker = busMarkers[update.tripId]
   if (!marker) return
 

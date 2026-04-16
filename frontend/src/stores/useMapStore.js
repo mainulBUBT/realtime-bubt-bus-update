@@ -18,6 +18,7 @@ export const useMapStore = defineStore('map', () => {
 
   // Track active channel subscriptions so we can leave stale ones
   const subscribedBusIds = new Set()
+  let socketRefreshInFlight = false
 
   // ── derived bus list for sidebar ─────────────────────
   const buses = computed(() =>
@@ -121,7 +122,7 @@ export const useMapStore = defineStore('map', () => {
         })
 
       subscribedBusIds.add(busId)
-      console.log('[Echo] subscribed to channel bus.' + busId)
+      console.log('[Echo] subscribed to channel bus.' + busId, '| connection state:', echo.connector.pusher.connection.state)
     }
   }
 
@@ -131,7 +132,15 @@ export const useMapStore = defineStore('map', () => {
    */
   function handleLocationUpdate(busId, payload) {
     const idx = trips.value.findIndex(t => t.bus_id === busId)
-    if (idx === -1) return
+    if (idx === -1) {
+      if (!socketRefreshInFlight) {
+        socketRefreshInFlight = true
+        void fetchTrips().finally(() => {
+          socketRefreshInFlight = false
+        })
+      }
+      return
+    }
 
     // Patch in place so Vue reactivity picks it up
     trips.value[idx] = {

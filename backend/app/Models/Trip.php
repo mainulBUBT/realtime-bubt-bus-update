@@ -93,12 +93,20 @@ class Trip extends Model
     }
 
     /**
-     * Scope for ongoing trips left over from previous days.
+     * Scope for ongoing trips that are stale:
+     * - From a previous day, OR
+     * - No location update for 2+ hours.
      */
     public function scopeStaleOngoing($query)
     {
         return $query->ongoing()
-            ->whereDate('trip_date', '<', today());
+            ->where(function ($q) {
+                $q->whereDate('trip_date', '<', today())
+                    ->orWhere(function ($q2) {
+                        $q2->whereNull('last_location_at')
+                            ->orWhere('last_location_at', '<', now()->subHours(2));
+                    });
+            });
     }
 
     /**

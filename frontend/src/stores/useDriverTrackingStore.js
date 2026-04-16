@@ -109,6 +109,7 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
   const queue = ref([])
   const lastSentAt = ref(null)
   const lastError = ref(null)
+  const persistedLastLocation = ref(createEmptyLocation())
   const syncInProgress = ref(false)
   const status = ref('idle')
   const isOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
@@ -120,6 +121,7 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     distance: 0,
     jump: 0
   })
+  const recentAccuracyRejects = ref(0)
 
   let flushTimerId = null
   let appStateListener = null
@@ -129,17 +131,9 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
 
   const queueSize = computed(() => queue.value.length)
   const hasQueuedLocations = computed(() => queueSize.value > 0)
-  const lastKnownLocation = computed(() => {
-    if (currentLocation.value && (
-      currentLocation.value.timestamp ||
-      currentLocation.value.lat !== 0 ||
-      currentLocation.value.lng !== 0
-    )) {
-      return currentLocation.value
-    }
-
+  const lastAcceptedLocation = computed(() => {
     const latestQueued = queue.value[queue.value.length - 1]
-    if (!latestQueued) return createEmptyLocation()
+    if (!latestQueued) return persistedLastLocation.value
 
     return {
       lat: latestQueued.lat,
@@ -148,6 +142,15 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
       accuracy: latestQueued.accuracy,
       timestamp: latestQueued.recorded_at
     }
+  })
+  const lastKnownLocation = computed(() => {
+    if (lastAcceptedLocation.value.timestamp ||
+      lastAcceptedLocation.value.lat !== 0 ||
+      lastAcceptedLocation.value.lng !== 0) {
+      return lastAcceptedLocation.value
+    }
+
+    return createEmptyLocation()
   })
   const isAndroidNative = computed(() => Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android')
 
@@ -186,6 +189,7 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     lastSentAt.value = null
     lastError.value = null
     status.value = 'idle'
+    persistedLastLocation.value = createEmptyLocation()
     persistState()
   }
 
@@ -216,10 +220,21 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     const candidateTimeMs = parseTimestampMs(location?.timestamp) ?? Date.now()
     const candidateAccuracy = normalized.accuracy == null ? null : Number(normalized.accuracy)
 
-    if (candidateAccuracy != null && Number.isFinite(candidateAccuracy) && candidateAccuracy > MAX_ACCEPTABLE_ACCURACY_M) {
+    const isBootstrapMode = bootstrapping.value && queue.value.length === 0
+    const canAcceptPoorAccuracy = isBootstrapMode && candidateAccuracy != null && candidateAccuracy <= 200
+
+    if (candidateAccuracy != null && Number.isFinite(candidateAccuracy) && candidateAccuracy > MAX_ACCEPTABLE_ACCURACY_M && !canAcceptPoorAccuracy) {
+      if (isBootstrapMode) {
+        recentAccuracyRejects.value += 1
+      }
       ignoredCounts.value.total += 1
       ignoredCounts.value.accuracy += 1
       return
+    }
+
+    if (isBootstrapMode) {
+      recentAccuracyRejects.value = 0
+      bootstrapping.value = false
     }
 
     const previousQueued = queue.value[queue.value.length - 1]
@@ -252,6 +267,14 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     }
 
     queue.value.push(normalized)
+
+    persistedLastLocation.value = {
+      lat: normalized.lat,
+      lng: normalized.lng,
+      speed: normalized.speed,
+      accuracy: normalized.accuracy,
+      timestamp: normalized.recorded_at
+    }
 
     if (queue.value.length > MAX_QUEUE_SIZE) {
       queue.value = queue.value.slice(queue.value.length - MAX_QUEUE_SIZE)
@@ -414,6 +437,8 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     }
 
     activeTripId.value = tripId
+    bootstrapping.value = true
+    recentAccuracyRejects.value = 0
 
     if (status.value !== 'starting') {
       lastError.value = null
@@ -469,6 +494,7 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     if (clearQueue) {
       queue.value = []
       lastSentAt.value = null
+      persistedLastLocation.value = createEmptyLocation()
     }
 
     if (resetTrip) {
@@ -487,6 +513,7 @@ export const useDriverTrackingStore = defineStore('driverTracking', () => {
     queue,
     queueSize,
     hasQueuedLocations,
+    lastAcceptedLocation,
     lastKnownLocation,
     lastSentAt,
     lastError,

@@ -17,15 +17,15 @@ const nowTick = ref(Date.now())
 const trip = computed(() => driverTripStore.currentTrip)
 
 const location = computed(() => {
-  const lastKnownLocation = driverTrackingStore.lastKnownLocation
+  const acceptedLocation = driverTrackingStore.lastAcceptedLocation
 
-  if (lastKnownLocation && (lastKnownLocation.timestamp || lastKnownLocation.lat !== 0 || lastKnownLocation.lng !== 0)) {
+  if (acceptedLocation && (acceptedLocation.timestamp || acceptedLocation.lat !== 0 || acceptedLocation.lng !== 0)) {
     return {
-      lat: Number(lastKnownLocation.lat || 0),
-      lng: Number(lastKnownLocation.lng || 0),
-      speed: lastKnownLocation.speed,
-      accuracy: lastKnownLocation.accuracy ?? null,
-      timestamp: lastKnownLocation.timestamp ?? null
+      lat: Number(acceptedLocation.lat || 0),
+      lng: Number(acceptedLocation.lng || 0),
+      speed: acceptedLocation.speed,
+      accuracy: acceptedLocation.accuracy ?? null,
+      timestamp: acceptedLocation.timestamp ?? null
     }
   }
 

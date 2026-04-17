@@ -29,6 +29,12 @@ export const useMapStore = defineStore('map', () => {
     )
   }
 
+  function parseTimeMs(value) {
+    if (!value) return null
+    const ms = Date.parse(value)
+    return Number.isFinite(ms) ? ms : null
+  }
+
   // ── derived bus list for sidebar ─────────────────────
   const buses = computed(() =>
     trips.value.map(trip => {
@@ -152,6 +158,20 @@ export const useMapStore = defineStore('map', () => {
           socketRefreshInFlight = false
         })
       }
+      return
+    }
+
+    const existingUpdatedAt = parseTimeMs(
+      trips.value[idx]?.latestLocation?.recorded_at
+      ?? trips.value[idx]?.latest_location?.recorded_at
+    )
+    const incomingUpdatedAt = parseTimeMs(payload.updated_at)
+
+    if (
+      existingUpdatedAt !== null
+      && incomingUpdatedAt !== null
+      && incomingUpdatedAt <= existingUpdatedAt
+    ) {
       return
     }
 

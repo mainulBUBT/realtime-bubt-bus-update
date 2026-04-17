@@ -319,6 +319,13 @@ class DriverLocationTrackingTest extends TestCase
         $trip->refresh();
         $this->assertFalse($trip->is_off_route);
         $this->assertGreaterThanOrEqual($frozenProgress, (float) $trip->progress_distance_m);
+        $this->assertSame($route->stops()->where('sequence', 4)->value('id'), $trip->current_stop_id);
+
+        Sanctum::actingAs($student);
+        $recoveredResponse = $this->getJson('/api/student/trips/active');
+        $recoveredResponse->assertOk();
+        $recoveredResponse->assertJsonPath('0.tracking_status', 'at_stop');
+        $recoveredResponse->assertJsonPath('0.stop_states.3.state', 'current');
     }
 
     public function test_noise_and_impossible_speed_points_do_not_advance_progress(): void
@@ -372,6 +379,75 @@ class DriverLocationTrackingTest extends TestCase
         $this->assertSame($firstProgress, (float) $trip->progress_distance_m);
         $this->assertEquals('23.7800000', (string) $trip->current_lat);
         $this->assertEquals('90.4100500', (string) $trip->current_lng);
+    }
+
+    public function test_stale_single_and_batch_points_are_dropped_without_reverting_live_trip_state(): void
+    {
+        Event::fake();
+
+        $driver = $this->createUser('driver');
+        $bus = $this->createBus();
+        $route = $this->createRouteWithStops();
+        $trip = $this->createTrip($bus, $route, $driver);
+
+        Sanctum::actingAs($driver);
+
+        $this->postJson('/api/driver/location', [
+            'trip_id' => $trip->id,
+            'lat' => 23.7800000,
+            'lng' => 90.4100500,
+            'recorded_at' => '2026-04-04T09:00:00+06:00',
+        ])->assertOk();
+
+        $this->postJson('/api/driver/location', [
+            'trip_id' => $trip->id,
+            'lat' => 23.7800000,
+            'lng' => 90.4197000,
+            'recorded_at' => '2026-04-04T09:08:00+06:00',
+        ])->assertOk();
+
+        $trip->refresh();
+        $this->assertSame(2, Location::query()->count());
+        $this->assertEquals('23.7800000', (string) $trip->current_lat);
+        $this->assertEquals('90.4197000', (string) $trip->current_lng);
+
+        $this->postJson('/api/driver/location', [
+            'trip_id' => $trip->id,
+            'lat' => 23.7800000,
+            'lng' => 90.4141000,
+            'recorded_at' => '2026-04-04T09:04:00+06:00',
+        ])->assertOk()
+            ->assertJsonPath('ignored', true);
+
+        $trip->refresh();
+        $this->assertSame(2, Location::query()->count());
+        $this->assertEquals('23.7800000', (string) $trip->current_lat);
+        $this->assertEquals('90.4197000', (string) $trip->current_lng);
+
+        $this->postJson('/api/driver/location/batch', [
+            'trip_id' => $trip->id,
+            'locations' => [
+                [
+                    'lat' => 23.7800000,
+                    'lng' => 90.4141000,
+                    'recorded_at' => '2026-04-04T09:05:00+06:00',
+                ],
+                [
+                    'lat' => 23.7800000,
+                    'lng' => 90.4219000,
+                    'recorded_at' => '2026-04-04T09:10:00+06:00',
+                ],
+            ],
+        ])->assertOk();
+
+        $trip->refresh();
+        $this->assertSame(3, Location::query()->count());
+        $this->assertEquals('23.7800000', (string) $trip->current_lat);
+        $this->assertEquals('90.4219000', (string) $trip->current_lng);
+        $this->assertSame(
+            Carbon::parse('2026-04-04T09:10:00+06:00')->utc()->timestamp,
+            $trip->last_location_at?->timestamp
+        );
     }
 
     private function createUser(string $role): User

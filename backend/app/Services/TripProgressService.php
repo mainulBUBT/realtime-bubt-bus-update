@@ -72,6 +72,11 @@ class TripProgressService
         $progressDistance = $trip->progress_distance_m !== null ? (float) $trip->progress_distance_m : 0.0;
         $previousProgressDistance = $progressDistance;
         $trackingStatus = 'on_route';
+        $lastConfirmedSequence = (int) ($trip->last_confirmed_stop_sequence ?? 0);
+        $terminalStopIds = array_values(array_filter([
+            $stops->first()?->id,
+            $stops->last()?->id,
+        ]));
 
         if ($this->isNearTerminalStop($stops, $busLat, $busLng)) {
             $nearestRouteDistance = 0.0;
@@ -108,9 +113,17 @@ class TripProgressService
             $busLat,
             $busLng,
             $progressDistance,
-            (bool) $trip->is_off_route,
-            $trackingStatus !== 'backward'
+            $trackingStatus !== 'backward',
+            $lastConfirmedSequence,
+            $terminalStopIds,
         );
+
+        if ($stopState['recovered_from_stop_match']) {
+            $trip->off_route_counter = 0;
+            $trip->is_off_route = false;
+            $trip->off_route_since = null;
+            $trackingStatus = 'on_route';
+        }
 
         if ($trackingStatus === 'on_route' && $stopState['current_stop_id'] !== null) {
             $trackingStatus = 'at_stop';
@@ -137,7 +150,21 @@ class TripProgressService
 
     public function shouldIgnoreIncomingPoint(Trip $trip, float $busLat, float $busLng, CarbonInterface $recordedAt): bool
     {
+        if ($this->isStalePoint($trip, $recordedAt)) {
+            return true;
+        }
+
         return $this->shouldIgnorePoint($trip, $busLat, $busLng, $recordedAt);
+    }
+
+    private function isStalePoint(Trip $trip, CarbonInterface $recordedAt): bool
+    {
+        if ($trip->last_gps_at !== null && $recordedAt->lessThanOrEqualTo($trip->last_gps_at)) {
+            return true;
+        }
+
+        return $trip->last_location_at !== null
+            && $recordedAt->lessThanOrEqualTo($trip->last_location_at);
     }
 
     private function shouldIgnorePoint(Trip $trip, float $busLat, float $busLng, CarbonInterface $recordedAt): bool
@@ -169,12 +196,15 @@ class TripProgressService
         float $busLat,
         float $busLng,
         float $progressDistance,
-        bool $isOffRoute,
         bool $allowCurrentStop,
+        int $lastConfirmedSequence,
+        array $terminalStopIds,
     ): array {
         $passedStop = null;
         $nextStop = null;
         $currentStop = null;
+        $bestRadiusMatch = null;
+        $bestRadiusDistance = INF;
         $lastIndex = $stops->count() - 1;
 
         foreach ($stops->sortBy('sequence')->values() as $index => $stop) {
@@ -189,12 +219,25 @@ class TripProgressService
                 $passedStop = $stop;
             }
 
-            if ($currentStop === null && !$isOffRoute && $allowCurrentStop && $distanceToStop <= $radius) {
-                $currentStop = $stop;
+            if ($allowCurrentStop && $distanceToStop <= $radius && $distanceToStop < $bestRadiusDistance) {
+                $bestRadiusDistance = $distanceToStop;
+                $bestRadiusMatch = $stop;
             }
 
             if ($nextStop === null && $distanceAlongRoute > $progressDistance) {
                 $nextStop = $stop;
+            }
+        }
+
+        $recoveredFromStopMatch = false;
+
+        if ($bestRadiusMatch !== null) {
+            $isTerminalStop = in_array($bestRadiusMatch->id, $terminalStopIds, true);
+            $isNextLogicalStop = $bestRadiusMatch->sequence >= max(1, $lastConfirmedSequence + 1);
+
+            if ($isTerminalStop || $isNextLogicalStop) {
+                $currentStop = $bestRadiusMatch;
+                $recoveredFromStopMatch = true;
             }
         }
 
@@ -205,6 +248,7 @@ class TripProgressService
             'last_confirmed_stop_sequence' => $lastConfirmedStop?->sequence,
             'current_stop_id' => $currentStop?->id,
             'next_stop_id' => $nextStop?->id,
+            'recovered_from_stop_match' => $recoveredFromStopMatch,
         ];
     }
 

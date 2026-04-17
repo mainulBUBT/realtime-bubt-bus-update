@@ -1,0 +1,1373 @@
+{
+  "info": {
+    "name": "BUBT Bus Tracker API",
+    "description": "Comprehensive API collection for the BUBT Bus Tracker application. Includes endpoints for authentication, driver trip management, student tracking, and admin operations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "driverToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "studentToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driverId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "studentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "busId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "routeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tripId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "scheduleId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "todayDate",
+      "value": "{{$isoTimestamp}}",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{driverToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Public Routes",
+      "description": "Endpoints accessible without authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('driverToken', jsonData.token);",
+                  "    pm.collectionVariables.set('driverId', jsonData.user.id);",
+                  "    pm.test('Token received', function() {",
+                  "        pm.expect(jsonData.token).to.not.be.empty;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"driver@bubt.edu\",\n    \"password\": \"password123\",\n    \"role\": \"driver\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login for drivers and students. Returns user object and API token."
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('studentToken', jsonData.token);",
+                  "    pm.collectionVariables.set('studentId', jsonData.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"student@bubt.edu\",\n    \"password\": \"password123\",\n    \"role\": \"student\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login for students."
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('adminToken', jsonData.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@bubt.edu\",\n    \"password\": \"password123\",\n    \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login for administrators."
+          },
+          "response": []
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Rafiq Ahmed\",\n    \"email\": \"rafiq.ahmed@student.bubt.edu\",\n    \"phone\": \"+8801812345678\",\n    \"password\": \"SecurePass123\",\n    \"password_confirmation\": \"SecurePass123\",\n    \"role\": \"student\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new student or driver account."
+          },
+          "response": []
+        },
+        {
+          "name": "Get App Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["settings"]
+            },
+            "description": "Get public application settings."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication (Protected)",
+      "description": "Endpoints for managing authenticated user session",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get the currently authenticated user's profile."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Name\",\n    \"phone\": \"+8801712345679\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            },
+            "description": "Update the authenticated user's profile (name and phone)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Password",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"current_password\": \"password123\",\n    \"password\": \"newpassword123\",\n    \"password_confirmation\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "password"]
+            },
+            "description": "Update the authenticated user's password."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout and invalidate the current token. If driver has an active trip, it will be completed."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Driver Endpoints",
+      "description": "Endpoints for drivers to manage trips and submit location data",
+      "item": [
+        {
+          "name": "Get Available Buses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/driver/buses",
+              "host": ["{{baseUrl}}"],
+              "path": ["driver", "buses"]
+            },
+            "description": "Get list of available buses (active buses without ongoing trips)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Available Routes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/driver/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["driver", "routes"]
+            },
+            "description": "Get list of available routes for today."
+          },
+          "response": []
+        },
+        {
+          "name": "Start Trip",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('tripId', jsonData.trip.id);",
+                  "    pm.collectionVariables.set('busId', jsonData.trip.bus_id);",
+                  "    pm.collectionVariables.set('routeId', jsonData.trip.route_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bus_id\": 1,\n    \"route_id\": 1,\n    \"schedule_id\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/driver/trips/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["driver", "trips", "start"]
+            },
+            "description": "Start a new trip. Returns conflict if driver or bus already has an active trip."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current Trip",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/driver/trips/current",
+              "host": ["{{baseUrl}}"],
+              "path": ["driver", "trips", "current"]
+            },
+            "description": "Get the driver's current active trip with bus, route, and stops details."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/driver/trips/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["driver", "trips", "history"]
+            },
+            "description": "Get paginated list of driver's completed and cancelled trips."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"trip_id\": \"{{tripId}}\",\n    \"lat\": 23.7942,\n    \"lng\": 90.3635,\n    \"speed\": 28.5,\n    \"recorded_at\": \"{{$timestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/driver/location",
+              "host": ["{{baseUrl}}"],
+              "path": ["driver", "location"]
+            },
+            "description": "Submit driver's current GPS location. Broadcasts to all subscribers via WebSocket."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Batch Locations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"trip_id\": \"{{tripId}}\",\n    \"locations\": [\n        {\n            \"lat\": 23.7937,\n            \"lng\": 90.3629,\n            \"speed\": 25.5,\n            \"recorded_at\": \"{{$timestamp}}\"\n        },\n        {\n            \"lat\": 23.7940,\n            \"lng\": 90.3630,\n            \"speed\": 26.0,\n            \"recorded_at\": \"{{$timestamp}}\"\n        },\n        {\n            \"lat\": 23.7943,\n            \"lng\": 90.3631,\n            \"speed\": 24.8,\n            \"recorded_at\": \"{{$timestamp}}\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/driver/location/batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["driver", "location", "batch"]
+            },
+            "description": "Submit multiple GPS locations at once. Useful for background tracking."
+          },
+          "response": []
+        },
+        {
+          "name": "End Trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{driverToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/driver/trips/{{tripId}}/end",
+              "host": ["{{baseUrl}}"],
+              "path": ["driver", "trips", "{{tripId}}", "end"]
+            },
+            "description": "End the current trip. Broadcasts BusTripEnded event to notify students."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Student Endpoints",
+      "description": "Endpoints for students to view routes, schedules, and track buses",
+      "item": [
+        {
+          "name": "Get Routes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "routes"]
+            },
+            "description": "Get list of active routes with optional search parameter."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Routes with Search",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/routes?q=mirpur",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "routes"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "mirpur",
+                  "description": "Search term for route name, code, or stops"
+                }
+              ]
+            },
+            "description": "Search routes by name, code, origin, destination, or stop names."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Route Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/routes/{{routeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "routes", "{{routeId}}"]
+            },
+            "description": "Get detailed route information including stops ordered by sequence."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Trips",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/trips/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "trips", "active"]
+            },
+            "description": "Get all currently active/ongoing trips with bus, route, driver, and latest location."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip Locations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/trips/{{tripId}}/locations",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "trips", "{{tripId}}", "locations"]
+            },
+            "description": "Get trip details with location history (up to 100 most recent locations)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Latest Location",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/trips/{{tripId}}/latest-location",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "trips", "{{tripId}}", "latest-location"]
+            },
+            "description": "Get the most recent location for a specific trip."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Schedules",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "schedules"]
+            },
+            "description": "Get today's bus schedules with route and bus details."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Schedules",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/schedules?filter=all",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "schedules"],
+              "query": [
+                {
+                  "key": "filter",
+                  "value": "all",
+                  "description": "Set to 'all' to get all schedules in current period, not just today's"
+                }
+              ]
+            },
+            "description": "Get all schedules in the current period (not just today)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update FCM Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"fcm_token\": \"fcm_a1b2c3d4e5f6_g7h8i9j0k1l2m3n4o5p6_q7r8s9t0\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/student/fcm-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "fcm-token"]
+            },
+            "description": "Update Firebase Cloud Messaging token for push notifications."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "notifications"]
+            },
+            "description": "Get all notifications for the authenticated student."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/notifications/unread-count",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "notifications", "unread-count"]
+            },
+            "description": "Get count of unread notifications."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/notifications/1/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "notifications", "1", "read"]
+            },
+            "description": "Mark a specific notification as read."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/student/notifications/read-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["student", "notifications", "read-all"]
+            },
+            "description": "Mark all notifications as read."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Endpoints",
+      "description": "Administrative endpoints for managing buses, routes, and schedules",
+      "item": [
+        {
+          "name": "List Buses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/buses",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "buses"]
+            },
+            "description": "Get all buses with trip counts."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Bus",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('busId', jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"plate_number\": \"DHAKA METRO-GA-12-3456\",\n    \"device_id\": \"driver-phone-001\",\n    \"capacity\": 40,\n    \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/buses",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "buses"]
+            },
+            "description": "Create a new bus."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/buses/{{busId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "buses", "{{busId}}"]
+            },
+            "description": "Get a specific bus with recent trips."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Bus",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"plate_number\": \"DHAKA METRO-GA-12-3456\",\n    \"device_id\": \"driver-phone-001\",\n    \"capacity\": 45,\n    \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/buses/{{busId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "buses", "{{busId}}"]
+            },
+            "description": "Update an existing bus."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Bus",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/buses/{{busId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "buses", "{{busId}}"]
+            },
+            "description": "Delete a bus (soft delete)."
+          },
+          "response": []
+        },
+        {
+          "name": "List Routes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "routes"]
+            },
+            "description": "Get all routes with schedule period and stops."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Route",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('routeId', jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Mirpur - BUBT Express\",\n    \"schedule_period_id\": 1,\n    \"direction\": \"up\",\n    \"origin_name\": \"Mirpur 10\",\n    \"destination_name\": \"BUBT Campus\",\n    \"polyline\": [\n        [23.7937, 90.3629],\n        [23.7945, 90.3645],\n        [23.7955, 90.3680],\n        [23.7966, 90.3745]\n    ],\n    \"stops\": [\n        {\n            \"name\": \"Mirpur 10\",\n            \"lat\": 23.7937,\n            \"lng\": 90.3629,\n            \"sequence\": 1\n        },\n        {\n            \"name\": \"Sony Hall\",\n            \"lat\": 23.7945,\n            \"lng\": 90.3645,\n            \"sequence\": 2\n        },\n        {\n            \"name\": \"Kohinoor College\",\n            \"lat\": 23.7955,\n            \"lng\": 90.3680,\n            \"sequence\": 3\n        },\n        {\n            \"name\": \"BUBT Main Gate\",\n            \"lat\": 23.7966,\n            \"lng\": 90.3745,\n            \"sequence\": 4\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "routes"]
+            },
+            "description": "Create a new route with stops."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Route",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/routes/{{routeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "routes", "{{routeId}}"]
+            },
+            "description": "Get a specific route with all related data."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Route",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Mirpur Route Updated\",\n    \"schedule_period_id\": 1,\n    \"direction\": \"up\",\n    \"origin_name\": \"Mirpur 10\",\n    \"destination_name\": \"BUBT Campus\",\n    \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/routes/{{routeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "routes", "{{routeId}}"]
+            },
+            "description": "Update an existing route."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Route",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/routes/{{routeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "routes", "{{routeId}}"]
+            },
+            "description": "Delete a route."
+          },
+          "response": []
+        },
+        {
+          "name": "List Schedules",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "schedules"]
+            },
+            "description": "Get all schedules active today with bus and route details."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('scheduleId', jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"route_id\": 1,\n    \"bus_id\": 1,\n    \"schedule_period_id\": 1,\n    \"departure_time\": \"07:30\",\n    \"weekdays\": [\"saturday\", \"sunday\", \"monday\", \"tuesday\", \"wednesday\", \"thursday\"],\n    \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "schedules"]
+            },
+            "description": "Create a new schedule."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Schedule",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "schedules", "{{scheduleId}}"]
+            },
+            "description": "Get a specific schedule with related data."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Schedule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"route_id\": 1,\n    \"bus_id\": 1,\n    \"schedule_period_id\": 1,\n    \"departure_time\": \"08:00\",\n    \"weekdays\": [\"sunday\", \"monday\", \"tuesday\", \"wednesday\", \"thursday\"],\n    \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "schedules", "{{scheduleId}}"]
+            },
+            "description": "Update an existing schedule."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Schedule",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "schedules", "{{scheduleId}}"]
+            },
+            "description": "Delete a schedule."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/api/client'
-import echo, { canUseRealtime } from '@/plugins/echo'
+import echo from '@/plugins/echo'
 
 export const useMapStore = defineStore('map', () => {
   // ── state ─────────────────────────────────────────────
@@ -19,21 +19,6 @@ export const useMapStore = defineStore('map', () => {
   // Track active channel subscriptions so we can leave stale ones
   const subscribedBusIds = new Set()
   let socketRefreshInFlight = false
-
-  function hasTrackingSnapshot(payload) {
-    return Boolean(
-      payload
-      && payload.tracking_status
-      && Array.isArray(payload.stop_states)
-      && payload.stop_states.length > 0
-    )
-  }
-
-  function parseTimeMs(value) {
-    if (!value) return null
-    const ms = Date.parse(value)
-    return Number.isFinite(ms) ? ms : null
-  }
 
   // ── derived bus list for sidebar ─────────────────────
   const buses = computed(() =>
@@ -105,10 +90,6 @@ export const useMapStore = defineStore('map', () => {
    * Leaves channels for buses that are no longer active.
    */
   function subscribeToTrips(tripList) {
-    if (!canUseRealtime()) {
-      return
-    }
-
     const activeBusIds = new Set(tripList.map(t => t.bus_id).filter(Boolean))
 
     // Leave channels for buses no longer active
@@ -161,22 +142,6 @@ export const useMapStore = defineStore('map', () => {
       return
     }
 
-    const existingUpdatedAt = parseTimeMs(
-      trips.value[idx]?.latestLocation?.recorded_at
-      ?? trips.value[idx]?.latest_location?.recorded_at
-    )
-    const incomingUpdatedAt = parseTimeMs(payload.updated_at)
-
-    if (
-      existingUpdatedAt !== null
-      && incomingUpdatedAt !== null
-      && incomingUpdatedAt <= existingUpdatedAt
-    ) {
-      return
-    }
-
-    const requiresSnapshotRefresh = !hasTrackingSnapshot(payload)
-
     // Patch in place so Vue reactivity picks it up
     trips.value[idx] = {
       ...trips.value[idx],
@@ -186,15 +151,6 @@ export const useMapStore = defineStore('map', () => {
         speed:       payload.speed,
         recorded_at: payload.updated_at,
       },
-      tracking_status: payload.tracking_status ?? trips.value[idx].tracking_status ?? null,
-      current_stop_id: payload.current_stop_id ?? trips.value[idx].current_stop_id ?? null,
-      next_stop_id: payload.next_stop_id ?? trips.value[idx].next_stop_id ?? null,
-      progress_distance_m: payload.progress_distance_m ?? trips.value[idx].progress_distance_m ?? null,
-      distance_to_next_stop_m: payload.distance_to_next_stop_m ?? trips.value[idx].distance_to_next_stop_m ?? null,
-      osrm_distance_to_next_stop_m: payload.osrm_distance_to_next_stop_m ?? trips.value[idx].osrm_distance_to_next_stop_m ?? null,
-      eta_to_next_stop_seconds: payload.eta_to_next_stop_seconds ?? trips.value[idx].eta_to_next_stop_seconds ?? null,
-      eta_to_destination_seconds: payload.eta_to_destination_seconds ?? trips.value[idx].eta_to_destination_seconds ?? null,
-      stop_states: payload.stop_states ?? trips.value[idx].stop_states ?? [],
     }
 
     // Signal MapView to follow if this bus is currently selected
@@ -204,13 +160,6 @@ export const useMapStore = defineStore('map', () => {
       busId,
       lat: payload.lat,
       lng: payload.lng,
-    }
-
-    if (requiresSnapshotRefresh && !socketRefreshInFlight) {
-      socketRefreshInFlight = true
-      void fetchTrips().finally(() => {
-        socketRefreshInFlight = false
-      })
     }
   }
 

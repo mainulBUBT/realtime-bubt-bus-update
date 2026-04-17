@@ -1,16 +1,272 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useMapStore } from '@/stores/useMapStore'
 import { storeToRefs } from 'pinia'
 
 const mapStore = useMapStore()
 const { selectedTrip, selectedTripId, showTimeline } = storeToRefs(mapStore)
 
+// ── helpers ────────────────────────────────────────────────
+const STOP_PROXIMITY_METERS = 160
+const TERMINAL_PROXIMITY_METERS = 260
+const SEGMENT_END_SNAP_RATIO = 0.92
+
+function haversineMeters(lat1, lng1, lat2, lng2) {
+  const R = 6371000
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function projectToMeters(lat, lng, originLat) {
+  const latMeters = 110540
+  const lngMeters = 111320 * Math.cos(originLat * Math.PI / 180)
+
+  return {
+    x: lng * lngMeters,
+    y: lat * latMeters,
+  }
+}
+
+function distanceToSegmentMeters(lat, lng, startLat, startLng, endLat, endLng) {
+  const originLat = (startLat + endLat + lat) / 3
+  const point = projectToMeters(lat, lng, originLat)
+  const start = projectToMeters(startLat, startLng, originLat)
+  const end = projectToMeters(endLat, endLng, originLat)
+
+  const segX = end.x - start.x
+  const segY = end.y - start.y
+  const segLenSq = segX ** 2 + segY ** 2
+
+  if (segLenSq === 0) {
+    return {
+      distance: Math.hypot(point.x - start.x, point.y - start.y),
+      t: 0,
+    }
+  }
+
+  const rawT = ((point.x - start.x) * segX + (point.y - start.y) * segY) / segLenSq
+  const t = Math.max(0, Math.min(1, rawT))
+  const projectionX = start.x + segX * t
+  const projectionY = start.y + segY * t
+
+  return {
+    distance: Math.hypot(point.x - projectionX, point.y - projectionY),
+    t,
+  }
+}
+
 function formatDistance(distanceMeters) {
   if (!Number.isFinite(distanceMeters)) return ''
   if (distanceMeters < 20) return `${Math.round(distanceMeters)} m away`
   if (distanceMeters < 1000) return `${Math.round(distanceMeters / 10) * 10} m away`
   return `${(distanceMeters / 1000).toFixed(1)} km away`
+}
+
+function getNearestStop(stops, busLat, busLng) {
+  const distances = stops.map(stop =>
+    haversineMeters(busLat, busLng, parseFloat(stop.lat), parseFloat(stop.lng))
+  )
+
+  let nearest = { index: 0, distance: distances[0] ?? Infinity }
+
+  distances.forEach((distance, index) => {
+    if (distance < nearest.distance) {
+      nearest = { index, distance }
+    }
+  })
+
+  return { distances, nearest }
+}
+
+function resolveRouteProgressIndex(stops, busLat, busLng) {
+  if (stops.length <= 1) return 0
+
+  const lastIdx = stops.length - 1
+  let bestSegment = { distance: Infinity, startIdx: 0, t: 0 }
+
+  for (let i = 0; i < lastIdx; i++) {
+    const segment = distanceToSegmentMeters(
+      busLat,
+      busLng,
+      parseFloat(stops[i].lat),
+      parseFloat(stops[i].lng),
+      parseFloat(stops[i + 1].lat),
+      parseFloat(stops[i + 1].lng),
+    )
+
+    if (segment.distance < bestSegment.distance) {
+      bestSegment = {
+        distance: segment.distance,
+        startIdx: i,
+        t: segment.t,
+      }
+    }
+  }
+
+  if (bestSegment.t >= SEGMENT_END_SNAP_RATIO) {
+    return Math.min(bestSegment.startIdx + 1, lastIdx)
+  }
+
+  return bestSegment.startIdx
+}
+
+// ── OSRM road distance ───────────────────────────────────
+// Fetches real road distance from bus position to approaching stop via OSRM.
+// Falls back to haversine if OSRM fails.
+const approachingRoadDist = ref(null)  // { stopId, distance }
+let osrmAbortController = null
+let osrmRefreshTimer = null
+let lastOsrmBusPos = '' // track last OSRM-fetched position to avoid redundant calls
+
+async function fetchApproachingDistance(busLat, busLng, stopLat, stopLng, stopId, force = false) {
+  // Skip only if the bus position is identical to the last fetch (sub-meter)
+  const posKey = `${busLat.toFixed(5)},${busLng.toFixed(5)}→${stopId}`
+  if (!force && posKey === lastOsrmBusPos) return
+  lastOsrmBusPos = posKey
+
+  if (osrmAbortController) osrmAbortController.abort()
+  osrmAbortController = new AbortController()
+
+  // OSRM uses lng,lat order
+  const url = `https://router.project-osrm.org/route/v1/driving/${busLng},${busLat};${stopLng},${stopLat}?overview=false`
+
+  try {
+    const res = await fetch(url, { signal: osrmAbortController.signal })
+    if (!res.ok) throw new Error(`OSRM ${res.status}`)
+    const data = await res.json()
+
+    if (data.code === 'Ok' && data.routes?.[0]?.distance != null) {
+      approachingRoadDist.value = { stopId, distance: data.routes[0].distance }
+    } else {
+      approachingRoadDist.value = {
+        stopId,
+        distance: haversineMeters(busLat, busLng, stopLat, stopLng),
+      }
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') return
+    approachingRoadDist.value = {
+      stopId,
+      distance: haversineMeters(busLat, busLng, stopLat, stopLng),
+    }
+  }
+}
+
+// Helper: fetch OSRM distance for the current approaching stop
+function refreshOsrmForCurrentPosition() {
+  const loc = selectedTrip.value?.latestLocation || selectedTrip.value?.latest_location
+  if (!loc?.lat || !loc?.lng) return
+  const stops = selectedTrip.value?.route?.stops
+  if (!stops?.length) return
+
+  const sorted = [...stops].sort((a, b) => a.sequence - b.sequence)
+  const busLat = parseFloat(loc.lat)
+  const busLng = parseFloat(loc.lng)
+  const { approachingIdx } = resolveStopState(sorted, busLat, busLng)
+
+  if (approachingIdx !== null) {
+    const stop = sorted[approachingIdx]
+    // Force re-fetch — the bus moved since last check
+    lastOsrmBusPos = ''
+    fetchApproachingDistance(busLat, busLng, parseFloat(stop.lat), parseFloat(stop.lng), stop.id, true)
+  }
+}
+
+// Watch bus position changes via WebSocket → force OSRM re-fetch
+watch(
+  () => {
+    const loc = selectedTrip.value?.latestLocation || selectedTrip.value?.latest_location
+    return loc ? `${loc.lat},${loc.lng}` : null
+  },
+  (newPos, oldPos) => {
+    if (newPos && newPos !== oldPos) {
+      refreshOsrmForCurrentPosition()
+    }
+  }
+)
+
+// Start 5s periodic OSRM refresh while timeline is open
+watch(selectedTripId, (newId) => {
+  if (osrmRefreshTimer) { clearInterval(osrmRefreshTimer); osrmRefreshTimer = null }
+  if (!newId) { approachingRoadDist.value = null; lastOsrmBusPos = ''; return }
+
+  // First fetch immediately
+  refreshOsrmForCurrentPosition()
+
+  // Then refresh every 5 seconds
+  osrmRefreshTimer = setInterval(refreshOsrmForCurrentPosition, 5000)
+})
+
+onUnmounted(() => {
+  if (osrmAbortController) osrmAbortController.abort()
+  if (osrmRefreshTimer) clearInterval(osrmRefreshTimer)
+})
+
+function resolveStopState(stops, busLat, busLng) {
+  if (busLat === null || busLng === null) {
+    return {
+      currentIdx: null,
+      approachingIdx: null,
+      approachingDistance: null,
+      progressIdx: null,
+    }
+  }
+
+  if (stops.length <= 1) {
+    return {
+      currentIdx: 0,
+      approachingIdx: null,
+      approachingDistance: 0,
+      progressIdx: 0,
+    }
+  }
+
+  const lastIdx = stops.length - 1
+  const { distances, nearest } = getNearestStop(stops, busLat, busLng)
+
+  // Use OSRM road distance for the nearest stop if available — more accurate
+  // than Haversine for determining if the bus is actually at a stop.
+  const nearestStopId = stops[nearest.index]?.id
+  const roadDist = (approachingRoadDist.value?.stopId === nearestStopId)
+    ? approachingRoadDist.value.distance
+    : nearest.distance
+  const effectiveNearestDist = roadDist < nearest.distance ? roadDist : nearest.distance
+
+  // 1st priority: if bus is within standard proximity of ANY stop → "Currently Here"
+  if (effectiveNearestDist <= STOP_PROXIMITY_METERS) {
+    return {
+      currentIdx: nearest.index,
+      approachingIdx: null,
+      approachingDistance: effectiveNearestDist,
+      progressIdx: nearest.index,
+    }
+  }
+
+  // 2nd priority: terminal fallback — wider radius for first/last stops
+  const firstTerminalDistance = distances[0]
+  const lastTerminalDistance = distances[lastIdx]
+  if (firstTerminalDistance <= TERMINAL_PROXIMITY_METERS || lastTerminalDistance <= TERMINAL_PROXIMITY_METERS) {
+    const currentIdx = firstTerminalDistance <= lastTerminalDistance ? 0 : lastIdx
+    return {
+      currentIdx,
+      approachingIdx: null,
+      approachingDistance: distances[currentIdx],
+      progressIdx: currentIdx,
+    }
+  }
+
+  const progressIdx = resolveRouteProgressIndex(stops, busLat, busLng)
+  const approachingIdx = Math.min(progressIdx + 1, lastIdx)
+
+  return {
+    currentIdx: null,
+    approachingIdx,
+    approachingDistance: distances[approachingIdx] ?? nearest.distance,
+    progressIdx,
+  }
 }
 
 function timeAgo(dateString) {
@@ -51,23 +307,16 @@ const routeName = computed(() =>
   trip.value?.route?.name || 'Unknown Route'
 )
 
-const trackingStatus = computed(() => trip.value?.tracking_status || 'no_gps')
-
 const tripStatus = computed(() => {
-  const status = trackingStatus.value
-  if (status === 'at_stop') return 'active'
-  if (status === 'backward') return 'delayed'
-  if (status === 'off_route' || status === 'no_gps') return 'inactive'
-  return 'active'
+  const s = trip.value?.status || 'active'
+  return s === 'ongoing' ? 'active' : s
 })
 
 const statusLabel = computed(() => ({
-  on_route: 'On Route',
-  at_stop: 'At Stop',
-  off_route: 'Off Route',
-  backward: 'Returning',
-  no_gps: 'No GPS',
-}[trackingStatus.value] ?? 'On Route'))
+  active: 'On Route',
+  delayed: 'Delayed',
+  inactive: 'Inactive',
+}[tripStatus.value] ?? 'On Route'))
 
 const lastUpdate = computed(() => {
   const loc = trip.value?.latestLocation || trip.value?.latest_location
@@ -79,18 +328,57 @@ const stopsWithState = computed(() => {
   const raw = trip.value?.route?.stops
   if (!raw || raw.length === 0) return []
 
+  // Sort by sequence
   const stops = [...raw].sort((a, b) => a.sequence - b.sequence)
-  const stateByStopId = new Map((trip.value?.stop_states || []).map((entry) => [entry.stop_id, entry]))
-  const nextStopId = trip.value?.next_stop_id
-  const nextDistance = Number(trip.value?.distance_to_next_stop_m)
+
+  // Find bus current position
+  const loc = trip.value?.latestLocation || trip.value?.latest_location
+  const busLat = loc?.lat ? parseFloat(loc.lat) : null
+  const busLng = loc?.lng ? parseFloat(loc.lng) : null
+
+  const lastIdx = stops.length - 1
+  const { currentIdx, approachingIdx, approachingDistance } = resolveStopState(stops, busLat, busLng)
+
+  // Use OSRM road distance if available, otherwise Haversine
+  let displayDistance = approachingDistance
+  if (approachingIdx !== null && busLat !== null && busLng !== null) {
+    const stop = stops[approachingIdx]
+
+    // Use cached OSRM distance if available for this stop
+    if (approachingRoadDist.value?.stopId === stop.id) {
+      displayDistance = approachingRoadDist.value.distance
+    }
+  }
 
   return stops.map((stop, i) => {
-    const backendState = stateByStopId.get(stop.id)
-    const state = backendState?.state || (i === stops.length - 1 ? 'destination' : 'upcoming')
-    let statusText = backendState?.status_text || 'Upcoming'
+    let state = 'upcoming'
+    let statusText = 'Upcoming'
 
-    if (stop.id === nextStopId && Number.isFinite(nextDistance) && trackingStatus.value === 'on_route') {
-      statusText = `Approaching - ${formatDistance(nextDistance)}`
+    if (currentIdx !== null) {
+      if (i < currentIdx) {
+        state = 'passed'
+        statusText = 'Passed'
+      } else if (i === currentIdx) {
+        state = 'current'
+        statusText = 'Currently Here'
+      } else if (i === lastIdx) {
+        state = 'destination'
+        statusText = 'Final Stop'
+      }
+    } else if (approachingIdx !== null) {
+      if (i < approachingIdx) {
+        state = 'passed'
+        statusText = 'Passed'
+      } else if (i === approachingIdx) {
+        state = 'approaching'
+        statusText = `Approaching - ${formatDistance(displayDistance)}`
+      } else if (i === lastIdx) {
+        state = 'destination'
+        statusText = 'Final Stop'
+      }
+    } else if (i === lastIdx) {
+      state = 'destination'
+      statusText = 'Final Stop'
     }
 
     return { ...stop, state, statusText }

@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## Documentation Updates
+
+### Updated
+- `docs/FEATURES.md` - Fixed stale references to removed files and old API endpoints
+- `docs/architecture/database-schema.md` - Documented actual table names and schema
+- `docs/architecture/data-flow.md` - Fixed data flow to reflect actual implementation
+- `docs/deployment.md` - Updated API endpoints section with actual routes
+- `docs/features/multi-trip-tracking.md` - Fixed references to actual Trip model
+- `docs/installation.md` - Updated system settings section
+- `docs/README.md` - Updated overview to reflect actual system
+- `.kilo/docs-index.md` - Comprehensive knowledge base index
+
 ## [v1.1.0] - 2026-04-17
 
 ### Added

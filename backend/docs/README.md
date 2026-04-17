@@ -4,11 +4,11 @@ Welcome to the official documentation for the BUBT Bus Tracker application.
 
 ## Overview
 
-The BUBT Bus Tracker is a real-time bus tracking system that allows users to:
-- Track bus locations based on crowd-sourced GPS data
-- See live bus positions on the map
-- Get real-time updates on bus arrivals
-- Track multiple trips per day with automatic cleanup
+The BUBT Bus Tracker is a real-time bus tracking system that allows:
+- Drivers to start trips and submit GPS locations
+- Students to view active trips and track buses in real-time
+- Admins to manage buses, routes, and schedules
+- Automatic trip completion and data cleanup
 
 ## Documentation Index
 

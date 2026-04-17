@@ -130,16 +130,11 @@ After installation, configure these system settings via the admin panel or datab
 
 | Setting Key | Default | Description |
 |-------------|---------|-------------|
-| `min_active_users` | 2 | Minimum users needed to calculate bus location |
-| `inactive_user_timeout` | 120 | Seconds before user marked inactive |
-| `location_max_age` | 120 | Maximum age of location data to use (seconds) |
-| `route_proximity_threshold` | 100 | Max distance from route (meters) |
-| `top_users_for_calculation` | 15 | Number of users to use for calculation |
-| `cleanup_old_user_locations_days` | 30 | Delete user locations older than X days |
-| `cleanup_old_bus_locations_days` | 7 | Delete bus locations older than X days |
-| `cleanup_completed_trips_days` | 90 | Archive completed trips older than X days |
-| `auto_complete_trips_after_minutes` | 10 | Complete trips with no activity for X minutes |
-| `trip_duration_buffer_hours` | 4 | Max hours to keep trip active after schedule |
+| `app_name` | BUBT Bus Tracker | Application name |
+| `app_version` | 1.0.0 | Application version |
+| `maintenance_mode` | false | Enable/disable maintenance mode |
+
+**Note**: Many settings are now hardcoded in jobs rather than stored in database.
 
 ## Development Setup
 

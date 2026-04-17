@@ -43,11 +43,27 @@ class LocationController extends Controller
             return response()->json(['message' => 'Trip is not active'], 400);
         }
 
+        $recordedAt = !empty($request->recorded_at)
+            ? Carbon::parse($request->recorded_at)->utc()
+            : now();
+
+        if ($this->tripProgressService->shouldIgnoreIncomingPoint(
+            $trip,
+            (float) $request->lat,
+            (float) $request->lng,
+            $recordedAt,
+        )) {
+            return response()->json([
+                'message' => 'Location ignored due to GPS noise',
+                'ignored' => true,
+            ]);
+        }
+
         $location = $this->createLocationRecord($trip, [
             'lat' => $request->lat,
             'lng' => $request->lng,
             'speed' => $request->speed,
-            'recorded_at' => $request->recorded_at,
+            'recorded_at' => $recordedAt,
         ]);
 
         $this->updateTripCache($trip, $location);
@@ -100,6 +116,15 @@ class LocationController extends Controller
                 ->values();
 
             foreach ($locations as $payload) {
+                if ($this->tripProgressService->shouldIgnoreIncomingPoint(
+                    $trip,
+                    (float) $payload['lat'],
+                    (float) $payload['lng'],
+                    $payload['_recorded_at'],
+                )) {
+                    continue;
+                }
+
                 $location = $this->createLocationRecord($trip, $payload);
                 $this->updateTripCache($trip, $location);
                 $this->tripProgressService->updateTripProgress($trip->fresh(['route.stops', 'latestLocation']), $location);

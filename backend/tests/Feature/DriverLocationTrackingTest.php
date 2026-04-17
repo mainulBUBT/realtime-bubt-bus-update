@@ -134,6 +134,54 @@ class DriverLocationTrackingTest extends TestCase
         $response->assertJsonPath('0.stop_states.0.state', 'upcoming');
     }
 
+    public function test_active_trip_bootstraps_tracking_state_from_latest_location_when_trip_fields_are_empty(): void
+    {
+        Event::fake();
+
+        $driver = $this->createUser('driver');
+        $student = $this->createUser('student');
+        $bus = $this->createBus();
+        $route = $this->createRouteWithStops();
+        $trip = $this->createTrip($bus, $route, $driver);
+
+        $location = Location::create([
+            'trip_id' => $trip->id,
+            'bus_id' => $bus->id,
+            'lat' => 23.7800000,
+            'lng' => 90.4197000,
+            'recorded_at' => Carbon::parse('2026-04-04T09:08:00+06:00'),
+        ]);
+
+        $trip->update([
+            'current_lat' => $location->lat,
+            'current_lng' => $location->lng,
+            'last_location_at' => $location->recorded_at,
+            'progress_distance_m' => null,
+            'previous_progress_distance_m' => null,
+            'progress_segment_index' => null,
+            'current_stop_id' => null,
+            'next_stop_id' => null,
+            'tracking_status' => null,
+        ]);
+
+        Sanctum::actingAs($student);
+
+        $response = $this->getJson('/api/student/trips/active');
+
+        $response->assertOk();
+        $response->assertJsonPath('0.id', $trip->id);
+        $response->assertJsonPath('0.tracking_status', 'on_route');
+        $response->assertJsonPath('0.next_stop_id', $route->stops()->where('sequence', 4)->value('id'));
+        $response->assertJsonPath('0.stop_states.0.state', 'passed');
+        $response->assertJsonPath('0.stop_states.1.state', 'passed');
+        $response->assertJsonPath('0.stop_states.2.state', 'passed');
+        $response->assertJsonPath('0.stop_states.3.state', 'approaching');
+
+        $trip->refresh();
+        $this->assertNotNull($trip->progress_distance_m);
+        $this->assertSame('on_route', $trip->tracking_status);
+    }
+
     public function test_progress_engine_tracks_forward_progress_and_near_destination_correctly(): void
     {
         Event::fake();
@@ -300,22 +348,30 @@ class DriverLocationTrackingTest extends TestCase
             'lat' => 23.7800000,
             'lng' => 90.4100800,
             'recorded_at' => '2026-04-04T09:00:10+06:00',
-        ])->assertOk();
+        ])->assertOk()
+            ->assertJsonPath('ignored', true);
 
         $trip->refresh();
+        $this->assertSame(1, Location::query()->count());
         $this->assertSame($firstAcceptedAt, $trip->last_gps_at?->timestamp);
         $this->assertSame($firstProgress, (float) $trip->progress_distance_m);
+        $this->assertEquals('23.7800000', (string) $trip->current_lat);
+        $this->assertEquals('90.4100500', (string) $trip->current_lng);
 
         $this->postJson('/api/driver/location', [
             'trip_id' => $trip->id,
             'lat' => 23.7800000,
             'lng' => 90.4220000,
             'recorded_at' => '2026-04-04T09:00:20+06:00',
-        ])->assertOk();
+        ])->assertOk()
+            ->assertJsonPath('ignored', true);
 
         $trip->refresh();
+        $this->assertSame(1, Location::query()->count());
         $this->assertSame($firstAcceptedAt, $trip->last_gps_at?->timestamp);
         $this->assertSame($firstProgress, (float) $trip->progress_distance_m);
+        $this->assertEquals('23.7800000', (string) $trip->current_lat);
+        $this->assertEquals('90.4100500', (string) $trip->current_lng);
     }
 
     private function createUser(string $role): User

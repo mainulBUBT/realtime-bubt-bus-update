@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Location;
 use App\Models\RouteStop;
 use App\Models\Trip;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
 class TripProgressService
@@ -51,7 +52,7 @@ class TripProgressService
         $busLat = (float) $location->lat;
         $busLng = (float) $location->lng;
 
-        if ($this->shouldIgnorePoint($trip, $location, $busLat, $busLng)) {
+        if ($this->shouldIgnorePoint($trip, $busLat, $busLng, $location->recorded_at)) {
             return;
         }
 
@@ -134,7 +135,12 @@ class TripProgressService
         ])->save();
     }
 
-    private function shouldIgnorePoint(Trip $trip, Location $location, float $busLat, float $busLng): bool
+    public function shouldIgnoreIncomingPoint(Trip $trip, float $busLat, float $busLng, CarbonInterface $recordedAt): bool
+    {
+        return $this->shouldIgnorePoint($trip, $busLat, $busLng, $recordedAt);
+    }
+
+    private function shouldIgnorePoint(Trip $trip, float $busLat, float $busLng, CarbonInterface $recordedAt): bool
     {
         if ($trip->last_gps_lat === null || $trip->last_gps_lng === null || $trip->last_gps_at === null) {
             return false;
@@ -151,7 +157,7 @@ class TripProgressService
             return true;
         }
 
-        $deltaSeconds = max(1, abs($location->recorded_at->diffInSeconds($trip->last_gps_at, false)));
+        $deltaSeconds = max(1, abs($recordedAt->diffInSeconds($trip->last_gps_at, false)));
         $speedKmh = ($distanceMeters / $deltaSeconds) * 3.6;
 
         return $speedKmh > self::MAX_SPEED_KMH;

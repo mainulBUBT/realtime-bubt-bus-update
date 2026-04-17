@@ -7,6 +7,7 @@ use App\Models\Location;
 use App\Models\Route;
 use App\Models\Schedule;
 use App\Models\Trip;
+use App\Services\TripProgressService;
 use App\Services\TripTrackingSnapshotService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 class TrackingController extends Controller
 {
     public function __construct(
+        private readonly TripProgressService $tripProgressService,
         private readonly TripTrackingSnapshotService $tripTrackingSnapshotService,
     ) {
     }
@@ -109,7 +111,7 @@ class TrackingController extends Controller
             ->with(['bus', 'route', 'route.stops', 'driver:id,name,role', 'latestLocation'])
             ->get();
 
-        return response()->json($trips->map(fn (Trip $trip) => $this->serializeTrip($trip))->values());
+        return response()->json($trips->map(fn (Trip $trip) => $this->serializeTrip($this->ensureTrackingState($trip)))->values());
     }
 
     /**
@@ -126,7 +128,7 @@ class TrackingController extends Controller
             ->get();
 
         return response()->json([
-            'trip' => $this->serializeTrip($trip->loadMissing('latestLocation')),
+            'trip' => $this->serializeTrip($this->ensureTrackingState($trip->loadMissing('latestLocation'))),
             'locations' => $locations,
         ]);
     }
@@ -156,6 +158,36 @@ class TrackingController extends Controller
             ...$trip->toArray(),
             ...$this->tripTrackingSnapshotService->snapshot($trip),
         ];
+    }
+
+    private function ensureTrackingState(Trip $trip): Trip
+    {
+        $trip->loadMissing(['route.stops', 'latestLocation']);
+
+        if (!$this->needsTrackingBootstrap($trip)) {
+            return $trip;
+        }
+
+        $location = $trip->latestLocation;
+        if ($location === null) {
+            return $trip;
+        }
+
+        $this->tripProgressService->updateTripProgress($trip, $location);
+
+        return $trip->fresh(['bus', 'route', 'route.stops', 'driver:id,name,role', 'latestLocation']) ?? $trip;
+    }
+
+    private function needsTrackingBootstrap(Trip $trip): bool
+    {
+        if ($trip->latestLocation === null) {
+            return false;
+        }
+
+        return $trip->progress_distance_m === null
+            && $trip->current_stop_id === null
+            && $trip->next_stop_id === null
+            && blank($trip->tracking_status);
     }
 
     /**

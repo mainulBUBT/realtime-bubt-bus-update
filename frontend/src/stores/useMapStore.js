@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/api/client'
-import echo from '@/plugins/echo'
+import echo, { canUseRealtime } from '@/plugins/echo'
 
 export const useMapStore = defineStore('map', () => {
   // ── state ─────────────────────────────────────────────
@@ -19,6 +19,15 @@ export const useMapStore = defineStore('map', () => {
   // Track active channel subscriptions so we can leave stale ones
   const subscribedBusIds = new Set()
   let socketRefreshInFlight = false
+
+  function hasTrackingSnapshot(payload) {
+    return Boolean(
+      payload
+      && payload.tracking_status
+      && Array.isArray(payload.stop_states)
+      && payload.stop_states.length > 0
+    )
+  }
 
   // ── derived bus list for sidebar ─────────────────────
   const buses = computed(() =>
@@ -90,6 +99,10 @@ export const useMapStore = defineStore('map', () => {
    * Leaves channels for buses that are no longer active.
    */
   function subscribeToTrips(tripList) {
+    if (!canUseRealtime()) {
+      return
+    }
+
     const activeBusIds = new Set(tripList.map(t => t.bus_id).filter(Boolean))
 
     // Leave channels for buses no longer active
@@ -142,6 +155,8 @@ export const useMapStore = defineStore('map', () => {
       return
     }
 
+    const requiresSnapshotRefresh = !hasTrackingSnapshot(payload)
+
     // Patch in place so Vue reactivity picks it up
     trips.value[idx] = {
       ...trips.value[idx],
@@ -169,6 +184,13 @@ export const useMapStore = defineStore('map', () => {
       busId,
       lat: payload.lat,
       lng: payload.lng,
+    }
+
+    if (requiresSnapshotRefresh && !socketRefreshInFlight) {
+      socketRefreshInFlight = true
+      void fetchTrips().finally(() => {
+        socketRefreshInFlight = false
+      })
     }
   }
 

@@ -96,55 +96,52 @@ $activeBuses = Bus::active()->with('currentRoute')->get();
 ### Route Configuration
 - **Purpose**: Define bus routes with GPS coordinates and stops
 - **Location**: [`app/Http/Controllers/Admin/RouteController.php`](../app/Http/Controllers/Admin/RouteController.php)
-- **Model**: [`app/Models/BusRoute.php`](../app/Models/BusRoute.php)
+- **Model**: [`app/Models/Route.php`](../app/Models/Route.php)
 - **Key Functions**:
   - Route creation with polyline coordinates
   - Distance and duration estimation
-  - Proximity validation for location tracking
+  - Association with route stops
 - **Dependencies**: JSON handling, Haversine distance calculation
 - **Usage Example**:
 ```php
 // Creating a route with GPS coordinates
-BusRoute::create([
-    'bus_id' => 1,
-    'schedule_period_id' => 1,
+Route::create([
     'name' => 'Main Route',
     'polyline' => json_encode($coordinates),
     'distance_km' => 12.5,
-    'estimated_duration_minutes' => 45
+    'estimated_duration_minutes' => 45,
+    'is_active' => true
 ]);
 ```
 
-### Route Proximity Validation
-- **Purpose**: Validates if user locations are near defined routes
-- **Key Functions**:
-  - `isPointNearRoute()`: Checks if coordinates are within threshold distance
-  - `haversineDistance()`: Calculates distance between GPS points
-- **Usage Example**:
-```php
-// Check if user location is near route
-$isNearRoute = $route->isPointNearRoute($lat, $lng, 100); // 100 meters threshold
-```
+### Route Stops
+- **Purpose**: Define individual stops along routes
+- **Model**: [`app/Models/RouteStop.php`](../app/Models/RouteStop.php)
+- **Features**:
+  - Stop name and coordinates
+  - Order in route sequence
+  - Arrival time offset from route start
 
 ## Schedule Management
 
 ### Bus Scheduling
 - **Purpose**: Manage bus departure times and schedules
 - **Location**: [`app/Http/Controllers/Admin/ScheduleController.php`](../app/Http/Controllers/Admin/ScheduleController.php)
-- **Model**: [`app/Models/BusSchedule.php`](../app/Models/BusSchedule.php)
+- **Model**: [`app/Models/Schedule.php`](../app/Models/Schedule.php)
 - **Key Functions**:
   - Create schedules with departure times
   - Weekday-based scheduling
-  - Specific date scheduling
   - Active/inactive schedule management
 - **Usage Example**:
 ```php
 // Creating a bus schedule
-BusSchedule::create([
+Schedule::create([
     'bus_id' => 1,
+    'route_id' => 1,
     'schedule_period_id' => 1,
     'departure_time' => '07:00',
-    'weekdays' => [1, 2, 3, 4, 5], // Monday to Friday
+    'arrival_time' => '07:45',
+    'weekdays' => '{"mon":true,"tue":true,"wed":true,"thu":true,"fri":true}',
     'is_active' => true
 ]);
 ```
@@ -159,65 +156,60 @@ BusSchedule::create([
 
 ## Location Tracking System
 
-### User Location Collection
-- **Purpose**: Collect GPS data from users on buses
-- **Location**: [`app/Http/Controllers/Api/LocationController.php`](../app/Http/Controllers/Api/LocationController.php)
-- **Model**: [`app/Models/UserLocation.php`](../app/Models/UserLocation.php)
+### Driver Location Collection
+- **Purpose**: Collect GPS data from drivers during trips
+- **Location**: [`app/Http/Controllers/Api/Driver/LocationController.php`](../app/Http/Controllers/Api/Driver/LocationController.php)
+- **Model**: [`app/Models/Location.php`](../app/Models/Location.php)
 - **Key Functions**:
-  - `saveLocation()`: Receives and validates GPS coordinates
-  - User presence tracking
-  - Active user cache management
-- **API Endpoint**: `POST /api/save-location`
+  - `update()`: Receives and validates GPS coordinates from driver
+  - `batchUpdate()`: Accepts batch location submissions
+  - Trip association
+- **API Endpoint**: `POST /api/driver/location`
 - **Usage Example**:
 ```javascript
-// Sending location from frontend
-fetch('/api/save-location', {
+// Sending location from driver frontend
+fetch('/api/driver/location', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify({
-        bus_id: 1,
+        trip_id: 1,
         lat: 23.7937,
         lng: 90.3629,
         accuracy: 10,
-        speed: 30
+        speed: 30,
+        heading: 180
     })
 });
 ```
 
-### Bus Location Calculation
-- **Purpose**: Calculate bus position from multiple user locations
-- **Location**: [`app/Jobs/CalculateBusLocationJob.php`](../app/Jobs/CalculateBusLocationJob.php)
-- **Model**: [`app/Models/BusLocation.php`](../app/Models/BusLocation.php)
+### Bus Location Broadcast
+- **Purpose**: Broadcast driver location to all subscribed clients
+- **Location**: [`app/Events/BusLocationUpdated.php`](../app/Events/BusLocationUpdated.php)
 - **Key Functions**:
-  - Aggregate multiple user locations
-  - Filter by route proximity
-  - Calculate average position
-  - Store calculated location with accuracy metrics
-- **Dependencies**: Laravel Queues, Redis Cache
+  - Broadcast location via Laravel Reverb
+  - Channel-based communication per bus
+- **Dependencies**: Laravel Echo, Laravel Reverb (WebSocket)
 - **Usage Example**:
 ```php
-// Dispatching location calculation job
-CalculateBusLocationJob::dispatch($busId);
+// Broadcasting bus location update
+broadcast(new BusLocationUpdated($busId, [
+    'lat' => $location->lat,
+    'lng' => $location->lng,
+    'trip_id' => $trip->id,
+    'calculated_at' => now()
+]));
 ```
 
-### Active User Management
-- **Purpose**: Track which users are currently on which buses
-- **Model**: [`app/Models/BusActiveUser.php`](../app/Models/BusActiveUser.php)
+### Trip Location History
+- **Purpose**: Store and retrieve trip location history
+- **Model**: [`app/Models/Location.php`](../app/Models/Location.php)
 - **Features**:
-  - User presence tracking
-  - Inactivity timeout handling
-  - Cache-based quick access
-- **Usage Example**:
-```php
-// Update user presence on bus
-BusActiveUser::updateOrCreate(
-    ['bus_id' => 1, 'user_id' => 123],
-    ['last_seen_at' => now()]
-);
-```
+  - Location history per trip
+  - Speed and heading data
+  - Accuracy metrics
 
 ## Real-time Features
 
@@ -225,19 +217,19 @@ BusActiveUser::updateOrCreate(
 - **Purpose**: Real-time updates of bus locations to connected clients
 - **Location**: [`app/Events/BusLocationUpdated.php`](../app/Events/BusLocationUpdated.php)
 - **Key Functions**:
-  - Broadcast calculated bus locations
+  - Broadcast driver location via Laravel Reverb
   - Channel-based communication per bus
   - Event-driven updates
-- **Dependencies**: Laravel Echo, Pusher/WebSocket
+- **Dependencies**: Laravel Echo, Laravel Reverb (WebSocket)
 - **Usage Example**:
 ```php
-// Broadcasting bus location update
-BusLocationUpdated::dispatch($busId, [
-    'lat' => $avgLat,
-    'lng' => $avgLng,
-    'active_users' => $count,
+// Broadcasting bus location update (using broadcast() directly)
+broadcast(new BusLocationUpdated($busId, [
+    'lat' => $location->lat,
+    'lng' => $location->lng,
+    'trip_id' => $trip->id,
     'calculated_at' => now()
-]);
+]));
 ```
 
 ### Frontend Real-time Updates
@@ -289,22 +281,19 @@ User::updateOrCreate([
 
 ### Configuration Management
 - **Purpose**: Centralized system configuration
-- **Location**: [`app/Models/SystemSetting.php`](../app/Models/SystemSetting.php)
+- **Location**: [`app/Models/Setting.php`](../app/Models/Setting.php)
 - **Controller**: [`app/Http/Controllers/Admin/SettingsController.php`](../app/Http/Controllers/Admin/SettingsController.php)
 - **Key Settings**:
-  - `min_active_users`: Minimum users for location calculation (default: 2)
-  - `location_update_interval`: GPS update frequency in seconds (default: 5)
-  - `location_max_age`: Location data expiration in seconds (default: 120)
-  - `inactive_user_timeout`: User inactivity timeout (default: 120)
-  - `route_proximity_threshold`: Distance threshold for route validation (default: 100m)
-  - `top_users_for_calculation`: Number of users used in calculation (default: 15)
+  - `app_name`: Application name
+  - `app_version`: Application version
+  - `maintenance_mode`: Maintenance status flag
 - **Usage Example**:
 ```php
-// Get system setting with type casting
-$minUsers = SystemSetting::getValue('min_active_users', 2);
+// Get setting value
+$value = Setting::get('key', 'default');
 
-// Update system setting
-SystemSetting::setValue('location_update_interval', 10);
+// Update setting
+Setting::set('key', 'value');
 ```
 
 ### Caching Strategy
@@ -317,52 +306,59 @@ SystemSetting::setValue('location_update_interval', 10);
 
 ## API Endpoints
 
-### Public Bus Information
-- **Purpose**: Provide bus data to public consumers
-- **Location**: [`app/Http/Controllers/Api/BusController.php`](../app/Http/Controllers/Api/BusController.php)
+### Public Routes
+- **Purpose**: Routes accessible without authentication
 - **Endpoints**:
-  - `GET /api/buses`: List all active buses with current locations
-  - `GET /api/buses/{id}`: Get detailed information for specific bus
-- **Response Format**:
-```json
-{
-    "period": "Morning",
-    "buses": [
-        {
-            "id": 1,
-            "name": "Buriganga",
-            "code": "B1",
-            "direction": "A_TO_Z",
-            "status": "active",
-            "active_users": 5,
-            "location": {
-                "lat": 23.7937,
-                "lng": 90.3629,
-                "updated_at": "2023-12-07T10:30:00Z"
-            },
-            "route": {
-                "id": 1,
-                "name": "Main Route",
-                "polyline": [...]
-            }
-        }
-    ]
-}
-```
+  - `POST /api/auth/login` - User login
+  - `POST /api/auth/register` - User registration
+  - `GET /api/settings` - Get app settings
 
-### Location Tracking API
-- **Purpose**: Handle user location submissions and bus interactions
+### Authentication Routes (Protected - Bearer Token)
+- **Purpose**: User authentication management
 - **Endpoints**:
-  - `POST /api/save-location`: Submit user GPS coordinates
-  - `POST /api/confirm-bus`: Confirm user is on specific bus
-  - `POST /api/leave-bus`: User leaves bus tracking
-- **Authentication**: Bearer token required
-- **Validation**: Coordinate bounds, accuracy limits
+  - `POST /api/auth/logout` - Logout user
+  - `GET /api/auth/me` - Get current user
+  - `PATCH /api/auth/profile` - Update user profile
+  - `PATCH /api/auth/password` - Update password
+
+### Driver Routes (Protected - role:driver)
+- **Purpose**: Driver-specific endpoints for trip management
+- **Endpoints**:
+  - `GET /api/driver/buses` - List available buses
+  - `GET /api/driver/routes` - List available routes
+  - `POST /api/driver/trips/start` - Start a new trip
+  - `POST /api/driver/trips/{trip}/end` - End a trip
+  - `GET /api/driver/trips/current` - Get current active trip
+  - `GET /api/driver/trips/history` - Get trip history
+  - `POST /api/driver/location` - Submit single GPS location
+  - `POST /api/driver/location/batch` - Submit batch GPS locations
+
+### Student Routes (Protected - role:student)
+- **Purpose**: Student-specific endpoints for tracking
+- **Endpoints**:
+  - `GET /api/student/routes` - List available routes
+  - `GET /api/student/routes/{id}` - Get route details
+  - `GET /api/student/trips/active` - Get active trips for student
+  - `GET /api/student/trips/{tripId}/locations` - Get locations for a trip
+  - `GET /api/student/trips/{tripId}/latest-location` - Get latest location
+  - `GET /api/student/schedules` - Get bus schedules
+  - `POST /api/student/fcm-token` - Update FCM token for push notifications
+  - `GET /api/student/notifications` - Get notifications
+  - `GET /api/student/notifications/unread-count` - Get unread count
+  - `POST /api/student/notifications/{id}/read` - Mark notification as read
+  - `POST /api/student/notifications/read-all` - Mark all as read
+
+### Admin Routes (Protected - role:admin)
+- **Purpose**: Administrative endpoints for managing buses, routes, schedules
+- **Endpoints**:
+  - `GET/POST/PUT/DELETE /api/admin/buses` - Bus CRUD operations
+  - `GET/POST/PUT/DELETE /api/admin/routes` - Route CRUD operations
+  - `GET/POST/PUT/DELETE /api/admin/schedules` - Schedule CRUD operations
 
 ## Frontend Features
 
 ### Interactive Map Interface
-- **Location**: [`public/assets/js/track.js`](../public/assets/js/track.js)
+- **Location**: [`frontend/src/stores/useMapStore.js`](../frontend/src/stores/useMapStore.js) and Vue components
 - **Features**:
   - OpenStreetMap integration with Leaflet.js
   - Real-time bus position updates

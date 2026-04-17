@@ -120,14 +120,32 @@ Or use Supervisor for Reverb as well.
 ## API Endpoints
 
 ### Public Routes
-- `GET /api/buses` - List all buses
-- `GET /api/buses/{id}` - Get bus details
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+- `GET /api/settings` - Get app settings
 
-### Protected Routes (Require Authentication)
-- `POST /api/confirm-bus` - User confirms they're on a bus
-- `POST /api/leave-bus` - User leaves the bus
-- `POST /api/save-location` - Save user GPS location
-- `GET /api/active-bus` - Get user's active bus
+### Driver Routes (role:driver)
+- `GET /api/driver/buses` - List available buses
+- `GET /api/driver/routes` - List available routes
+- `POST /api/driver/trips/start` - Start a new trip
+- `POST /api/driver/trips/{trip}/end` - End a trip
+- `GET /api/driver/trips/current` - Get current active trip
+- `GET /api/driver/trips/history` - Get trip history
+- `POST /api/driver/location` - Submit GPS location
+- `POST /api/driver/location/batch` - Submit batch GPS locations
+
+### Student Routes (role:student)
+- `GET /api/student/routes` - List available routes
+- `GET /api/student/routes/{id}` - Get route details
+- `GET /api/student/trips/active` - Get active trips
+- `GET /api/student/trips/{tripId}/locations` - Get trip locations
+- `GET /api/student/trips/{tripId}/latest-location` - Get latest location
+- `GET /api/student/schedules` - Get bus schedules
+
+### Admin Routes (role:admin)
+- `GET/POST/PUT/DELETE /api/admin/buses` - Bus CRUD
+- `GET/POST/PUT/DELETE /api/admin/routes` - Route CRUD
+- `GET/POST/PUT/DELETE /api/admin/schedules` - Schedule CRUD
 
 ## Troubleshooting
 

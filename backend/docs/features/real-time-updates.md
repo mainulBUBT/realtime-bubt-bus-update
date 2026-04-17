@@ -2,7 +2,7 @@
 
 ## Overview
 
-The real-time bus movement feature provides smooth, animated bus movement on the map based on crowd-sourced driver GPS locations. Bus markers glide smoothly to new positions instead of teleporting instantly.
+The real-time bus movement feature provides smooth, animated bus movement on the map based on driver GPS locations. Bus markers glide smoothly to new positions instead of teleporting instantly.
 
 ## How It Works
 
@@ -11,47 +11,27 @@ The real-time bus movement feature provides smooth, animated bus movement on the
 ```
 Driver GPS Location (background, every ~5-10s)
     ↓
-Driver sends to location API
+Driver sends to /api/driver/location
     ↓
 Location stored in `locations` table
     ↓
-Reverb broadcasts to all subscribers
+Reverb broadcasts BusLocationUpdated to all subscribers
     ↓
 Frontend receives and animates marker
 ```
 
 ### Rate Limiting
 
-- **Backend**: Locations batched and sent every ~10 seconds
-- **Frontend**: Animations complete in 3 seconds (smooth interpolation)
+- **Driver App**: Sends locations every ~5-10 seconds
+- **Frontend**: Animations complete in 1 second (smooth interpolation)
 
-This provides a "live movement" feel without overwhelming the server.
-
-## OSRM Road Distance Calculation
-
-### Overview
-
-The system uses OSRM (Open Source Routing Machine) to calculate actual road distance between the bus and upcoming stops.
-
-### API Endpoint
-
-```
-GET /api/route/distance?lat=X&lng=Y&stop_id=Z
-```
-
-Returns road distance in meters.
-
-### Use Cases
-
-1. **Stop ETA**: Calculate how far the bus is from each upcoming stop
-2. **Arrival Prediction**: Show "arriving in X min" based on average speed
-3. **Stop Approach State**: Mark stop as "approaching" when within 200m road distance
+This provides a "live movement" feel without excessive server load.
 
 ## Animation Engine
 
 ### Configuration
 
-Located in [index.blade.php](../resources/views/index.blade.php):
+Located in Vue map components:
 
 ```javascript
 const ANIMATION_CONFIG = {
@@ -90,9 +70,9 @@ The `easeInOutCubic` function provides natural vehicle movement:
 
 ### Server Performance
 
-- **Rate limiting** prevents excessive calculations
-- **Batch operations** for cleanup jobs
+- **No rate limiting on driver locations** - trusted device
 - **Efficient broadcasting** via Laravel Reverb
+- **Location data cleanup** via scheduled jobs
 
 ## Frontend Implementation
 
@@ -132,40 +112,42 @@ busAnimationState[busId] = {
 
 ## Backend Implementation
 
-### Rate Limit Configuration
+### Location Controller
 
-[LocationController.php](../app/Http/Controllers/Api/LocationController.php):
+[LocationController.php](../app/Http/Controllers/Api/Driver/LocationController.php):
 
 ```php
-if (Cache::add($lockKey, true, 1)) { // 1 second rate limit
-    CalculateBusLocationJob::dispatch($busId);
+public function update(Request $request)
+{
+    // Validates driver authentication
+    // Gets active trip
+    // Stores location to Location model
+    // Updates trip's current coordinates
+    // Broadcasts BusLocationUpdated via Reverb
 }
 ```
 
-### Location Calculation
+### Location Storage
 
-[CalculateBusLocationJob](../app/Jobs/CalculateBusLocationJob.php):
-
-1. Fetches user locations from last 120 seconds
-2. Filters by route proximity (within 100m)
-3. Takes top 15 most recent locations
-4. Calculates average position
-5. Broadcasts update via Reverb
+1. Driver sends location via `POST /api/driver/location`
+2. Location stored in `locations` table with trip_id
+3. Trip record updated with current_lat, current_lng
+4. BusLocationUpdated event broadcast via Reverb
 
 ## Testing
 
 ### Visual Test
 
-1. Open the map in a browser
-2. Click "I'm on this bus" for any bus
-3. Watch as other users send location updates
+1. Open the student app in a browser
+2. View active trips on the map
+3. Watch as driver sends location updates
 4. Bus marker should glide smoothly to new positions
 
 ### Network Test
 
 1. Open DevTools Network tab
 2. Filter by `BusLocationUpdated`
-3. Verify events arrive every ~1 second
+3. Verify events arrive as driver sends updates
 4. Verify animation completes before next update
 
 ## Troubleshooting
@@ -177,11 +159,12 @@ if (Cache::add($lockKey, true, 1)) { // 1 second rate limit
 2. Are Echo listeners subscribed? Check console logs
 3. Is `busAnimationState` populated?
 4. Check for JavaScript errors
+5. Is the driver actively sending locations?
 
 ### Animation Jumps/Twitches
 
 **Check**:
-1. Are updates arriving too rapidly? (Should be ~1 second apart)
+1. Are updates arriving too rapidly? (Should be ~5-10 seconds apart)
 2. Is the queue size too small? Increase `maxQueueSize`
 3. Is there a large distance jump? Check `jumpThreshold`
 

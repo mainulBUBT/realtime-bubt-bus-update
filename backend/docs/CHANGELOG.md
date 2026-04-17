@@ -7,14 +7,16 @@ All notable changes to this project will be documented in this file.
 ## Documentation Updates
 
 ### Updated
-- `docs/FEATURES.md` - Fixed stale references to removed files and old API endpoints
-- `docs/architecture/database-schema.md` - Documented actual table names and schema
-- `docs/architecture/data-flow.md` - Fixed data flow to reflect actual implementation
-- `docs/deployment.md` - Updated API endpoints section with actual routes
-- `docs/features/multi-trip-tracking.md` - Fixed references to actual Trip model
-- `docs/installation.md` - Updated system settings section
-- `docs/README.md` - Updated overview to reflect actual system
-- `.kilo/docs-index.md` - Comprehensive knowledge base index
+- `docs/FEATURES.md` - Complete rewrite of Location Tracking System section, removed BusRoute/BusSchedule/BusLocation/BusActiveUser/SystemSetting references, updated to use actual Route/Schedule/Location/Setting models
+- `docs/architecture/database-schema.md` - Complete rewrite documenting actual tables: users (role enum), buses (plate_number, status), trips, locations, routes, route_stops, schedules, settings
+- `docs/architecture/data-flow.md` - Complete rewrite reflecting driver-based GPS flow, removed UserLocation/BusActiveUser/BusLocation references, updated to reflect actual Trip lifecycle
+- `docs/deployment.md` - Updated API endpoints section with actual driver/student/admin routes
+- `docs/features/multi-trip-tracking.md` - Fixed BusTrip→Trip, removed non-existent table refs, updated API endpoints to actual driver routes
+- `docs/features/real-time-updates.md` - Removed CalculateBusLocationJob references, updated to driver location flow
+- `docs/features/daily-cleanup.md` - Fixed actual_ended_at→ended_at reference
+- `docs/installation.md` - Updated system settings section to reflect actual Setting model
+- `docs/README.md` - Updated overview to reflect driver-based tracking system
+- `.kilo/docs-index.md` - Comprehensive knowledge base index updated
 
 ## [v1.1.0] - 2026-04-17
 

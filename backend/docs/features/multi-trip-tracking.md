@@ -2,116 +2,128 @@
 
 ## Overview
 
-The multi-trip tracking feature allows users to track buses multiple times per day (e.g., morning trip, afternoon trip) while keeping data properly isolated between trips.
+The multi-trip tracking feature allows drivers to operate multiple trips per day (e.g., morning shift, afternoon shift) with automatic trip lifecycle management.
 
 ## How It Works
 
 ### Trip Model
 
-Each tracking session is associated with a `BusTrip` record that includes:
+Each tracking session is associated with a `Trip` record that includes:
 - **Trip Date**: The date the trip occurred
 - **Bus Schedule**: The scheduled departure time (if available)
-- **Status**: `pending` → `active` → `completed` / `cancelled`
-- **Timestamps**: When the trip actually started and ended
+- **Driver Assignment**: Links trip to a specific driver
+- **Status**: `pending` → `ongoing` → `completed` / `cancelled`
+- **Timestamps**: When the trip started and ended
 
 ### Trip Lifecycle
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│  Pending    │ -> │   Active    │ -> │  Completed   │
-│  (Created)  │    │  (Users     │    │  (No users   │
-│             │    │   Joining)  │    │   for X min) │
+│  Pending    │ -> │   Ongoing   │ -> │  Completed   │
+│  (Created)  │    │  (Started)  │    │  (Ended)     │
 └─────────────┘    └─────────────┘    └─────────────┘
+                       │
+                       │ Driver ends trip OR
+                       │ CompleteExpiredTripsJob
+                       ▼
+              ┌─────────────┐
+              │  Cancelled  │
+              │ (Optional)  │
+              └─────────────┘
 ```
 
 ### Automatic Trip Creation
 
-When a user starts tracking a bus:
-1. System checks for an existing active trip for today
-2. If none exists, creates a new trip with:
+When a driver starts a trip:
+1. Driver selects bus and route
+2. System creates a new trip with:
    - Today's date
-   - Matching schedule (if found within ±2 hours)
-   - Status set to `active`
+   - Selected bus_id, route_id, driver_id
+   - Status set to `ongoing`
+   - `started_at` timestamp
 
 ### Automatic Trip Completion
 
 Trips are automatically completed when:
-- **No active users** for X minutes (default: 10 minutes)
+- **Driver ends trip** manually via `POST /api/driver/trips/{trip}/end`
+- **No location updates** for X minutes (default: 10 minutes) via `CompleteExpiredTripsJob`
 - **Past schedule time** + buffer hours (default: 4 hours)
 
 This runs every 5 minutes via the `CompleteExpiredTripsJob`.
 
-## Data Isolation
+## Trip Data Isolation
 
-Each trip isolates tracking data:
+Each trip stores its own tracking data:
 
-| Table | Trip Association | Benefit |
-|-------|-----------------|---------|
-| `BusActiveUser` | `bus_trip_id` | Know which trip user was on |
-| `UserLocation` | `bus_trip_id` | GPS locations per trip |
-| `BusLocation` | `bus_trip_id` | Calculated positions per trip |
+| Field | Association | Purpose |
+|-------|-------------|---------|
+| `trip_id` | locations table | GPS locations per trip |
+| `trip_id` | trips table | Track trip history |
 
 ## Multi-Trip Example
 
 ```
 Date: 2026-02-27
 
-Trip A (Morning)          Trip B (Afternoon)
-┌─────────────┐          ┌─────────────┐
-│ Bus: B1     │          │ Bus: B1     │
-│ Time: 8 AM  │          │ Time: 2 PM  │
-│ Status:     │          │ Status:     │
-│ completed   │          │ active      │
-│             │          │             │
-│ 5 users     │          │ 3 users     │
-└─────────────┘          └─────────────┘
+Morning Trip            Afternoon Trip
+┌─────────────┐        ┌─────────────┐
+│ Bus: B1     │        │ Bus: B1     │
+│ Driver: Ali │        │ Driver: Rahim│
+│ Time: 8 AM  │        │ Time: 2 PM  │
+│ Status:     │        │ Status:     │
+│ completed   │        │ ongoing      │
+└─────────────┘        └─────────────┘
 
-No data mixing - completely separate tracking sessions!
+No data mixing - completely separate trips!
 ```
 
-## API Changes
+## API Endpoints
 
-### confirmBus Endpoint
-
-Now associates tracking with a trip:
+### Start Trip
 
 ```javascript
-// POST /api/confirm-bus
+// POST /api/driver/trips/start
 {
     "bus_id": 5,
-    "trip_id": 123  // Automatically created
+    "route_id": 3,
+    "schedule_id": 7  // optional
 }
 ```
 
-### saveLocation Endpoint
-
-Now includes trip_id with location data:
+### Submit Location
 
 ```javascript
-// POST /api/save-location
+// POST /api/driver/location
 {
-    "bus_id": 5,
     "trip_id": 123,
     "lat": 23.8103,
-    "lng": 90.4125
+    "lng": 90.4125,
+    "speed": 15
 }
+```
+
+### End Trip
+
+```javascript
+// POST /api/driver/trips/{trip}/end
+// No body required
 ```
 
 ## User Experience
 
-### From User's Perspective
+### From Driver's Perspective
 
-1. **Morning**: User clicks "I'm on this bus" → Trip A created
-2. **Afternoon**: Same user clicks "I'm on this bus" → Trip B created
-3. **Next Day**: User logs in → No active trips from yesterday
-4. **Clean State**: Only current day's trips are active
+1. **Morning**: Driver starts trip → Trip A created
+2. **Afternoon**: Driver starts another trip → Trip B created
+3. **Evening**: Driver ends trip → Trip B completed
+4. **Next Day**: New day, new trips
 
-### Frontend Behavior
+### From Student's Perspective
 
-The frontend automatically:
-- Shows only active trips for today
-- Displays trip status (active/completed)
-- Clears old trip indicators automatically
+1. Student views active trips → Sees running buses
+2. Student selects a trip to track
+3. Student receives real-time updates via WebSocket
+4. Trip auto-completes when driver ends or after inactivity
 
 ## Configuration
 
@@ -125,12 +137,12 @@ The frontend automatically:
 ### Trip Not Auto-Completing
 
 1. Check scheduler is running: `php artisan schedule:list`
-2. Verify settings: `auto_complete_trips_after_minutes`
+2. Verify `CompleteExpiredTripsJob` is in the queue worker
 3. Check logs: `storage/logs/laravel.log`
 
-### Multiple Trips Showing
+### Multiple Active Trips for Same Bus
 
 If you see multiple active trips:
-1. Check `shouldComplete()` logic in BusTrip model
-2. Verify `CompleteExpiredTripsJob` is running
-3. Check for active users in database
+1. Check `shouldComplete()` logic in Trip model
+2. Verify `CompleteExpiredTripsJob` is running every 5 minutes
+3. Each driver should have their own active trip

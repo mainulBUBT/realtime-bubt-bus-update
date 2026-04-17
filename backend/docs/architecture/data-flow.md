@@ -2,116 +2,62 @@
 
 ## Overview
 
-This document explains how data flows through the BUBT Bus Tracker system, from user GPS updates to the map display.
+This document explains how data flows through the BUBT Bus Tracker system, from driver GPS updates to the map display.
 
 ## Real-Time Location Tracking Flow
 
 ```
 ┌─────────────┐
-│   Frontend   │
-│  (Browser)   │
+│   Driver    │
+│   Mobile    │
 └──────┬──────┘
        │
-       │ 1. User GPS Update
-       │    (watchPosition - every ~1-5s)
+       │ 1. Driver GPS Location
+       │    (background, every ~5-10s)
        ▼
-┌─────────────────────────────────────────────────────────┐
-│                    Backend API                          │
-│                                                           │
-│  ┌────────────────┐                                   │
-│  │ POST            │                                   │
-│  │ /api/save-      │  LocationController.php            │
-│  │   location      │  - Validates banned users            │
-│  │                 │  - Gets/Creates active trip           │
-│  │                 │  - Stores to UserLocation            │
-│  │                 │  - Updates BusActiveUser           │
-│  │                 │  - Updates cache                    │
-│  └────────┬───────┘                                   │
-│           │                                             │
-│           │ 2. Check threshold (≥2 users?)             │
-│           │    AND rate limit (1s cooldown)            │
-│           ▼                                             │
-│  ┌────────────────┐                                   │
-│  │ Queue Job       │                                   │
-│  │ CalculateBus    │  - Fetches recent locations       │
-│  │ LocationJob     │  - Filters by route proximity     │
-│  │                 │  - Takes top 15 users              │
-│  │                 │  - Calculates average position     │
-│  │                 │  - Saves to BusLocation           │
-│  └────────┬───────┘                                   │
-│           │                                             │
-│           │ 3. Broadcast Update                         │
-│           ▼                                             │
-│  ┌────────────────┐                                   │
-│  │ Event           │                                   │
-│  │ BusLocationUp    │  Laravel Reverb (WebSocket)        │
-│  │ dated           │  - Broadcasts to 'bus.{id}' channel│
-│  │                 │  - Includes: lat, lng, users        │
-│  └────────┬───────┘                                   │
-└───────────┼─────────────────────────────────────────┘
-            │
-            │ 4. WebSocket Event
-            ▼
-┌─────────────────────────────────────────────────────────┐
-│                   Frontend (Browser)                     │
-│                                                           │
-│  ┌────────────────┐                                   │
-│  │ Echo Listener   │  index.blade.php                  │
-│  │ (bus.{id})      │  - Listens for events             │
-│  │                 │  - Receives update                 │
-│  └────────┬───────┘                                   │
-│           │                                             │
-│           │ 5. Update Marker                            │
-│           ▼                                             │
-│  ┌────────────────┐                                   │
-│  │ updateBusMarker │  - Starts animation               │
-│  │                 │  - Interpolates positions          │
-│  │                 │  - Updates marker on map          │
-│  │                 │  - Completes when done            │
-│  └────────────────┘                                   │
-│           │                                             │
-│           ▼                                             │
-│  ┌────────────────┐                                   │
-│  │ Leaflet Map     │  - Marker glides smoothly         │
-│  │                 │  - User sees "live movement"      │
-│  └────────────────┘                                   │
-└─────────────────────────────────────────────────────────┘
-```
-
-## User Join/Leave Bus Flow
-
-```
-User clicks "I'm on this bus"
-        │
-        ▼
-┌────────────────────────┐
-│ POST /api/confirm-bus   │
-│ LocationController       │
-└───────────┬───────────────┘
-            │
-            │ 1. Get or create active trip
-            ▼
-    ┌───────────────┐
-    │ Bus::          │
-    │ getOrCreate   │
-    │ ActiveTrip()  │
-    └───────┬───────┘
-            │
-            │ Returns BusTrip (status: active)
-            ▼
-    ┌───────────────┐
-    │ Create        │
-    │ BusActiveUser│
-    │ (with trip_id)│
-    └───────────────┘
-            │
-            │ 2. Remove from other buses
-            ▼
-    Delete old BusActiveUser records
-            │
-            ▼
-        User added to trip
-        (Can now track location)
+┌─────────────────────────────────────────────────────────────┐
+│                    Backend API                               │
+│                                                               │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ POST /api/driver/location                            │    │
+│  │ LocationController.php                                │    │
+│  │ - Validates driver authentication (role:driver)      │    │
+│  │ - Gets driver's active trip                          │    │
+│  │ - Stores location to Location model                  │    │
+│  │ - Updates trip's current_lat/lng                    │    │
+│  └─────────────┬───────────────────────────────────────┘    │
+│                │                                             │
+│                │ 2. Broadcast Update                          │
+│                ▼                                             │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ Event                                                  │    │
+│  │ BusLocationUpdated                                     │    │
+│  │ Laravel Reverb (WebSocket)                            │    │
+│  │ - Broadcasts to 'bus.{busId}' channel                │    │
+│  │ - Includes: lat, lng, trip_id                         │    │
+│  └─────────────┬───────────────────────────────────────┘    │
+└────────────────┼─────────────────────────────────────────────┘
+                │
+                │ 3. WebSocket Event
+                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Frontend (Browser/Mobile)                   │
+│                                                               │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ Echo Listener                                         │    │
+│  │ (bus.{busId})                                        │    │
+│  │ - Listens for events                                 │    │
+│  │ - Receives update                                    │    │
+│  └─────────────┬───────────────────────────────────────┘    │
+│                │                                             │
+│                │ 4. Update Marker                             │
+│                ▼                                             │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ Vue Map Component                                     │    │
+│  │ - Animates marker to new position                    │    │
+│  │ - Shows trip status                                  │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Trip Lifecycle Flow
@@ -123,21 +69,28 @@ User clicks "I'm on this bus"
 │  pending)    │
 └──────┬──────┘
        │
-       │ First user joins
+       │ Driver starts trip
+       │ POST /api/driver/trips/start
        ▼
 ┌─────────────┐
-│ Trip Active  │
+│ Trip Ongoing │
 │ (status:     │
-│  active)     │
+│  ongoing)    │
 └──────┬──────┘
        │
-       │ Users tracking...
+       │ Driver sends locations
+       │ (every ~5-10 seconds)
        │
-       ├─ No users for 10+ minutes
+       ├─ Driver ends trip
+       │   POST /api/driver/trips/{trip}/end
        │
-       ├─ Past schedule time + 4 hours
+       ├─ No location updates for 10+ minutes
+       │   CompleteExpiredTripsJob runs
        │
-       ▼
+       └─ Past schedule time + buffer hours
+           CompleteExpiredTripsJob runs
+           │
+           ▼
 ┌─────────────┐
 │ Trip         │
 │ Completed    │
@@ -145,7 +98,7 @@ User clicks "I'm on this bus"
 │  completed)  │
 └─────────────┘
        │
-       │ Data retained for 90 days
+       │ Data retained per cleanup settings
        │
        ▼
 ┌─────────────┐
@@ -155,50 +108,107 @@ User clicks "I'm on this bus"
 └─────────────┘
 ```
 
+## Driver Start Trip Flow
+
+```
+Driver clicks "Start Trip"
+        │
+        ▼
+┌─────────────────────────────────────┐
+│ POST /api/driver/trips/start        │
+│ TripController@start                 │
+└───────────────┬─────────────────────┘
+               │
+               │ 1. Validate driver role
+               ▼
+       ┌───────────────┐
+       │ Create Trip   │
+       │ - bus_id      │
+       │ - route_id    │
+       │ - driver_id   │
+       │ - trip_date   │
+       │ - status:     │
+       │   'ongoing'   │
+       │ - started_at  │
+       └───────┬───────┘
+               │
+               │ 2. Broadcast trip started
+               ▼
+       ┌───────────────┐
+       │ BusTripEnded  │
+       │ Event         │
+       │ (broadcast to │
+       │  bus.{busId}) │
+       └───────┬───────┘
+               │
+               ▼
+         Trip ongoing
+         (Students can track)
+```
+
+## Student Tracking Flow
+
+```
+Student selects route
+        │
+        ▼
+┌─────────────────────────────────────┐
+│ GET /api/student/routes             │
+│ GET /api/student/routes/{id}       │
+└───────────────┬─────────────────────┘
+               │
+               │ View active trips
+               ▼
+┌─────────────────────────────────────┐
+│ GET /api/student/trips/active      │
+│ (Shows currently running trips)     │
+└───────────────┬─────────────────────┘
+               │
+               │ Select trip to track
+               ▼
+┌─────────────────────────────────────┐
+│ GET /api/student/trips/{tripId}/   │
+│      latest-location                │
+│ (Poll for bus position)             │
+└─────────────────────────────────────┘
+               │
+               │ Real-time updates via
+               │ WebSocket (bus.{busId})
+               ▼
+         Student sees bus
+         on map with live
+         position updates
+```
+
 ## Scheduled Cleanup Flow
 
 ```
 Every 5 minutes:
-┌───────────────────────┐
-│ CompleteExpiredTripsJob │
-│ - Find active trips      │
-│ - Check shouldComplete() │
-│ - Mark as completed      │
-└─────────────────────────┘
-
-Every 2 minutes:
-┌───────────────────────┐
-│ CleanupInactiveUsersJob │
-│ - Find users inactive   │
-│   for 120+ seconds      │
-│ - Remove from tracking   │
-└─────────────────────────┘
+┌───────────────────────────────┐
+│ CompleteExpiredTripsJob        │
+│ - Find ongoing trips          │
+│ - Check inactivity timeout    │
+│   (no location for 10+ min)  │
+│ - Check schedule + buffer     │
+│   (> 4 hours past schedule)   │
+│ - Mark as completed           │
+│ - Broadcast BusTripEnded      │
+└───────────────────────────────┘
 
 Daily at 12:05 AM:
-┌───────────────────────┐
-│ DailyCleanupJob        │
-│ - Delete old user_locs  │
-│ - Delete old bus_locs   │
-│ - Archive old trips     │
-└─────────────────────────┘
-```
+┌───────────────────────────────┐
+│ DailyCleanupJob                │
+│ - Archive completed trips      │
+│   older than 90 days          │
+└───────────────────────────────┘
 
-## Cache Layer
-
+Daily at 02:00 AM:
+┌───────────────────────────────┐
+│ CleanOldLocations(30)         │
+│ - Delete locations older      │
+│   than 30 days                │
+└───────────────────────────────┘
 ```
-┌──────────────┐
-│ Active Users │
-│ Cache        │
-│              │
-│ Key:         │
-│ active_users_│
-│ bus_{bus_id} │
-│              │
-│ TTL: 60 sec  │
-└──────────────┘
-```
-
-Used for quick access to active users list without querying database.
 
 ## Broadcast Channels
 
@@ -209,24 +219,30 @@ Laravel Reverb
 │   └── BusLocationUpdated event
 │       ├── lat
 │       ├── lng
-│       └── active_users
+│       ├── trip_id
+│       └── calculated_at
 │
 └── Presence channels (optional)
     └── user.{userId}
 ```
 
-## API Rate Limiting
+## Events
 
-```
-Location Calculation Rate Limit:
-┌──────────────────────────────┐
-│ Cache Lock:                    │
-│ "calculating_bus_{busId}"    │
-│ TTL: 1 second                  │
-│                                │
-│ Prevents excessive            │
-│ location calculations         │
-└──────────────────────────────┘
+### BusLocationUpdated
+Dispatched when a driver's location is received.
+
+```php
+broadcast(new BusLocationUpdated($busId, [
+    'lat' => $location->lat,
+    'lng' => $location->lng,
+    'trip_id' => $trip->id,
+    'calculated_at' => now()
+]));
 ```
 
-This ensures calculations happen at most once per second per bus, even if many users send locations simultaneously.
+### BusTripEnded
+Dispatched when a trip ends (driver ends trip or auto-completed).
+
+```php
+broadcast(new BusTripEnded($trip->id, $trip->bus_id));
+```

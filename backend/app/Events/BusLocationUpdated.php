@@ -60,15 +60,6 @@ class BusLocationUpdated implements ShouldBroadcastNow
             'lng'        => $this->location['lng'],
             'speed'      => $this->location['speed'] ?? null,
             'updated_at' => $this->location['recorded_at'],
-            'tracking_status' => $this->location['tracking_status'] ?? null,
-            'current_stop_id' => $this->location['current_stop_id'] ?? null,
-            'next_stop_id' => $this->location['next_stop_id'] ?? null,
-            'progress_distance_m' => $this->location['progress_distance_m'] ?? null,
-            'distance_to_next_stop_m' => $this->location['distance_to_next_stop_m'] ?? null,
-            'osrm_distance_to_next_stop_m' => $this->location['osrm_distance_to_next_stop_m'] ?? null,
-            'eta_to_next_stop_seconds' => $this->location['eta_to_next_stop_seconds'] ?? null,
-            'eta_to_destination_seconds' => $this->location['eta_to_destination_seconds'] ?? null,
-            'stop_states' => $this->location['stop_states'] ?? [],
         ];
     }
 }

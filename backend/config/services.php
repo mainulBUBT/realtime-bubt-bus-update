@@ -45,4 +45,9 @@ return [
         'credentials' => env('FIREBASE_CREDENTIALS', storage_path('app/firebase-credentials.json')),
     ],
 
+    'osrm' => [
+        'base_url' => env('OSRM_BASE_URL', ''),
+        'timeout' => env('OSRM_TIMEOUT', 2.5),
+    ],
+
 ];

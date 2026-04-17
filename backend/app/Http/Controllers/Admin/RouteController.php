@@ -5,11 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Route;
 use App\Models\RouteStop;
+use App\Services\RouteGeometryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class RouteController extends Controller
 {
+    public function __construct(
+        private readonly RouteGeometryService $routeGeometryService,
+    ) {
+    }
+
     /**
      * Display a listing of routes.
      */
@@ -74,7 +80,7 @@ class RouteController extends Controller
             'stops.*.sequence' => 'required|integer|min:1',
         ]);
 
-        DB::transaction(function () use ($validated, $request) {
+        DB::transaction(function () use ($validated) {
             // Create route
             $route = Route::create([
                 'name' => $validated['name'],
@@ -98,6 +104,8 @@ class RouteController extends Controller
                     ]);
                 }
             }
+
+            $this->routeGeometryService->syncRouteStopMetrics($route);
         });
 
         return redirect()->route('admin.routes.index')
@@ -168,6 +176,8 @@ class RouteController extends Controller
                     ]);
                 }
             }
+
+            $this->routeGeometryService->syncRouteStopMetrics($route);
         });
 
         return redirect()->route('admin.routes.index')

@@ -151,6 +151,15 @@ export const useMapStore = defineStore('map', () => {
         speed:       payload.speed,
         recorded_at: payload.updated_at,
       },
+      tracking_status: payload.tracking_status ?? trips.value[idx].tracking_status ?? null,
+      current_stop_id: payload.current_stop_id ?? trips.value[idx].current_stop_id ?? null,
+      next_stop_id: payload.next_stop_id ?? trips.value[idx].next_stop_id ?? null,
+      progress_distance_m: payload.progress_distance_m ?? trips.value[idx].progress_distance_m ?? null,
+      distance_to_next_stop_m: payload.distance_to_next_stop_m ?? trips.value[idx].distance_to_next_stop_m ?? null,
+      osrm_distance_to_next_stop_m: payload.osrm_distance_to_next_stop_m ?? trips.value[idx].osrm_distance_to_next_stop_m ?? null,
+      eta_to_next_stop_seconds: payload.eta_to_next_stop_seconds ?? trips.value[idx].eta_to_next_stop_seconds ?? null,
+      eta_to_destination_seconds: payload.eta_to_destination_seconds ?? trips.value[idx].eta_to_destination_seconds ?? null,
+      stop_states: payload.stop_states ?? trips.value[idx].stop_states ?? [],
     }
 
     // Signal MapView to follow if this bus is currently selected

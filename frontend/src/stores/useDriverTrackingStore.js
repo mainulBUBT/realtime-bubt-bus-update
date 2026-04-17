@@ -16,7 +16,9 @@ const DEV_RELAXED_WEB_GPS = import.meta.env.DEV
 // Location filtering (reduce GPS drift while stopped)
 const MAX_ACCEPTABLE_ACCURACY_M = 50
 const MAX_BOOTSTRAP_ACCEPTABLE_ACCURACY_M = 200
+const WEB_ACCEPTABLE_ACCURACY_M = 1000
 const DEV_MAX_WEB_BOOTSTRAP_ACCEPTABLE_ACCURACY_M = 1000
+const DEV_MAX_WEB_ACCEPTABLE_ACCURACY_M = 3000
 const MIN_DISTANCE_M = 15
 const MIN_TIME_BETWEEN_POINTS_MS = 5000
 const MAX_JUMP_M = 250
@@ -96,13 +98,16 @@ function createHttpError(status, data) {
 }
 
 function getTrackingThresholdPolicy(providerValue, isBootstrapMode) {
+  const isWebProvider = providerValue === 'web-geolocation'
   const isDevRelaxedWebBootstrap = DEV_RELAXED_WEB_GPS
-    && providerValue === 'web-geolocation'
+    && isWebProvider
     && isBootstrapMode
 
   return {
     isDevRelaxedWebBootstrap,
-    maxAcceptableAccuracyM: MAX_ACCEPTABLE_ACCURACY_M,
+    maxAcceptableAccuracyM: isWebProvider
+      ? (DEV_RELAXED_WEB_GPS ? DEV_MAX_WEB_ACCEPTABLE_ACCURACY_M : WEB_ACCEPTABLE_ACCURACY_M)
+      : MAX_ACCEPTABLE_ACCURACY_M,
     maxBootstrapAccuracyM: isDevRelaxedWebBootstrap
       ? DEV_MAX_WEB_BOOTSTRAP_ACCEPTABLE_ACCURACY_M
       : MAX_BOOTSTRAP_ACCEPTABLE_ACCURACY_M

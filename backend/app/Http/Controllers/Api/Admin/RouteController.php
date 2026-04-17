@@ -6,9 +6,15 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Route;
 use App\Models\RouteStop;
+use App\Services\RouteGeometryService;
 
 class RouteController extends Controller
 {
+    public function __construct(
+        private readonly RouteGeometryService $routeGeometryService,
+    ) {
+    }
+
     /**
      * Display a listing of routes.
      */
@@ -57,6 +63,8 @@ class RouteController extends Controller
             ]);
         }
 
+        $this->routeGeometryService->syncRouteStopMetrics($route);
+
         return response()->json($route->load('stops'), 201);
     }
 
@@ -98,6 +106,8 @@ class RouteController extends Controller
                 ]);
             }
         }
+
+        $this->routeGeometryService->syncRouteStopMetrics($route);
 
         return response()->json($route->load('stops'));
     }

@@ -21,6 +21,8 @@ class RouteStop extends Model
         'lat',
         'lng',
         'sequence',
+        'distance_along_route_m',
+        'shape_index',
     ];
 
     /**
@@ -33,6 +35,7 @@ class RouteStop extends Model
         return [
             'lat' => 'decimal:7',
             'lng' => 'decimal:7',
+            'distance_along_route_m' => 'decimal:2',
         ];
     }
 

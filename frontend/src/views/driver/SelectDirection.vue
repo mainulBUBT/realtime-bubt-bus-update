@@ -148,16 +148,19 @@ const getBusDisplay = (bus) => {
       </button>
     </div>
 
-    <!-- Starting Overlay -->
-    <div
-      v-if="starting"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    >
-      <div class="starting-overlay-card">
-        <div class="starting-overlay-spinner"></div>
-        <p class="starting-overlay-text">Starting Trip...</p>
-      </div>
-    </div>
+    <!-- Starting Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="starting" class="modal-backdrop">
+          <div class="modal-content">
+            <div class="modal-body" style="padding: 32px 24px; text-align: center;">
+              <div class="modal-spinner"></div>
+              <p class="modal-text">Starting Trip...</p>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -225,15 +228,31 @@ const getBusDisplay = (bus) => {
   color: var(--gray-500);
 }
 
-.starting-overlay-card {
-  background: var(--white);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  text-align: center;
-  box-shadow: var(--shadow-lg);
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
 }
 
-.starting-overlay-spinner {
+.modal-content {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 360px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-spinner {
   width: 48px;
   height: 48px;
   border: 4px solid rgba(var(--primary-rgb), 0.22);
@@ -243,9 +262,20 @@ const getBusDisplay = (bus) => {
   animation: spin 1s linear infinite;
 }
 
-.starting-overlay-text {
+.modal-text {
   color: var(--gray-800);
   font-weight: 700;
   margin: 0;
+  font-size: 16px;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
 }
 </style>

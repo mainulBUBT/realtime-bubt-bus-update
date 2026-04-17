@@ -10,26 +10,32 @@ const driverTripStore = useDriverTripStore()
 
 const loading = ref(false)
 const statsLoading = ref(true)
-const pullRefreshDisabled = computed(() => driverTripStore.hasActiveTrip)
+
+const fetchAllHistory = async () => {
+  const firstPage = await driverTripStore.fetchHistory(1)
+  const lastPage = firstPage?.last_page || 1
+  
+  for (let page = 2; page <= lastPage; page++) {
+    await driverTripStore.fetchHistory(page, { append: true })
+  }
+}
 
 const refreshData = async () => {
   statsLoading.value = true
   try {
-    await driverTripStore.fetchHistory(1)
+    driverTripStore.resetHistory()
+    await fetchAllHistory()
   } finally {
     statsLoading.value = false
   }
 }
 
-const contentRef = ref(null)
-
 onMounted(async () => {
   await Promise.all([
     checkActiveTrip(),
-    driverTripStore.fetchHistory(1)
+    fetchAllHistory()
   ])
   statsLoading.value = false
-  initPull(contentRef.value)
 })
 
 const driverName = computed(() => authStore.user?.name || 'Driver')

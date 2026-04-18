@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Route;
 use App\Models\RouteStop;
+use App\Services\OsrmSegmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -98,6 +99,9 @@ class RouteController extends Controller
                     ]);
                 }
             }
+
+            // Compute road distances for route segments
+            app(OsrmSegmentService::class)->computeForRoute($route);
         });
 
         return redirect()->route('admin.routes.index')
@@ -168,6 +172,9 @@ class RouteController extends Controller
                     ]);
                 }
             }
+
+            // Compute road distances for route segments
+            app(OsrmSegmentService::class)->computeForRoute($route);
         });
 
         return redirect()->route('admin.routes.index')

@@ -21,18 +21,16 @@ class RouteStop extends Model
         'lat',
         'lng',
         'sequence',
+        'distance_to_next_m',
+        'geometry_to_next',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'lat' => 'decimal:7',
             'lng' => 'decimal:7',
+            'distance_to_next_m' => 'decimal:2',
         ];
     }
 

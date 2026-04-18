@@ -45,7 +45,7 @@ Represents a single trip instance.
 | started_at | TIMESTAMP | When trip started |
 | ended_at | TIMESTAMP | When completed |
 
-**Status Flow:** `pending → active → completed/cancelled`
+**Status Flow:** `pending → ongoing → completed/cancelled`
 
 ### Bus
 | Field | Type | Notes |

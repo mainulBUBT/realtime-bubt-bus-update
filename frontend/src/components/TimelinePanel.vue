@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { computed } from 'vue'
 import { useMapStore } from '@/stores/useMapStore'
 import { storeToRefs } from 'pinia'
 
@@ -113,97 +113,50 @@ function resolveRouteProgressIndex(stops, busLat, busLng) {
   return bestSegment.startIdx
 }
 
-// ── OSRM road distance ───────────────────────────────────
-// Fetches real road distance from bus position to approaching stop via OSRM.
-// Falls back to haversine if OSRM fails.
-const approachingRoadDist = ref(null)  // { stopId, distance }
-let osrmAbortController = null
-let osrmRefreshTimer = null
-let lastOsrmBusPos = '' // track last OSRM-fetched position to avoid redundant calls
+// ── Road distance using pre-computed geometry ────────────────
+// Uses pre-computed stop-to-stop road distances and geometry from backend.
+// No live OSRM calls needed - pure math interpolation.
 
-async function fetchApproachingDistance(busLat, busLng, stopLat, stopLng, stopId, force = false) {
-  // Skip only if the bus position is identical to the last fetch (sub-meter)
-  const posKey = `${busLat.toFixed(5)},${busLng.toFixed(5)}→${stopId}`
-  if (!force && posKey === lastOsrmBusPos) return
-  lastOsrmBusPos = posKey
+function calculateRoadDistances(stops, busLat, busLng) {
+  if (!busLat || !busLng || stops.length < 2) return {}
 
-  if (osrmAbortController) osrmAbortController.abort()
-  osrmAbortController = new AbortController()
+  const distances = {}
 
-  // OSRM uses lng,lat order
-  const url = `https://router.project-osrm.org/route/v1/driving/${busLng},${busLat};${stopLng},${stopLat}?overview=false`
+  // Find which segment the bus is on
+  let busSegmentIndex = -1
+  let distToNextStop = 0
 
-  try {
-    const res = await fetch(url, { signal: osrmAbortController.signal })
-    if (!res.ok) throw new Error(`OSRM ${res.status}`)
-    const data = await res.json()
+  for (let i = 0; i < stops.length - 1; i++) {
+    const result = distanceToSegmentMeters(
+      busLat, busLng,
+      parseFloat(stops[i].lat), parseFloat(stops[i].lng),
+      parseFloat(stops[i + 1].lat), parseFloat(stops[i + 1].lng)
+    )
+    if (result.distance < 200) {
+      busSegmentIndex = i
+      distToNextStop = parseFloat(stops[i].distance_to_next_m || 0) * (1 - result.t)
+      break
+    }
+  }
 
-    if (data.code === 'Ok' && data.routes?.[0]?.distance != null) {
-      approachingRoadDist.value = { stopId, distance: data.routes[0].distance }
+  // Fill distances for all stops
+  for (let i = 0; i < stops.length; i++) {
+    if (busSegmentIndex === -1 || i <= busSegmentIndex) {
+      distances[stops[i].id] = 0  // passed or unknown
+    } else if (i === busSegmentIndex + 1) {
+      distances[stops[i].id] = distToNextStop  // next stop
     } else {
-      approachingRoadDist.value = {
-        stopId,
-        distance: haversineMeters(busLat, busLng, stopLat, stopLng),
+      // Sum segments from next stop onwards
+      let d = distToNextStop
+      for (let j = busSegmentIndex + 1; j < i; j++) {
+        d += parseFloat(stops[j].distance_to_next_m || 0)
       }
-    }
-  } catch (e) {
-    if (e.name === 'AbortError') return
-    approachingRoadDist.value = {
-      stopId,
-      distance: haversineMeters(busLat, busLng, stopLat, stopLng),
+      distances[stops[i].id] = d
     }
   }
+
+  return distances
 }
-
-// Helper: fetch OSRM distance for the current approaching stop
-function refreshOsrmForCurrentPosition() {
-  const loc = selectedTrip.value?.latestLocation || selectedTrip.value?.latest_location
-  if (!loc?.lat || !loc?.lng) return
-  const stops = selectedTrip.value?.route?.stops
-  if (!stops?.length) return
-
-  const sorted = [...stops].sort((a, b) => a.sequence - b.sequence)
-  const busLat = parseFloat(loc.lat)
-  const busLng = parseFloat(loc.lng)
-  const { approachingIdx } = resolveStopState(sorted, busLat, busLng)
-
-  if (approachingIdx !== null) {
-    const stop = sorted[approachingIdx]
-    // Force re-fetch — the bus moved since last check
-    lastOsrmBusPos = ''
-    fetchApproachingDistance(busLat, busLng, parseFloat(stop.lat), parseFloat(stop.lng), stop.id, true)
-  }
-}
-
-// Watch bus position changes via WebSocket → force OSRM re-fetch
-watch(
-  () => {
-    const loc = selectedTrip.value?.latestLocation || selectedTrip.value?.latest_location
-    return loc ? `${loc.lat},${loc.lng}` : null
-  },
-  (newPos, oldPos) => {
-    if (newPos && newPos !== oldPos) {
-      refreshOsrmForCurrentPosition()
-    }
-  }
-)
-
-// Start 5s periodic OSRM refresh while timeline is open
-watch(selectedTripId, (newId) => {
-  if (osrmRefreshTimer) { clearInterval(osrmRefreshTimer); osrmRefreshTimer = null }
-  if (!newId) { approachingRoadDist.value = null; lastOsrmBusPos = ''; return }
-
-  // First fetch immediately
-  refreshOsrmForCurrentPosition()
-
-  // Then refresh every 5 seconds
-  osrmRefreshTimer = setInterval(refreshOsrmForCurrentPosition, 5000)
-})
-
-onUnmounted(() => {
-  if (osrmAbortController) osrmAbortController.abort()
-  if (osrmRefreshTimer) clearInterval(osrmRefreshTimer)
-})
 
 function resolveStopState(stops, busLat, busLng) {
   if (busLat === null || busLng === null) {
@@ -227,13 +180,11 @@ function resolveStopState(stops, busLat, busLng) {
   const lastIdx = stops.length - 1
   const { distances, nearest } = getNearestStop(stops, busLat, busLng)
 
-  // Use OSRM road distance for the nearest stop if available — more accurate
-  // than Haversine for determining if the bus is actually at a stop.
+  // Use pre-computed road distance if available for proximity check
+  const roadDistances = calculateRoadDistances(stops, busLat, busLng)
   const nearestStopId = stops[nearest.index]?.id
-  const roadDist = (approachingRoadDist.value?.stopId === nearestStopId)
-    ? approachingRoadDist.value.distance
-    : nearest.distance
-  const effectiveNearestDist = roadDist < nearest.distance ? roadDist : nearest.distance
+  const roadDistToNearest = roadDistances[nearestStopId] ?? nearest.distance
+  const effectiveNearestDist = Math.min(roadDistToNearest, nearest.distance)
 
   // 1st priority: if bus is within standard proximity of ANY stop → "Currently Here"
   if (effectiveNearestDist <= STOP_PROXIMITY_METERS) {
@@ -260,11 +211,12 @@ function resolveStopState(stops, busLat, busLng) {
 
   const progressIdx = resolveRouteProgressIndex(stops, busLat, busLng)
   const approachingIdx = Math.min(progressIdx + 1, lastIdx)
+  const approachingDist = roadDistances[stops[approachingIdx]?.id] ?? nearest.distance
 
   return {
     currentIdx: null,
     approachingIdx,
-    approachingDistance: distances[approachingIdx] ?? nearest.distance,
+    approachingDistance: approachingDist,
     progressIdx,
   }
 }
@@ -339,16 +291,12 @@ const stopsWithState = computed(() => {
   const lastIdx = stops.length - 1
   const { currentIdx, approachingIdx, approachingDistance } = resolveStopState(stops, busLat, busLng)
 
-  // Use OSRM road distance if available, otherwise Haversine
-  let displayDistance = approachingDistance
-  if (approachingIdx !== null && busLat !== null && busLng !== null) {
-    const stop = stops[approachingIdx]
+  // Use pre-computed road distances if available, otherwise Haversine
+  const roadDistances = (busLat !== null && busLng !== null)
+    ? calculateRoadDistances(stops, busLat, busLng)
+    : {}
 
-    // Use cached OSRM distance if available for this stop
-    if (approachingRoadDist.value?.stopId === stop.id) {
-      displayDistance = approachingRoadDist.value.distance
-    }
-  }
+  let displayDistance = approachingDistance
 
   return stops.map((stop, i) => {
     let state = 'upcoming'
@@ -371,7 +319,9 @@ const stopsWithState = computed(() => {
         statusText = 'Passed'
       } else if (i === approachingIdx) {
         state = 'approaching'
-        statusText = `Approaching - ${formatDistance(displayDistance)}`
+        // Use road distance if available, otherwise Haversine
+        const dist = roadDistances[stop.id] ?? approachingDistance
+        statusText = `Approaching - ${formatDistance(dist)}`
       } else if (i === lastIdx) {
         state = 'destination'
         statusText = 'Final Stop'

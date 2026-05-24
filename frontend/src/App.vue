@@ -226,7 +226,9 @@ const syncStudentNotifications = async () => {
   })
 
   if (!result.success) {
-    console.error('Student FCM initialization failed:', result.error || 'Unknown initialization error')
+    if (result.error) {
+      console.error('Student FCM initialization failed:', result.error)
+    }
     return
   }
 
